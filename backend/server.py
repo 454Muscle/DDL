@@ -120,21 +120,62 @@ async def get_downloads(
     page: int = Query(1, ge=1),
     limit: int = Query(50, ge=1, le=100),
     type_filter: Optional[str] = None,
-    search: Optional[str] = None
+    search: Optional[str] = None,
+    sort_by: Optional[str] = Query("date_desc", description="Sort options: date_desc, date_asc, downloads_desc, downloads_asc, name_asc, name_desc"),
+    date_from: Optional[str] = None,
+    date_to: Optional[str] = None,
+    size_min: Optional[str] = None,
+    size_max: Optional[str] = None
 ):
     skip = (page - 1) * limit
     query = {"approved": True}
+    
     if type_filter and type_filter != "all":
         query["type"] = type_filter
     if search and search.strip():
         query["name"] = {"$regex": search.strip(), "$options": "i"}
     
+    # Date range filter
+    if date_from or date_to:
+        date_query = {}
+        if date_from:
+            date_query["$gte"] = date_from
+        if date_to:
+            date_query["$lte"] = date_to
+        if date_query:
+            query["submission_date"] = date_query
+    
+    # Sorting
+    sort_field = "created_at"
+    sort_order = -1
+    if sort_by == "date_desc":
+        sort_field, sort_order = "created_at", -1
+    elif sort_by == "date_asc":
+        sort_field, sort_order = "created_at", 1
+    elif sort_by == "downloads_desc":
+        sort_field, sort_order = "download_count", -1
+    elif sort_by == "downloads_asc":
+        sort_field, sort_order = "download_count", 1
+    elif sort_by == "name_asc":
+        sort_field, sort_order = "name", 1
+    elif sort_by == "name_desc":
+        sort_field, sort_order = "name", -1
+    
     total = await db.downloads.count_documents(query)
     pages = max((total + limit - 1) // limit, 1)
     
-    downloads = await db.downloads.find(query, {"_id": 0}).sort("created_at", -1).skip(skip).limit(limit).to_list(limit)
+    downloads = await db.downloads.find(query, {"_id": 0}).sort(sort_field, sort_order).skip(skip).limit(limit).to_list(limit)
     
     return PaginatedDownloads(items=downloads, total=total, page=page, pages=pages)
+
+# Top Downloads
+@api_router.get("/downloads/top")
+async def get_top_downloads(limit: int = Query(10, ge=1, le=20)):
+    top = await db.downloads.find(
+        {"approved": True},
+        {"_id": 0}
+    ).sort("download_count", -1).limit(limit).to_list(limit)
+    return {"items": top}
 
 # Increment download count
 @api_router.post("/downloads/{download_id}/increment")
