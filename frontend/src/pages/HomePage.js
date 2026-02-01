@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
-import { Download, Gamepad2, Monitor, Film, Tv, Search, TrendingUp, SlidersHorizontal, X, ChevronDown, Trophy } from 'lucide-react';
+import { Download, Gamepad2, Monitor, Film, Tv, Search, TrendingUp, SlidersHorizontal, X, ChevronDown, Trophy, Tag } from 'lucide-react';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -24,7 +24,18 @@ const sortOptions = [
     { value: 'downloads_desc', label: 'Most Downloaded' },
     { value: 'downloads_asc', label: 'Least Downloaded' },
     { value: 'name_asc', label: 'Name A-Z' },
-    { value: 'name_desc', label: 'Name Z-A' }
+    { value: 'name_desc', label: 'Name Z-A' },
+    { value: 'size_desc', label: 'Largest First' },
+    { value: 'size_asc', label: 'Smallest First' }
+];
+
+const sizePresets = [
+    { label: 'Any', min: '', max: '' },
+    { label: '< 100 MB', min: '', max: '100 MB' },
+    { label: '100 MB - 1 GB', min: '100 MB', max: '1 GB' },
+    { label: '1 GB - 5 GB', min: '1 GB', max: '5 GB' },
+    { label: '5 GB - 20 GB', min: '5 GB', max: '20 GB' },
+    { label: '> 20 GB', min: '20 GB', max: '' }
 ];
 
 const formatNumber = (num) => {
@@ -48,6 +59,12 @@ export default function HomePage() {
     const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
     const [dateFrom, setDateFrom] = useState('');
     const [dateTo, setDateTo] = useState('');
+    const [sizeMin, setSizeMin] = useState('');
+    const [sizeMax, setSizeMax] = useState('');
+    const [categories, setCategories] = useState([]);
+    const [selectedCategory, setSelectedCategory] = useState('');
+    const [popularTags, setPopularTags] = useState([]);
+    const [selectedTags, setSelectedTags] = useState([]);
 
     const fetchDownloads = useCallback(async () => {
         setLoading(true);
