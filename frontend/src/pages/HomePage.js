@@ -78,8 +78,15 @@ export default function HomePage() {
 
     const fetchTopDownloads = async () => {
         try {
-            const response = await axios.get(`${API}/downloads/top`, { params: { limit: 10 } });
-            setTopDownloads(response.data.items);
+            const response = await axios.get(`${API}/downloads/top`);
+            if (response.data.enabled) {
+                // Combine sponsored (first) and regular top downloads
+                const sponsored = (response.data.sponsored || []).map(item => ({ ...item, isSponsored: true }));
+                const regular = (response.data.items || []).map(item => ({ ...item, isSponsored: false }));
+                setTopDownloads([...sponsored, ...regular]);
+            } else {
+                setTopDownloads([]);
+            }
         } catch (error) {
             console.error('Error fetching top downloads:', error);
         }
