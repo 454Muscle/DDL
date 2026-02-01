@@ -345,6 +345,34 @@ async def update_theme(update: ThemeUpdate):
     )
     return ThemeSettings(**theme)
 
+# Site Settings - Get
+@api_router.get("/settings")
+async def get_site_settings():
+    settings = await db.site_settings.find_one({"id": "site_settings"}, {"_id": 0})
+    if not settings:
+        default_settings = SiteSettings()
+        await db.site_settings.insert_one(default_settings.model_dump())
+        return default_settings.model_dump()
+    return settings
+
+# Site Settings - Update (Admin)
+@api_router.put("/admin/settings")
+async def update_site_settings(update: SiteSettingsUpdate):
+    settings = await db.site_settings.find_one({"id": "site_settings"}, {"_id": 0})
+    if not settings:
+        settings = SiteSettings().model_dump()
+    
+    if update.daily_submission_limit is not None:
+        # Clamp between 5 and 100
+        settings["daily_submission_limit"] = max(5, min(100, update.daily_submission_limit))
+    
+    await db.site_settings.update_one(
+        {"id": "site_settings"},
+        {"$set": settings},
+        upsert=True
+    )
+    return settings
+
 # Seed database with sample data
 @api_router.post("/admin/seed")
 async def seed_database():
