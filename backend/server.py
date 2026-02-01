@@ -190,8 +190,31 @@ async def increment_download_count(download_id: str):
 
 # Submissions - Public
 @api_router.post("/submissions", response_model=Submission)
-async def create_submission(submission: SubmissionCreate):
-    submission_date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+async def create_submission(submission: SubmissionCreate, client_ip: Optional[str] = Query(None)):
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    
+    # Get rate limit settings
+    settings = await db.site_settings.find_one({"id": "site_settings"}, {"_id": 0})
+    daily_limit = settings.get("daily_submission_limit", 10) if settings else 10
+    
+    # Check rate limit by IP (use a simple identifier if no IP provided)
+    ip_key = client_ip or "anonymous"
+    rate_entry = await db.rate_limits.find_one({"ip_address": ip_key, "date": today}, {"_id": 0})
+    
+    if rate_entry and rate_entry.get("count", 0) >= daily_limit:
+        raise HTTPException(
+            status_code=429, 
+            detail=f"Daily submission limit ({daily_limit}) reached. Try again tomorrow."
+        )
+    
+    # Update rate limit counter
+    await db.rate_limits.update_one(
+        {"ip_address": ip_key, "date": today},
+        {"$inc": {"count": 1}},
+        upsert=True
+    )
+    
+    submission_date = today
     submission_obj = Submission(
         name=submission.name,
         download_link=submission.download_link,
@@ -203,6 +226,22 @@ async def create_submission(submission: SubmissionCreate):
     doc = submission_obj.model_dump()
     await db.submissions.insert_one(doc)
     return submission_obj
+
+# Check remaining submissions for today
+@api_router.get("/submissions/remaining")
+async def get_remaining_submissions(client_ip: Optional[str] = Query(None)):
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    
+    settings = await db.site_settings.find_one({"id": "site_settings"}, {"_id": 0})
+    daily_limit = settings.get("daily_submission_limit", 10) if settings else 10
+    
+    ip_key = client_ip or "anonymous"
+    rate_entry = await db.rate_limits.find_one({"ip_address": ip_key, "date": today}, {"_id": 0})
+    
+    used = rate_entry.get("count", 0) if rate_entry else 0
+    remaining = max(0, daily_limit - used)
+    
+    return {"daily_limit": daily_limit, "used": used, "remaining": remaining}
 
 # Admin Login
 @api_router.post("/admin/login")
