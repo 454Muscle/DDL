@@ -17,7 +17,10 @@ import {
     Database,
     Loader2,
     Settings,
-    Clock
+    Clock,
+    Trophy,
+    Plus,
+    Star
 } from 'lucide-react';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
@@ -37,6 +40,8 @@ const accentPresets = [
     { name: 'Classic Blue', color: '#0066FF' }
 ];
 
+const typeOptions = ['game', 'software', 'movie', 'tv_show'];
+
 export default function AdminDashboardPage() {
     const navigate = useNavigate();
     const { theme, updateTheme } = useTheme();
@@ -48,8 +53,17 @@ export default function AdminDashboardPage() {
     const [customAccent, setCustomAccent] = useState(theme.accent_color);
     const [seeding, setSeeding] = useState(false);
     const [stats, setStats] = useState(null);
-    const [siteSettings, setSiteSettings] = useState({ daily_submission_limit: 10 });
+    const [siteSettings, setSiteSettings] = useState({ 
+        daily_submission_limit: 10,
+        top_downloads_enabled: true,
+        top_downloads_count: 5,
+        sponsored_downloads: []
+    });
     const [newLimit, setNewLimit] = useState(10);
+    const [topEnabled, setTopEnabled] = useState(true);
+    const [topCount, setTopCount] = useState(5);
+    const [sponsoredDownloads, setSponsoredDownloads] = useState([]);
+    const [newSponsored, setNewSponsored] = useState({ name: '', download_link: '', type: 'software', description: '' });
 
     useEffect(() => {
         if (!sessionStorage.getItem('admin_auth')) {
@@ -93,6 +107,9 @@ export default function AdminDashboardPage() {
             const response = await axios.get(`${API}/settings`);
             setSiteSettings(response.data);
             setNewLimit(response.data.daily_submission_limit || 10);
+            setTopEnabled(response.data.top_downloads_enabled !== false);
+            setTopCount(response.data.top_downloads_count || 5);
+            setSponsoredDownloads(response.data.sponsored_downloads || []);
         } catch (error) {
             console.error('Error fetching settings:', error);
         }
@@ -187,6 +204,61 @@ export default function AdminDashboardPage() {
         }
     };
 
+    const handleUpdateTopDownloads = async () => {
+        const countValue = Math.max(5, Math.min(20, parseInt(topCount) || 5));
+        try {
+            const response = await axios.put(`${API}/admin/settings`, {
+                top_downloads_enabled: topEnabled,
+                top_downloads_count: countValue
+            });
+            setSiteSettings(response.data);
+            setTopEnabled(response.data.top_downloads_enabled);
+            setTopCount(response.data.top_downloads_count);
+            toast.success('Top downloads settings updated');
+        } catch (error) {
+            console.error('Update settings error:', error);
+            toast.error('Failed to update settings');
+        }
+    };
+
+    const handleAddSponsored = async () => {
+        if (!newSponsored.name.trim() || !newSponsored.download_link.trim()) {
+            toast.error('Name and download link are required');
+            return;
+        }
+        if (sponsoredDownloads.length >= 5) {
+            toast.error('Maximum 5 sponsored downloads allowed');
+            return;
+        }
+        
+        const updatedSponsored = [...sponsoredDownloads, { ...newSponsored, id: `sponsored-${Date.now()}` }];
+        try {
+            const response = await axios.put(`${API}/admin/settings`, {
+                sponsored_downloads: updatedSponsored
+            });
+            setSponsoredDownloads(response.data.sponsored_downloads || []);
+            setNewSponsored({ name: '', download_link: '', type: 'software', description: '' });
+            toast.success('Sponsored download added');
+        } catch (error) {
+            console.error('Add sponsored error:', error);
+            toast.error('Failed to add sponsored download');
+        }
+    };
+
+    const handleRemoveSponsored = async (index) => {
+        const updatedSponsored = sponsoredDownloads.filter((_, i) => i !== index);
+        try {
+            const response = await axios.put(`${API}/admin/settings`, {
+                sponsored_downloads: updatedSponsored
+            });
+            setSponsoredDownloads(response.data.sponsored_downloads || []);
+            toast.success('Sponsored download removed');
+        } catch (error) {
+            console.error('Remove sponsored error:', error);
+            toast.error('Failed to remove sponsored download');
+        }
+    };
+
     const handleLogout = () => {
         sessionStorage.removeItem('admin_auth');
         toast.success('Logged out');
@@ -266,9 +338,6 @@ export default function AdminDashboardPage() {
                                 </>
                             )}
                         </button>
-                        <p style={{ fontSize: '0.75rem', opacity: 0.6, marginTop: '0.5rem' }}>
-                            Populates database with sample games, software, movies, and TV shows
-                        </p>
                     </div>
                 </div>
             )}
@@ -280,35 +349,217 @@ export default function AdminDashboardPage() {
                     SITE SETTINGS
                 </h2>
                 
-                <div style={{ display: 'flex', alignItems: 'flex-end', gap: '1rem', flexWrap: 'wrap' }}>
-                    <div style={{ flex: 1, minWidth: '200px' }}>
-                        <label className="form-label" style={{ fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            <Clock size={14} />
-                            DAILY SUBMISSION LIMIT (5-100):
-                        </label>
-                        <input
-                            type="number"
-                            min="5"
-                            max="100"
-                            value={newLimit}
-                            onChange={(e) => setNewLimit(e.target.value)}
-                            className="form-input"
-                            style={{ width: '100%' }}
-                            data-testid="rate-limit-input"
-                        />
+                {/* Rate Limit */}
+                <div style={{ marginBottom: '1.5rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'flex-end', gap: '1rem', flexWrap: 'wrap' }}>
+                        <div style={{ flex: 1, minWidth: '200px' }}>
+                            <label className="form-label" style={{ fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                <Clock size={14} />
+                                DAILY SUBMISSION LIMIT (5-100):
+                            </label>
+                            <input
+                                type="number"
+                                min="5"
+                                max="100"
+                                value={newLimit}
+                                onChange={(e) => setNewLimit(e.target.value)}
+                                className="form-input"
+                                style={{ width: '100%' }}
+                                data-testid="rate-limit-input"
+                            />
+                        </div>
+                        <button
+                            onClick={handleUpdateRateLimit}
+                            className="action-btn approve"
+                            style={{ padding: '0.75rem 1.5rem', marginBottom: '0.25rem' }}
+                            data-testid="update-rate-limit-btn"
+                        >
+                            UPDATE
+                        </button>
                     </div>
-                    <button
-                        onClick={handleUpdateRateLimit}
-                        className="action-btn approve"
-                        style={{ padding: '0.75rem 1.5rem', marginBottom: '0.25rem' }}
-                        data-testid="update-rate-limit-btn"
-                    >
-                        UPDATE LIMIT
-                    </button>
                 </div>
-                <p style={{ fontSize: '0.75rem', opacity: 0.6, marginTop: '0.5rem' }}>
-                    Current limit: <strong>{siteSettings.daily_submission_limit}</strong> submissions per IP per day
+
+                {/* Top Downloads Settings */}
+                <div style={{ borderTop: '1px solid hsl(var(--border))', paddingTop: '1.5rem' }}>
+                    <h3 style={{ fontSize: '0.875rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <Trophy size={16} />
+                        TOP DOWNLOADS SETTINGS
+                    </h3>
+                    
+                    <div style={{ display: 'flex', alignItems: 'flex-end', gap: '1rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
+                        <div>
+                            <label className="form-label" style={{ fontSize: '0.75rem' }}>DISPLAY:</label>
+                            <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                <button
+                                    onClick={() => setTopEnabled(true)}
+                                    className={`filter-btn ${topEnabled ? 'active' : ''}`}
+                                    data-testid="top-enabled-btn"
+                                >
+                                    ENABLED
+                                </button>
+                                <button
+                                    onClick={() => setTopEnabled(false)}
+                                    className={`filter-btn ${!topEnabled ? 'active' : ''}`}
+                                    data-testid="top-disabled-btn"
+                                >
+                                    DISABLED
+                                </button>
+                            </div>
+                        </div>
+                        <div style={{ minWidth: '150px' }}>
+                            <label className="form-label" style={{ fontSize: '0.75rem' }}>COUNT (5-20):</label>
+                            <input
+                                type="number"
+                                min="5"
+                                max="20"
+                                value={topCount}
+                                onChange={(e) => setTopCount(e.target.value)}
+                                className="form-input"
+                                style={{ width: '100%' }}
+                                data-testid="top-count-input"
+                            />
+                        </div>
+                        <button
+                            onClick={handleUpdateTopDownloads}
+                            className="action-btn approve"
+                            style={{ padding: '0.75rem 1.5rem', marginBottom: '0.25rem' }}
+                            data-testid="update-top-downloads-btn"
+                        >
+                            UPDATE
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            {/* Sponsored Downloads Card */}
+            <div className="admin-card" data-testid="sponsored-downloads">
+                <h2 className="admin-title">
+                    <Star size={18} style={{ display: 'inline', marginRight: '0.5rem', color: '#FFD700' }} />
+                    SPONSORED DOWNLOADS (1-5)
+                </h2>
+                <p style={{ fontSize: '0.75rem', opacity: 0.7, marginBottom: '1rem' }}>
+                    Sponsored downloads appear first in the Top Downloads section
                 </p>
+
+                {/* Current Sponsored List */}
+                {sponsoredDownloads.length > 0 && (
+                    <div style={{ marginBottom: '1.5rem' }}>
+                        <table className="downloads-table">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Name</th>
+                                    <th>Type</th>
+                                    <th>Link</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {sponsoredDownloads.map((item, index) => (
+                                    <tr key={index} data-testid={`sponsored-row-${index}`}>
+                                        <td style={{ color: '#FFD700', fontWeight: 'bold' }}>#{index + 1}</td>
+                                        <td>
+                                            {item.name}
+                                            {item.description && (
+                                                <span style={{ display: 'block', fontSize: '0.75rem', opacity: 0.6 }}>
+                                                    {item.description}
+                                                </span>
+                                            )}
+                                        </td>
+                                        <td>
+                                            <span className={`type-badge type-${item.type}`}>{item.type}</span>
+                                        </td>
+                                        <td>
+                                            <a href={item.download_link} target="_blank" rel="noopener noreferrer">
+                                                <ExternalLink size={12} /> View
+                                            </a>
+                                        </td>
+                                        <td>
+                                            <button
+                                                onClick={() => handleRemoveSponsored(index)}
+                                                className="action-btn reject"
+                                                data-testid={`remove-sponsored-${index}`}
+                                            >
+                                                <Trash2 size={14} />
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+
+                {/* Add New Sponsored */}
+                {sponsoredDownloads.length < 5 && (
+                    <div style={{ 
+                        border: '1px dashed hsl(var(--border))', 
+                        padding: '1rem',
+                        background: 'hsl(var(--background))'
+                    }}>
+                        <h4 style={{ fontSize: '0.75rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <Plus size={14} />
+                            ADD SPONSORED DOWNLOAD ({sponsoredDownloads.length}/5)
+                        </h4>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+                            <div>
+                                <label className="form-label" style={{ fontSize: '0.75rem' }}>NAME *</label>
+                                <input
+                                    type="text"
+                                    value={newSponsored.name}
+                                    onChange={(e) => setNewSponsored({ ...newSponsored, name: e.target.value })}
+                                    className="form-input"
+                                    placeholder="Download name"
+                                    data-testid="sponsored-name-input"
+                                />
+                            </div>
+                            <div>
+                                <label className="form-label" style={{ fontSize: '0.75rem' }}>DOWNLOAD LINK *</label>
+                                <input
+                                    type="url"
+                                    value={newSponsored.download_link}
+                                    onChange={(e) => setNewSponsored({ ...newSponsored, download_link: e.target.value })}
+                                    className="form-input"
+                                    placeholder="https://..."
+                                    data-testid="sponsored-link-input"
+                                />
+                            </div>
+                            <div>
+                                <label className="form-label" style={{ fontSize: '0.75rem' }}>TYPE</label>
+                                <select
+                                    value={newSponsored.type}
+                                    onChange={(e) => setNewSponsored({ ...newSponsored, type: e.target.value })}
+                                    className="form-select"
+                                    data-testid="sponsored-type-select"
+                                >
+                                    {typeOptions.map(t => (
+                                        <option key={t} value={t}>{t}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div>
+                                <label className="form-label" style={{ fontSize: '0.75rem' }}>DESCRIPTION</label>
+                                <input
+                                    type="text"
+                                    value={newSponsored.description}
+                                    onChange={(e) => setNewSponsored({ ...newSponsored, description: e.target.value })}
+                                    className="form-input"
+                                    placeholder="Optional description"
+                                    data-testid="sponsored-description-input"
+                                />
+                            </div>
+                        </div>
+                        <button
+                            onClick={handleAddSponsored}
+                            className="action-btn approve"
+                            style={{ marginTop: '1rem', padding: '0.75rem 1.5rem' }}
+                            data-testid="add-sponsored-btn"
+                        >
+                            <Plus size={14} style={{ display: 'inline', marginRight: '0.5rem' }} />
+                            ADD SPONSORED
+                        </button>
+                    </div>
+                )}
             </div>
 
             {/* Theme Editor Card */}
@@ -319,7 +570,6 @@ export default function AdminDashboardPage() {
                 </h2>
                 
                 <div className="theme-editor">
-                    {/* Mode Toggle */}
                     <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                         <span>MODE:</span>
                         <button
@@ -340,7 +590,6 @@ export default function AdminDashboardPage() {
                         </button>
                     </div>
 
-                    {/* Accent Color */}
                     <div>
                         <p style={{ marginBottom: '0.5rem' }}>ACCENT COLOR:</p>
                         <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
@@ -380,18 +629,15 @@ export default function AdminDashboardPage() {
                     <h2 className="admin-title" style={{ margin: 0, border: 'none', padding: 0 }}>
                         PENDING SUBMISSIONS
                     </h2>
-                    <div style={{ display: 'flex', gap: '0.5rem' }}>
-                        <button 
-                            onClick={fetchSubmissions}
-                            className="action-btn approve"
-                            data-testid="refresh-submissions-btn"
-                        >
-                            <RefreshCw size={14} />
-                        </button>
-                    </div>
+                    <button 
+                        onClick={fetchSubmissions}
+                        className="action-btn approve"
+                        data-testid="refresh-submissions-btn"
+                    >
+                        <RefreshCw size={14} />
+                    </button>
                 </div>
 
-                {/* Status Filter */}
                 <div className="filter-bar" style={{ marginTop: '1rem' }}>
                     <span style={{ opacity: 0.7 }}>STATUS:</span>
                     {['all', 'pending', 'approved', 'rejected'].map(status => (
@@ -406,7 +652,6 @@ export default function AdminDashboardPage() {
                     ))}
                 </div>
 
-                {/* Submissions Table */}
                 {loading ? (
                     <div className="loading-state">
                         <p className="loading-text">LOADING...</p>
@@ -434,30 +679,16 @@ export default function AdminDashboardPage() {
                                     <td>
                                         {sub.name}
                                         {sub.description && (
-                                            <span style={{ 
-                                                display: 'block', 
-                                                fontSize: '0.75rem', 
-                                                opacity: 0.6 
-                                            }}>
+                                            <span style={{ display: 'block', fontSize: '0.75rem', opacity: 0.6 }}>
                                                 {sub.description}
                                             </span>
                                         )}
                                     </td>
-                                    <td>
-                                        <span className={`type-badge type-${sub.type}`}>
-                                            {sub.type}
-                                        </span>
-                                    </td>
+                                    <td><span className={`type-badge type-${sub.type}`}>{sub.type}</span></td>
                                     <td style={{ fontSize: '0.875rem' }}>{sub.file_size || '-'}</td>
                                     <td>
-                                        <a 
-                                            href={sub.download_link} 
-                                            target="_blank" 
-                                            rel="noopener noreferrer"
-                                            style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}
-                                        >
-                                            <ExternalLink size={12} />
-                                            View
+                                        <a href={sub.download_link} target="_blank" rel="noopener noreferrer">
+                                            <ExternalLink size={12} /> View
                                         </a>
                                     </td>
                                     <td>
@@ -469,27 +700,15 @@ export default function AdminDashboardPage() {
                                     <td>
                                         {sub.status === 'pending' && (
                                             <>
-                                                <button
-                                                    onClick={() => handleApprove(sub.id)}
-                                                    className="action-btn approve"
-                                                    data-testid={`approve-btn-${index}`}
-                                                >
+                                                <button onClick={() => handleApprove(sub.id)} className="action-btn approve" data-testid={`approve-btn-${index}`}>
                                                     <Check size={14} />
                                                 </button>
-                                                <button
-                                                    onClick={() => handleReject(sub.id)}
-                                                    className="action-btn reject"
-                                                    data-testid={`reject-btn-${index}`}
-                                                >
+                                                <button onClick={() => handleReject(sub.id)} className="action-btn reject" data-testid={`reject-btn-${index}`}>
                                                     <X size={14} />
                                                 </button>
                                             </>
                                         )}
-                                        <button
-                                            onClick={() => handleDelete(sub.id)}
-                                            className="action-btn reject"
-                                            data-testid={`delete-btn-${index}`}
-                                        >
+                                        <button onClick={() => handleDelete(sub.id)} className="action-btn reject" data-testid={`delete-btn-${index}`}>
                                             <Trash2 size={14} />
                                         </button>
                                     </td>
@@ -499,7 +718,6 @@ export default function AdminDashboardPage() {
                     </table>
                 )}
 
-                {/* Pagination */}
                 {totalPages > 1 && (
                     <div className="pagination">
                         {Array.from({ length: Math.min(totalPages, 10) }, (_, i) => i + 1).map(p => (
