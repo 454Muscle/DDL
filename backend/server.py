@@ -9,6 +9,7 @@ from pydantic import BaseModel, Field, ConfigDict
 from typing import List, Optional
 import uuid
 from datetime import datetime, timezone
+import random
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -38,11 +39,16 @@ class Download(BaseModel):
     submission_date: str
     approved: bool = True
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    download_count: int = 0
+    file_size: Optional[str] = None
+    description: Optional[str] = None
 
 class DownloadCreate(BaseModel):
     name: str
     download_link: str
     type: str  # game, software, movie, tv_show
+    file_size: Optional[str] = None
+    description: Optional[str] = None
 
 class Submission(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -53,11 +59,15 @@ class Submission(BaseModel):
     submission_date: str
     status: str = "pending"  # pending, approved, rejected
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    file_size: Optional[str] = None
+    description: Optional[str] = None
 
 class SubmissionCreate(BaseModel):
     name: str
     download_link: str
     type: str
+    file_size: Optional[str] = None
+    description: Optional[str] = None
 
 class ThemeSettings(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -95,19 +105,33 @@ async def root():
 async def get_downloads(
     page: int = Query(1, ge=1),
     limit: int = Query(50, ge=1, le=100),
-    type_filter: Optional[str] = None
+    type_filter: Optional[str] = None,
+    search: Optional[str] = None
 ):
     skip = (page - 1) * limit
     query = {"approved": True}
     if type_filter and type_filter != "all":
         query["type"] = type_filter
+    if search and search.strip():
+        query["name"] = {"$regex": search.strip(), "$options": "i"}
     
     total = await db.downloads.count_documents(query)
-    pages = (total + limit - 1) // limit
+    pages = max((total + limit - 1) // limit, 1)
     
     downloads = await db.downloads.find(query, {"_id": 0}).sort("created_at", -1).skip(skip).limit(limit).to_list(limit)
     
     return PaginatedDownloads(items=downloads, total=total, page=page, pages=pages)
+
+# Increment download count
+@api_router.post("/downloads/{download_id}/increment")
+async def increment_download_count(download_id: str):
+    result = await db.downloads.update_one(
+        {"id": download_id},
+        {"$inc": {"download_count": 1}}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Download not found")
+    return {"success": True}
 
 # Submissions - Public
 @api_router.post("/submissions", response_model=Submission)
@@ -117,7 +141,9 @@ async def create_submission(submission: SubmissionCreate):
         name=submission.name,
         download_link=submission.download_link,
         type=submission.type,
-        submission_date=submission_date
+        submission_date=submission_date,
+        file_size=submission.file_size,
+        description=submission.description
     )
     doc = submission_obj.model_dump()
     await db.submissions.insert_one(doc)
@@ -162,7 +188,9 @@ async def approve_submission(submission_id: str):
         download_link=submission["download_link"],
         type=submission["type"],
         submission_date=submission["submission_date"],
-        approved=True
+        approved=True,
+        file_size=submission.get("file_size"),
+        description=submission.get("description")
     )
     
     await db.downloads.insert_one(download_obj.model_dump())
