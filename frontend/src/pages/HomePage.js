@@ -254,32 +254,50 @@ export default function HomePage() {
                             gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', 
                             gap: '0.75rem'
                         }}>
-                            {topDownloads.slice(0, 5).map((item, index) => {
+                            {topDownloads.map((item, index) => {
                                 const TypeIcon = typeIcons[item.type] || Download;
+                                const isSponsored = item.isSponsored;
                                 return (
                                     <div 
-                                        key={item.id} 
+                                        key={item.id || `sponsored-${index}`} 
                                         className="top-download-card"
                                         style={{
-                                            border: '1px solid hsl(var(--border))',
+                                            border: isSponsored ? '2px solid #FFD700' : '1px solid hsl(var(--border))',
                                             padding: '0.75rem',
-                                            background: 'hsl(var(--card))',
+                                            background: isSponsored ? 'rgba(255, 215, 0, 0.1)' : 'hsl(var(--card))',
                                             display: 'flex',
                                             alignItems: 'center',
-                                            gap: '0.75rem'
+                                            gap: '0.75rem',
+                                            position: 'relative'
                                         }}
                                         data-testid={`top-download-${index}`}
                                     >
+                                        {isSponsored && (
+                                            <div style={{
+                                                position: 'absolute',
+                                                top: '-8px',
+                                                right: '8px',
+                                                background: '#FFD700',
+                                                color: '#000',
+                                                fontSize: '0.625rem',
+                                                padding: '2px 6px',
+                                                fontWeight: 'bold',
+                                                textTransform: 'uppercase'
+                                            }}>
+                                                SPONSORED
+                                            </div>
+                                        )}
                                         <div style={{
                                             width: '32px',
                                             height: '32px',
                                             display: 'flex',
                                             alignItems: 'center',
                                             justifyContent: 'center',
-                                            background: 'hsl(var(--primary) / 0.2)',
-                                            border: '1px solid hsl(var(--primary))',
+                                            background: isSponsored ? 'rgba(255, 215, 0, 0.3)' : 'hsl(var(--primary) / 0.2)',
+                                            border: isSponsored ? '1px solid #FFD700' : '1px solid hsl(var(--primary))',
                                             fontWeight: 'bold',
-                                            fontSize: '0.875rem'
+                                            fontSize: '0.875rem',
+                                            color: isSponsored ? '#FFD700' : 'inherit'
                                         }}>
                                             #{index + 1}
                                         </div>
@@ -288,7 +306,7 @@ export default function HomePage() {
                                                 href={item.download_link}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                onClick={() => handleDownloadClick(item.id)}
+                                                onClick={() => !isSponsored && item.id && handleDownloadClick(item.id)}
                                                 style={{ 
                                                     display: 'block',
                                                     whiteSpace: 'nowrap',
@@ -299,14 +317,19 @@ export default function HomePage() {
                                             >
                                                 {item.name}
                                             </a>
-                                            <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.25rem', fontSize: '0.75rem', opacity: 0.7 }}>
+                                            <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.25rem', fontSize: '0.75rem', opacity: 0.7, flexWrap: 'wrap' }}>
                                                 <span className={`type-${item.type}`}>
                                                     <TypeIcon size={10} style={{ display: 'inline', marginRight: '0.25rem' }} />
-                                                    {typeLabels[item.type]}
+                                                    {typeLabels[item.type] || item.type}
                                                 </span>
-                                                <span style={{ color: 'hsl(var(--accent))' }}>
-                                                    {formatNumber(item.download_count || 0)} downloads
-                                                </span>
+                                                {!isSponsored && (
+                                                    <span style={{ color: 'hsl(var(--accent))' }}>
+                                                        {formatNumber(item.download_count || 0)} downloads
+                                                    </span>
+                                                )}
+                                                {isSponsored && item.description && (
+                                                    <span>{item.description}</span>
+                                                )}
                                             </div>
                                         </div>
                                     </div>
