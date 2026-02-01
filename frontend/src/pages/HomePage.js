@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
-import { Download, Gamepad2, Monitor, Film, Tv, Search, TrendingUp } from 'lucide-react';
+import { Download, Gamepad2, Monitor, Film, Tv, Search, TrendingUp, SlidersHorizontal, X, ChevronDown, Trophy } from 'lucide-react';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -18,6 +18,15 @@ const typeLabels = {
     tv_show: 'TV Show'
 };
 
+const sortOptions = [
+    { value: 'date_desc', label: 'Newest First' },
+    { value: 'date_asc', label: 'Oldest First' },
+    { value: 'downloads_desc', label: 'Most Downloaded' },
+    { value: 'downloads_asc', label: 'Least Downloaded' },
+    { value: 'name_asc', label: 'Name A-Z' },
+    { value: 'name_desc', label: 'Name Z-A' }
+];
+
 const formatNumber = (num) => {
     if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
     if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
@@ -26,6 +35,7 @@ const formatNumber = (num) => {
 
 export default function HomePage() {
     const [downloads, setDownloads] = useState([]);
+    const [topDownloads, setTopDownloads] = useState([]);
     const [loading, setLoading] = useState(true);
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
@@ -34,16 +44,26 @@ export default function HomePage() {
     const [searchQuery, setSearchQuery] = useState('');
     const [searchInput, setSearchInput] = useState('');
     const [stats, setStats] = useState(null);
+    const [sortBy, setSortBy] = useState('date_desc');
+    const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+    const [dateFrom, setDateFrom] = useState('');
+    const [dateTo, setDateTo] = useState('');
 
     const fetchDownloads = useCallback(async () => {
         setLoading(true);
         try {
-            const params = { page, limit: 50 };
+            const params = { page, limit: 50, sort_by: sortBy };
             if (filter !== 'all') {
                 params.type_filter = filter;
             }
             if (searchQuery.trim()) {
                 params.search = searchQuery.trim();
+            }
+            if (dateFrom) {
+                params.date_from = dateFrom;
+            }
+            if (dateTo) {
+                params.date_to = dateTo;
             }
             const response = await axios.get(`${API}/downloads`, { params });
             setDownloads(response.data.items);
@@ -54,7 +74,16 @@ export default function HomePage() {
         } finally {
             setLoading(false);
         }
-    }, [page, filter, searchQuery]);
+    }, [page, filter, searchQuery, sortBy, dateFrom, dateTo]);
+
+    const fetchTopDownloads = async () => {
+        try {
+            const response = await axios.get(`${API}/downloads/top`, { params: { limit: 10 } });
+            setTopDownloads(response.data.items);
+        } catch (error) {
+            console.error('Error fetching top downloads:', error);
+        }
+    };
 
     const fetchStats = async () => {
         try {
@@ -71,6 +100,7 @@ export default function HomePage() {
 
     useEffect(() => {
         fetchStats();
+        fetchTopDownloads();
     }, []);
 
     const handleFilterChange = (newFilter) => {
@@ -90,10 +120,19 @@ export default function HomePage() {
         setPage(1);
     };
 
+    const handleClearFilters = () => {
+        setDateFrom('');
+        setDateTo('');
+        setSearchInput('');
+        setSearchQuery('');
+        setFilter('all');
+        setSortBy('date_desc');
+        setPage(1);
+    };
+
     const handleDownloadClick = async (downloadId) => {
         try {
             await axios.post(`${API}/downloads/${downloadId}/increment`);
-            // Update local state
             setDownloads(prev => prev.map(d => 
                 d.id === downloadId ? { ...d, download_count: (d.download_count || 0) + 1 } : d
             ));
@@ -196,6 +235,80 @@ export default function HomePage() {
             </div>
 
             <div className="main-content">
+                {/* Top Downloads Section */}
+                {topDownloads.length > 0 && (
+                    <div className="top-downloads-section" style={{ marginBottom: '2rem' }} data-testid="top-downloads-section">
+                        <h2 className="pixel-font neon-glow" style={{ fontSize: '0.875rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <Trophy size={18} />
+                            TOP DOWNLOADS
+                        </h2>
+                        <div style={{ 
+                            display: 'grid', 
+                            gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', 
+                            gap: '0.75rem'
+                        }}>
+                            {topDownloads.slice(0, 5).map((item, index) => {
+                                const TypeIcon = typeIcons[item.type] || Download;
+                                return (
+                                    <div 
+                                        key={item.id} 
+                                        className="top-download-card"
+                                        style={{
+                                            border: '1px solid hsl(var(--border))',
+                                            padding: '0.75rem',
+                                            background: 'hsl(var(--card))',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '0.75rem'
+                                        }}
+                                        data-testid={`top-download-${index}`}
+                                    >
+                                        <div style={{
+                                            width: '32px',
+                                            height: '32px',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            background: 'hsl(var(--primary) / 0.2)',
+                                            border: '1px solid hsl(var(--primary))',
+                                            fontWeight: 'bold',
+                                            fontSize: '0.875rem'
+                                        }}>
+                                            #{index + 1}
+                                        </div>
+                                        <div style={{ flex: 1, minWidth: 0 }}>
+                                            <a 
+                                                href={item.download_link}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                onClick={() => handleDownloadClick(item.id)}
+                                                style={{ 
+                                                    display: 'block',
+                                                    whiteSpace: 'nowrap',
+                                                    overflow: 'hidden',
+                                                    textOverflow: 'ellipsis',
+                                                    fontSize: '0.875rem'
+                                                }}
+                                            >
+                                                {item.name}
+                                            </a>
+                                            <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.25rem', fontSize: '0.75rem', opacity: 0.7 }}>
+                                                <span className={`type-${item.type}`}>
+                                                    <TypeIcon size={10} style={{ display: 'inline', marginRight: '0.25rem' }} />
+                                                    {typeLabels[item.type]}
+                                                </span>
+                                                <span style={{ color: 'hsl(var(--accent))' }}>
+                                                    {formatNumber(item.download_count || 0)} downloads
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                )}
+
                 {/* Stats Bar */}
                 <div className="stats-bar">
                     <div className="stat-item">
@@ -252,14 +365,24 @@ export default function HomePage() {
                         <button type="submit" className="filter-btn active" data-testid="search-btn">
                             SEARCH
                         </button>
-                        {searchQuery && (
+                        <button 
+                            type="button" 
+                            onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+                            className={`filter-btn ${showAdvancedFilters ? 'active' : ''}`}
+                            data-testid="advanced-filters-btn"
+                        >
+                            <SlidersHorizontal size={14} style={{ marginRight: '0.25rem' }} />
+                            FILTERS
+                        </button>
+                        {(searchQuery || dateFrom || dateTo) && (
                             <button 
                                 type="button" 
-                                onClick={handleClearSearch} 
+                                onClick={handleClearFilters} 
                                 className="filter-btn"
-                                data-testid="clear-search-btn"
+                                data-testid="clear-all-btn"
                             >
-                                CLEAR
+                                <X size={14} style={{ marginRight: '0.25rem' }} />
+                                CLEAR ALL
                             </button>
                         )}
                     </div>
@@ -269,6 +392,63 @@ export default function HomePage() {
                         </p>
                     )}
                 </form>
+
+                {/* Advanced Filters Panel */}
+                {showAdvancedFilters && (
+                    <div className="advanced-filters-panel" style={{
+                        border: '1px solid hsl(var(--border))',
+                        padding: '1rem',
+                        marginBottom: '1rem',
+                        background: 'hsl(var(--card))'
+                    }} data-testid="advanced-filters-panel">
+                        <h3 style={{ fontSize: '0.875rem', marginBottom: '1rem', textTransform: 'uppercase' }}>
+                            Advanced Filters
+                        </h3>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+                            {/* Sort By */}
+                            <div>
+                                <label className="form-label" style={{ fontSize: '0.75rem' }}>SORT BY:</label>
+                                <div style={{ position: 'relative' }}>
+                                    <select
+                                        value={sortBy}
+                                        onChange={(e) => { setSortBy(e.target.value); setPage(1); }}
+                                        className="form-select"
+                                        data-testid="sort-select"
+                                    >
+                                        {sortOptions.map(opt => (
+                                            <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                        ))}
+                                    </select>
+                                    <ChevronDown size={16} style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', opacity: 0.5 }} />
+                                </div>
+                            </div>
+
+                            {/* Date From */}
+                            <div>
+                                <label className="form-label" style={{ fontSize: '0.75rem' }}>DATE FROM:</label>
+                                <input
+                                    type="date"
+                                    value={dateFrom}
+                                    onChange={(e) => { setDateFrom(e.target.value); setPage(1); }}
+                                    className="form-input"
+                                    data-testid="date-from-input"
+                                />
+                            </div>
+
+                            {/* Date To */}
+                            <div>
+                                <label className="form-label" style={{ fontSize: '0.75rem' }}>DATE TO:</label>
+                                <input
+                                    type="date"
+                                    value={dateTo}
+                                    onChange={(e) => { setDateTo(e.target.value); setPage(1); }}
+                                    className="form-input"
+                                    data-testid="date-to-input"
+                                />
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 {/* Filter Bar */}
                 <div className="filter-bar">
