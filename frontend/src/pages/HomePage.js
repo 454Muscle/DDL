@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
-import { Download, Gamepad2, Monitor, Film, Tv } from 'lucide-react';
+import { Download, Gamepad2, Monitor, Film, Tv, Search, TrendingUp } from 'lucide-react';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -18,6 +18,12 @@ const typeLabels = {
     tv_show: 'TV Show'
 };
 
+const formatNumber = (num) => {
+    if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+    if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
+    return num.toString();
+};
+
 export default function HomePage() {
     const [downloads, setDownloads] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -25,13 +31,19 @@ export default function HomePage() {
     const [totalPages, setTotalPages] = useState(1);
     const [total, setTotal] = useState(0);
     const [filter, setFilter] = useState('all');
+    const [searchQuery, setSearchQuery] = useState('');
+    const [searchInput, setSearchInput] = useState('');
+    const [stats, setStats] = useState(null);
 
-    const fetchDownloads = async () => {
+    const fetchDownloads = useCallback(async () => {
         setLoading(true);
         try {
             const params = { page, limit: 50 };
             if (filter !== 'all') {
                 params.type_filter = filter;
+            }
+            if (searchQuery.trim()) {
+                params.search = searchQuery.trim();
             }
             const response = await axios.get(`${API}/downloads`, { params });
             setDownloads(response.data.items);
@@ -42,15 +54,52 @@ export default function HomePage() {
         } finally {
             setLoading(false);
         }
+    }, [page, filter, searchQuery]);
+
+    const fetchStats = async () => {
+        try {
+            const response = await axios.get(`${API}/stats`);
+            setStats(response.data);
+        } catch (error) {
+            console.error('Error fetching stats:', error);
+        }
     };
 
     useEffect(() => {
         fetchDownloads();
-    }, [page, filter]);
+    }, [fetchDownloads]);
+
+    useEffect(() => {
+        fetchStats();
+    }, []);
 
     const handleFilterChange = (newFilter) => {
         setFilter(newFilter);
         setPage(1);
+    };
+
+    const handleSearch = (e) => {
+        e.preventDefault();
+        setSearchQuery(searchInput);
+        setPage(1);
+    };
+
+    const handleClearSearch = () => {
+        setSearchInput('');
+        setSearchQuery('');
+        setPage(1);
+    };
+
+    const handleDownloadClick = async (downloadId) => {
+        try {
+            await axios.post(`${API}/downloads/${downloadId}/increment`);
+            // Update local state
+            setDownloads(prev => prev.map(d => 
+                d.id === downloadId ? { ...d, download_count: (d.download_count || 0) + 1 } : d
+            ));
+        } catch (error) {
+            console.error('Error incrementing download:', error);
+        }
     };
 
     const renderPagination = () => {
@@ -157,7 +206,69 @@ export default function HomePage() {
                         <div className="stat-value">{page}/{totalPages || 1}</div>
                         <div className="stat-label">Current Page</div>
                     </div>
+                    {stats && (
+                        <>
+                            <div className="stat-item">
+                                <div className="stat-value" style={{ color: '#FF00FF' }}>{stats.by_type?.game || 0}</div>
+                                <div className="stat-label">Games</div>
+                            </div>
+                            <div className="stat-item">
+                                <div className="stat-value" style={{ color: '#00FFFF' }}>{stats.by_type?.software || 0}</div>
+                                <div className="stat-label">Software</div>
+                            </div>
+                            <div className="stat-item">
+                                <div className="stat-value" style={{ color: '#FFFF00' }}>{stats.by_type?.movie || 0}</div>
+                                <div className="stat-label">Movies</div>
+                            </div>
+                            <div className="stat-item">
+                                <div className="stat-value" style={{ color: '#FF6600' }}>{stats.by_type?.tv_show || 0}</div>
+                                <div className="stat-label">TV Shows</div>
+                            </div>
+                        </>
+                    )}
                 </div>
+
+                {/* Search Bar */}
+                <form onSubmit={handleSearch} className="search-bar" style={{ marginBottom: '1rem' }}>
+                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                        <div style={{ position: 'relative', flex: 1, minWidth: '200px' }}>
+                            <Search size={16} style={{ 
+                                position: 'absolute', 
+                                left: '0.75rem', 
+                                top: '50%', 
+                                transform: 'translateY(-50%)',
+                                opacity: 0.5
+                            }} />
+                            <input
+                                type="text"
+                                value={searchInput}
+                                onChange={(e) => setSearchInput(e.target.value)}
+                                placeholder="Search downloads..."
+                                className="form-input"
+                                style={{ paddingLeft: '2.5rem' }}
+                                data-testid="search-input"
+                            />
+                        </div>
+                        <button type="submit" className="filter-btn active" data-testid="search-btn">
+                            SEARCH
+                        </button>
+                        {searchQuery && (
+                            <button 
+                                type="button" 
+                                onClick={handleClearSearch} 
+                                className="filter-btn"
+                                data-testid="clear-search-btn"
+                            >
+                                CLEAR
+                            </button>
+                        )}
+                    </div>
+                    {searchQuery && (
+                        <p style={{ fontSize: '0.75rem', marginTop: '0.5rem', opacity: 0.7 }}>
+                            Showing results for: "{searchQuery}"
+                        </p>
+                    )}
+                </form>
 
                 {/* Filter Bar */}
                 <div className="filter-bar">
@@ -184,19 +295,26 @@ export default function HomePage() {
                 ) : downloads.length === 0 ? (
                     <div className="empty-state">
                         <p className="pixel-font" style={{ fontSize: '0.75rem' }}>NO DOWNLOADS AVAILABLE</p>
-                        <p style={{ marginTop: '1rem' }}>Be the first to submit!</p>
+                        <p style={{ marginTop: '1rem' }}>
+                            {searchQuery ? 'Try a different search term' : 'Be the first to submit!'}
+                        </p>
                     </div>
                 ) : (
                     <>
                         <table className="downloads-table" data-testid="downloads-table">
                             <thead>
                                 <tr>
-                                    <th style={{ width: '50%' }}>
+                                    <th style={{ width: '40%' }}>
                                         <Download size={14} style={{ display: 'inline', marginRight: '0.5rem' }} />
                                         Download Name
                                     </th>
-                                    <th style={{ width: '25%' }}>Submission Date</th>
-                                    <th style={{ width: '25%' }}>Type</th>
+                                    <th style={{ width: '12%' }}>Date</th>
+                                    <th style={{ width: '12%' }}>Type</th>
+                                    <th style={{ width: '12%' }}>Size</th>
+                                    <th style={{ width: '12%' }}>
+                                        <TrendingUp size={14} style={{ display: 'inline', marginRight: '0.25rem' }} />
+                                        Downloads
+                                    </th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -209,16 +327,39 @@ export default function HomePage() {
                                                     href={download.download_link} 
                                                     target="_blank" 
                                                     rel="noopener noreferrer"
+                                                    onClick={() => handleDownloadClick(download.id)}
                                                     data-testid={`download-link-${index}`}
+                                                    title={download.description || download.name}
                                                 >
                                                     {download.name}
                                                 </a>
+                                                {download.description && (
+                                                    <span style={{ 
+                                                        display: 'block', 
+                                                        fontSize: '0.75rem', 
+                                                        opacity: 0.6,
+                                                        marginTop: '0.25rem'
+                                                    }}>
+                                                        {download.description}
+                                                    </span>
+                                                )}
                                             </td>
                                             <td>{download.submission_date}</td>
                                             <td>
                                                 <span className={`type-badge type-${download.type}`}>
                                                     <TypeIcon size={12} style={{ display: 'inline', marginRight: '0.25rem' }} />
                                                     {typeLabels[download.type] || download.type}
+                                                </span>
+                                            </td>
+                                            <td style={{ fontSize: '0.875rem' }}>
+                                                {download.file_size || '-'}
+                                            </td>
+                                            <td>
+                                                <span className="download-count" style={{ 
+                                                    color: 'hsl(var(--accent))',
+                                                    fontWeight: 'bold'
+                                                }}>
+                                                    {formatNumber(download.download_count || 0)}
                                                 </span>
                                             </td>
                                         </tr>

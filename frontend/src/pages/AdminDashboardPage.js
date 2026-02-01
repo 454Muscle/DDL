@@ -13,7 +13,9 @@ import {
     Moon,
     RefreshCw,
     LogOut,
-    ExternalLink
+    ExternalLink,
+    Database,
+    Loader2
 } from 'lucide-react';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
@@ -42,6 +44,8 @@ export default function AdminDashboardPage() {
     const [totalPages, setTotalPages] = useState(1);
     const [statusFilter, setStatusFilter] = useState('pending');
     const [customAccent, setCustomAccent] = useState(theme.accent_color);
+    const [seeding, setSeeding] = useState(false);
+    const [stats, setStats] = useState(null);
 
     useEffect(() => {
         // Check auth
@@ -50,6 +54,7 @@ export default function AdminDashboardPage() {
             return;
         }
         fetchSubmissions();
+        fetchStats();
     }, [page, statusFilter, navigate]);
 
     const fetchSubmissions = async () => {
@@ -70,11 +75,21 @@ export default function AdminDashboardPage() {
         }
     };
 
+    const fetchStats = async () => {
+        try {
+            const response = await axios.get(`${API}/stats`);
+            setStats(response.data);
+        } catch (error) {
+            console.error('Error fetching stats:', error);
+        }
+    };
+
     const handleApprove = async (id) => {
         try {
             await axios.post(`${API}/admin/submissions/${id}/approve`);
             toast.success('Submission approved and published!');
             fetchSubmissions();
+            fetchStats();
         } catch (error) {
             console.error('Approve error:', error);
             toast.error('Failed to approve submission');
@@ -124,6 +139,25 @@ export default function AdminDashboardPage() {
         }
     };
 
+    const handleSeedDatabase = async () => {
+        if (!window.confirm('This will populate the database with 5000 sample downloads. Continue?')) return;
+        setSeeding(true);
+        try {
+            const response = await axios.post(`${API}/admin/seed`);
+            if (response.data.success) {
+                toast.success(response.data.message);
+                fetchStats();
+            } else {
+                toast.info(response.data.message);
+            }
+        } catch (error) {
+            console.error('Seed error:', error);
+            toast.error('Failed to seed database');
+        } finally {
+            setSeeding(false);
+        }
+    };
+
     const handleLogout = () => {
         sessionStorage.removeItem('admin_auth');
         toast.success('Logged out');
@@ -154,6 +188,61 @@ export default function AdminDashboardPage() {
                     LOGOUT
                 </button>
             </div>
+
+            {/* Stats Overview */}
+            {stats && (
+                <div className="admin-card" style={{ marginBottom: '1.5rem' }}>
+                    <h2 className="admin-title">DATABASE STATISTICS</h2>
+                    <div className="stats-bar" style={{ border: 'none', padding: 0, background: 'transparent' }}>
+                        <div className="stat-item">
+                            <div className="stat-value">{stats.total}</div>
+                            <div className="stat-label">Total Items</div>
+                        </div>
+                        <div className="stat-item">
+                            <div className="stat-value" style={{ color: '#FF00FF' }}>{stats.by_type?.game || 0}</div>
+                            <div className="stat-label">Games</div>
+                        </div>
+                        <div className="stat-item">
+                            <div className="stat-value" style={{ color: '#00FFFF' }}>{stats.by_type?.software || 0}</div>
+                            <div className="stat-label">Software</div>
+                        </div>
+                        <div className="stat-item">
+                            <div className="stat-value" style={{ color: '#FFFF00' }}>{stats.by_type?.movie || 0}</div>
+                            <div className="stat-label">Movies</div>
+                        </div>
+                        <div className="stat-item">
+                            <div className="stat-value" style={{ color: '#FF6600' }}>{stats.by_type?.tv_show || 0}</div>
+                            <div className="stat-label">TV Shows</div>
+                        </div>
+                    </div>
+                    
+                    {/* Seed Button */}
+                    <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid hsl(var(--border))' }}>
+                        <button
+                            onClick={handleSeedDatabase}
+                            disabled={seeding}
+                            className="action-btn approve"
+                            style={{ padding: '0.75rem 1.5rem' }}
+                            data-testid="seed-database-btn"
+                        >
+                            {seeding ? (
+                                <>
+                                    <Loader2 size={14} style={{ display: 'inline', marginRight: '0.5rem', animation: 'spin 1s linear infinite' }} />
+                                    SEEDING DATABASE...
+                                </>
+                            ) : (
+                                <>
+                                    <Database size={14} style={{ display: 'inline', marginRight: '0.5rem' }} />
+                                    SEED DATABASE (5000 ITEMS)
+                                </>
+                            )}
+                        </button>
+                        <p style={{ fontSize: '0.75rem', opacity: 0.6, marginTop: '0.5rem' }}>
+                            Populates database with sample games, software, movies, and TV shows
+                        </p>
+                    </div>
+                </div>
+            )}
 
             {/* Theme Editor Card */}
             <div className="admin-card" data-testid="theme-editor">
@@ -265,6 +354,7 @@ export default function AdminDashboardPage() {
                             <tr>
                                 <th>Name</th>
                                 <th>Type</th>
+                                <th>Size</th>
                                 <th>Link</th>
                                 <th>Status</th>
                                 <th>Date</th>
@@ -274,12 +364,24 @@ export default function AdminDashboardPage() {
                         <tbody>
                             {submissions.map((sub, index) => (
                                 <tr key={sub.id} data-testid={`submission-row-${index}`}>
-                                    <td>{sub.name}</td>
+                                    <td>
+                                        {sub.name}
+                                        {sub.description && (
+                                            <span style={{ 
+                                                display: 'block', 
+                                                fontSize: '0.75rem', 
+                                                opacity: 0.6 
+                                            }}>
+                                                {sub.description}
+                                            </span>
+                                        )}
+                                    </td>
                                     <td>
                                         <span className={`type-badge type-${sub.type}`}>
                                             {sub.type}
                                         </span>
                                     </td>
+                                    <td style={{ fontSize: '0.875rem' }}>{sub.file_size || '-'}</td>
                                     <td>
                                         <a 
                                             href={sub.download_link} 

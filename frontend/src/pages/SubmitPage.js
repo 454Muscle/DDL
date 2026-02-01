@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'sonner';
-import { Terminal, Send, ArrowLeft } from 'lucide-react';
+import { Terminal, Send, ArrowLeft, HelpCircle } from 'lucide-react';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -18,7 +18,9 @@ export default function SubmitPage() {
     const [formData, setFormData] = useState({
         name: '',
         download_link: '',
-        type: 'game'
+        type: 'game',
+        file_size: '',
+        description: ''
     });
     const [submitting, setSubmitting] = useState(false);
 
@@ -41,9 +43,22 @@ export default function SubmitPage() {
 
         setSubmitting(true);
         try {
-            await axios.post(`${API}/submissions`, formData);
+            const payload = {
+                name: formData.name,
+                download_link: formData.download_link,
+                type: formData.type
+            };
+            // Only include optional fields if they have values
+            if (formData.file_size.trim()) {
+                payload.file_size = formData.file_size.trim();
+            }
+            if (formData.description.trim()) {
+                payload.description = formData.description.trim();
+            }
+            
+            await axios.post(`${API}/submissions`, payload);
             toast.success('TRANSMISSION COMPLETE: Submission sent for approval');
-            setFormData({ name: '', download_link: '', type: 'game' });
+            setFormData({ name: '', download_link: '', type: 'game', file_size: '', description: '' });
             setTimeout(() => navigate('/'), 2000);
         } catch (error) {
             console.error('Submission error:', error);
@@ -75,7 +90,7 @@ export default function SubmitPage() {
                 <form onSubmit={handleSubmit}>
                     <div className="form-group">
                         <label className="form-label" htmlFor="name">
-                            {'>'} FILE_NAME:
+                            {'>'} FILE_NAME: <span style={{ color: 'hsl(var(--destructive))' }}>*</span>
                         </label>
                         <input
                             type="text"
@@ -91,7 +106,7 @@ export default function SubmitPage() {
 
                     <div className="form-group">
                         <label className="form-label" htmlFor="download_link">
-                            {'>'} DOWNLOAD_LINK:
+                            {'>'} DOWNLOAD_LINK: <span style={{ color: 'hsl(var(--destructive))' }}>*</span>
                         </label>
                         <input
                             type="url"
@@ -107,7 +122,7 @@ export default function SubmitPage() {
 
                     <div className="form-group">
                         <label className="form-label" htmlFor="type">
-                            {'>'} FILE_TYPE:
+                            {'>'} FILE_TYPE: <span style={{ color: 'hsl(var(--destructive))' }}>*</span>
                         </label>
                         <select
                             id="type"
@@ -123,6 +138,58 @@ export default function SubmitPage() {
                                 </option>
                             ))}
                         </select>
+                    </div>
+
+                    {/* Optional Fields */}
+                    <div style={{ 
+                        borderTop: '1px dashed hsl(var(--border))', 
+                        marginTop: '1.5rem', 
+                        paddingTop: '1.5rem' 
+                    }}>
+                        <p style={{ 
+                            fontSize: '0.75rem', 
+                            opacity: 0.7, 
+                            marginBottom: '1rem',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.5rem'
+                        }}>
+                            <HelpCircle size={14} />
+                            OPTIONAL FIELDS
+                        </p>
+                        
+                        <div className="form-group">
+                            <label className="form-label" htmlFor="file_size">
+                                {'>'} FILE_SIZE:
+                            </label>
+                            <input
+                                type="text"
+                                id="file_size"
+                                name="file_size"
+                                value={formData.file_size}
+                                onChange={handleChange}
+                                className="form-input"
+                                placeholder="e.g., 4.5 GB, 500 MB"
+                                data-testid="submit-size-input"
+                            />
+                        </div>
+
+                        <div className="form-group">
+                            <label className="form-label" htmlFor="description">
+                                {'>'} DESCRIPTION:
+                            </label>
+                            <textarea
+                                id="description"
+                                name="description"
+                                value={formData.description}
+                                onChange={handleChange}
+                                className="form-input"
+                                placeholder="Brief description of the file..."
+                                rows={3}
+                                style={{ resize: 'vertical', minHeight: '80px' }}
+                                data-testid="submit-description-input"
+                            />
+                        </div>
                     </div>
 
                     <div style={{ display: 'flex', gap: '1rem', marginTop: '2rem' }}>
