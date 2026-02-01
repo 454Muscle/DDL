@@ -87,16 +87,20 @@ Build a download website where you can download software, games, movies, tv show
 ### P0 (Critical)
 - All features implemented ✅
 
-### P1 (High)
-- [ ] User authentication for submitters
-- [ ] Rate limiting (10 submissions/day tracking)
-- [ ] Bulk download selection
+### P1 (High) - COMPLETED
+- [x] Download counters/statistics per item
+- [x] Search functionality
+- [x] Sorting options (date, downloads, name)
+- [x] Rate limiting (configurable 5-100/day)
+- [x] Advanced search filters (date range)
+- [x] Top downloads section
 
 ### P2 (Medium)
+- [ ] User authentication for submitters
 - [ ] Download history tracking
 - [ ] Categories/tags system
-- [ ] Advanced search filters (by date, size, type)
-- [ ] Sort options (by date, downloads, name)
+- [ ] File size range filter
+- [ ] Bulk download selection
 
 ### P3 (Nice to have)
 - [ ] User comments on downloads
@@ -105,7 +109,6 @@ Build a download website where you can download software, games, movies, tv show
 - [ ] Admin analytics dashboard
 
 ## Next Tasks
-1. Implement proper rate limiting for submissions
-2. Add sort options (by date, popularity, name)
-3. Add advanced search filters
-4. Implement categories/tags system
+1. Add user authentication for submitters
+2. Add file size range filter
+3. Implement categories/tags system
