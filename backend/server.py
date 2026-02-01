@@ -79,13 +79,25 @@ class ThemeUpdate(BaseModel):
     mode: Optional[str] = None
     accent_color: Optional[str] = None
 
+class SponsoredDownload(BaseModel):
+    name: str
+    download_link: str
+    type: str
+    description: Optional[str] = None
+
 class SiteSettings(BaseModel):
     model_config = ConfigDict(extra="ignore")
     id: str = "site_settings"
     daily_submission_limit: int = 10  # 5-100 configurable
+    top_downloads_enabled: bool = True
+    top_downloads_count: int = 5  # 5-20 configurable
+    sponsored_downloads: List[dict] = []  # 0-5 sponsored items
 
 class SiteSettingsUpdate(BaseModel):
     daily_submission_limit: Optional[int] = None
+    top_downloads_enabled: Optional[bool] = None
+    top_downloads_count: Optional[int] = None
+    sponsored_downloads: Optional[List[dict]] = None
 
 class RateLimitEntry(BaseModel):
     model_config = ConfigDict(extra="ignore")
