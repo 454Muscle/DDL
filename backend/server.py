@@ -79,6 +79,20 @@ class ThemeUpdate(BaseModel):
     mode: Optional[str] = None
     accent_color: Optional[str] = None
 
+class SiteSettings(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = "site_settings"
+    daily_submission_limit: int = 10  # 5-100 configurable
+
+class SiteSettingsUpdate(BaseModel):
+    daily_submission_limit: Optional[int] = None
+
+class RateLimitEntry(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    ip_address: str
+    date: str
+    count: int = 0
+
 class AdminLogin(BaseModel):
     password: str
 
