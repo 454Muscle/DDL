@@ -178,6 +178,15 @@ a:hover {
     animation: blink 1s step-end infinite;
 }
 
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.animate-spin {
+    animation: spin 1s linear infinite;
+}
+
 /* Light theme specific overrides */
 .light-theme .retro-btn {
     border-top-color: #ffffff;
