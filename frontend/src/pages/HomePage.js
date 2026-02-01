@@ -457,7 +457,7 @@ export default function HomePage() {
                             <SlidersHorizontal size={14} style={{ marginRight: '0.25rem' }} />
                             FILTERS
                         </button>
-                        {(searchQuery || dateFrom || dateTo) && (
+                        {(searchQuery || dateFrom || dateTo || sizeMin || sizeMax || selectedCategory || selectedTags.length > 0) && (
                             <button 
                                 type="button" 
                                 onClick={handleClearFilters} 
@@ -504,6 +504,44 @@ export default function HomePage() {
                                     </select>
                                     <ChevronDown size={16} style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', opacity: 0.5 }} />
                                 </div>
+                            </div>
+
+                            {/* Category */}
+                            <div>
+                                <label className="form-label" style={{ fontSize: '0.75rem' }}>CATEGORY:</label>
+                                <select
+                                    value={selectedCategory}
+                                    onChange={(e) => { setSelectedCategory(e.target.value); setPage(1); }}
+                                    className="form-select"
+                                    data-testid="category-select"
+                                >
+                                    <option value="">All Categories</option>
+                                    {categories
+                                        .filter(c => filter === 'all' || c.type === filter || c.type === 'all')
+                                        .map(cat => (
+                                            <option key={cat.id} value={cat.name}>{cat.name}</option>
+                                        ))}
+                                </select>
+                            </div>
+
+                            {/* File Size */}
+                            <div>
+                                <label className="form-label" style={{ fontSize: '0.75rem' }}>FILE SIZE:</label>
+                                <select
+                                    value={`${sizeMin}|${sizeMax}`}
+                                    onChange={(e) => { 
+                                        const [min, max] = e.target.value.split('|');
+                                        setSizeMin(min); 
+                                        setSizeMax(max); 
+                                        setPage(1); 
+                                    }}
+                                    className="form-select"
+                                    data-testid="size-select"
+                                >
+                                    {sizePresets.map((preset, idx) => (
+                                        <option key={idx} value={`${preset.min}|${preset.max}`}>{preset.label}</option>
+                                    ))}
+                                </select>
                             </div>
 
                             {/* Date From */}
