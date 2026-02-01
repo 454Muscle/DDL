@@ -82,6 +82,18 @@ export default function HomePage() {
             if (dateTo) {
                 params.date_to = dateTo;
             }
+            if (sizeMin) {
+                params.size_min = sizeMin;
+            }
+            if (sizeMax) {
+                params.size_max = sizeMax;
+            }
+            if (selectedCategory) {
+                params.category = selectedCategory;
+            }
+            if (selectedTags.length > 0) {
+                params.tags = selectedTags.join(',');
+            }
             const response = await axios.get(`${API}/downloads`, { params });
             setDownloads(response.data.items);
             setTotalPages(response.data.pages);
@@ -91,13 +103,12 @@ export default function HomePage() {
         } finally {
             setLoading(false);
         }
-    }, [page, filter, searchQuery, sortBy, dateFrom, dateTo]);
+    }, [page, filter, searchQuery, sortBy, dateFrom, dateTo, sizeMin, sizeMax, selectedCategory, selectedTags]);
 
     const fetchTopDownloads = async () => {
         try {
             const response = await axios.get(`${API}/downloads/top`);
             if (response.data.enabled) {
-                // Combine sponsored (first) and regular top downloads
                 const sponsored = (response.data.sponsored || []).map(item => ({ ...item, isSponsored: true }));
                 const regular = (response.data.items || []).map(item => ({ ...item, isSponsored: false }));
                 setTopDownloads([...sponsored, ...regular]);
@@ -115,6 +126,24 @@ export default function HomePage() {
             setStats(response.data);
         } catch (error) {
             console.error('Error fetching stats:', error);
+        }
+    };
+
+    const fetchCategories = async () => {
+        try {
+            const response = await axios.get(`${API}/categories`);
+            setCategories(response.data.items || []);
+        } catch (error) {
+            console.error('Error fetching categories:', error);
+        }
+    };
+
+    const fetchPopularTags = async () => {
+        try {
+            const response = await axios.get(`${API}/tags?limit=30`);
+            setPopularTags(response.data.items || []);
+        } catch (error) {
+            console.error('Error fetching tags:', error);
         }
     };
 
