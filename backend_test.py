@@ -183,6 +183,87 @@ class DownloadPortalAPITester:
             return self.run_test("Delete Submission", "DELETE", f"admin/submissions/{delete_id}", 200)
         return False
 
+    def test_get_stats(self):
+        """Test getting database statistics"""
+        success, response = self.run_test("Get Database Stats", "GET", "stats", 200)
+        if success:
+            expected_fields = ['total', 'by_type', 'top_downloads']
+            has_fields = all(field in response for field in expected_fields)
+            if not has_fields:
+                self.log_test("Stats Response Structure", False, f"Missing fields: {response}")
+                return False
+            
+            # Check by_type structure
+            by_type = response.get('by_type', {})
+            expected_types = ['game', 'software', 'movie', 'tv_show']
+            has_types = all(t in by_type for t in expected_types)
+            if not has_types:
+                self.log_test("Stats By Type Structure", False, f"Missing types: {by_type}")
+                return False
+            
+            self.log_test("Stats Response Structure", True, f"Total: {response['total']}, Types: {by_type}")
+        return success
+
+    def test_search_functionality(self):
+        """Test search functionality"""
+        # Test search with a common term
+        success, response = self.run_test("Search Downloads", "GET", "downloads?search=test", 200)
+        if success:
+            self.log_test("Search Functionality", True, f"Search returned {response.get('total', 0)} results")
+        return success
+
+    def test_download_increment(self):
+        """Test download counter increment"""
+        # First get a download to increment
+        success, response = self.run_test("Get Downloads for Increment", "GET", "downloads?limit=1", 200)
+        if success and response.get('items'):
+            download_id = response['items'][0]['id']
+            original_count = response['items'][0].get('download_count', 0)
+            
+            # Increment the download count
+            increment_success, _ = self.run_test("Increment Download Count", "POST", f"downloads/{download_id}/increment", 200)
+            
+            if increment_success:
+                # Verify the count increased
+                verify_success, verify_response = self.run_test("Verify Increment", "GET", f"downloads?limit=50", 200)
+                if verify_success:
+                    # Find the same download and check if count increased
+                    updated_download = next((d for d in verify_response['items'] if d['id'] == download_id), None)
+                    if updated_download and updated_download.get('download_count', 0) > original_count:
+                        self.log_test("Download Count Verification", True, f"Count increased from {original_count} to {updated_download['download_count']}")
+                        return True
+                    else:
+                        self.log_test("Download Count Verification", False, "Count did not increase")
+                        return False
+            return increment_success
+        else:
+            self.log_test("Download Increment", False, "No downloads available to increment")
+            return False
+
+    def test_admin_seed_database(self):
+        """Test admin database seeding"""
+        return self.run_test("Seed Database", "POST", "admin/seed", 200)
+
+    def test_downloads_with_optional_fields(self):
+        """Test creating submission with optional fields"""
+        test_submission = {
+            "name": "Test Game with Optional Fields",
+            "download_link": "https://example.com/test-game-full.zip",
+            "type": "game",
+            "file_size": "4.5 GB",
+            "description": "A test game with file size and description"
+        }
+        success, response = self.run_test("Create Submission with Optional Fields", "POST", "submissions", 200, test_submission)
+        if success:
+            # Verify the optional fields are included
+            if response.get('file_size') == "4.5 GB" and response.get('description'):
+                self.log_test("Optional Fields Verification", True, "File size and description saved correctly")
+                return True
+            else:
+                self.log_test("Optional Fields Verification", False, f"Optional fields not saved: {response}")
+                return False
+        return success
+
 def main():
     print("🚀 Starting Download Portal API Tests...")
     print(f"Testing against: https://contentcatalog-1.preview.emergentagent.com/api")
