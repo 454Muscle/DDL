@@ -400,6 +400,17 @@ async def update_site_settings(update: SiteSettingsUpdate):
         # Clamp between 5 and 100
         settings["daily_submission_limit"] = max(5, min(100, update.daily_submission_limit))
     
+    if update.top_downloads_enabled is not None:
+        settings["top_downloads_enabled"] = update.top_downloads_enabled
+    
+    if update.top_downloads_count is not None:
+        # Clamp between 5 and 20
+        settings["top_downloads_count"] = max(5, min(20, update.top_downloads_count))
+    
+    if update.sponsored_downloads is not None:
+        # Limit to 5 sponsored items
+        settings["sponsored_downloads"] = update.sponsored_downloads[:5]
+    
     await db.site_settings.update_one(
         {"id": "site_settings"},
         {"$set": settings},
