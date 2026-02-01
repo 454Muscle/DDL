@@ -286,7 +286,12 @@ def main():
         tester.test_theme_get,
         tester.test_theme_update,
         tester.test_reject_submission,
-        tester.test_delete_submission
+        tester.test_delete_submission,
+        tester.test_get_stats,
+        tester.test_search_functionality,
+        tester.test_download_increment,
+        tester.test_admin_seed_database,
+        tester.test_downloads_with_optional_fields
     ]
 
     for test_method in test_methods:
