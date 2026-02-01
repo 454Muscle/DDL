@@ -154,10 +154,13 @@ export default function HomePage() {
     useEffect(() => {
         fetchStats();
         fetchTopDownloads();
+        fetchCategories();
+        fetchPopularTags();
     }, []);
 
     const handleFilterChange = (newFilter) => {
         setFilter(newFilter);
+        setSelectedCategory('');
         setPage(1);
     };
 
@@ -176,6 +179,10 @@ export default function HomePage() {
     const handleClearFilters = () => {
         setDateFrom('');
         setDateTo('');
+        setSizeMin('');
+        setSizeMax('');
+        setSelectedCategory('');
+        setSelectedTags([]);
         setSearchInput('');
         setSearchQuery('');
         setFilter('all');
