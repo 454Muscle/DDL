@@ -41,8 +41,10 @@ export default function SubmitPage() {
         fetchCaptcha();
         fetchCategories();
         fetchPopularTags();
-        if (user?.email) {
-            setFormData(prev => ({ ...prev, submitter_email: user.email }));
+        if (user && user.email) {
+            setFormData(prev => {
+                return { ...prev, submitter_email: user.email };
+            });
         }
     }, [user]);
 
@@ -59,7 +61,9 @@ export default function SubmitPage() {
         try {
             const response = await axios.get(`${API}/captcha`);
             setCaptcha(response.data);
-            setFormData(prev => ({ ...prev, captcha_id: response.data.id, captcha_answer: '' }));
+            setFormData(prev => {
+                return { ...prev, captcha_id: response.data.id, captcha_answer: '' };
+            });
         } catch (error) {
             console.error('Error fetching captcha:', error);
         }
@@ -85,19 +89,25 @@ export default function SubmitPage() {
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
+        setFormData(prev => {
+            return { ...prev, [name]: value };
+        });
     };
 
     const handleAddTag = (tag) => {
         const cleanTag = tag.trim().toLowerCase();
         if (cleanTag && !formData.tags.includes(cleanTag) && formData.tags.length < 10) {
-            setFormData(prev => ({ ...prev, tags: [...prev.tags, cleanTag] }));
+            setFormData(prev => {
+                return { ...prev, tags: [...prev.tags, cleanTag] };
+            });
             setTagInput('');
         }
     };
 
     const handleRemoveTag = (tagToRemove) => {
-        setFormData(prev => ({ ...prev, tags: prev.tags.filter(t => t !== tagToRemove) }));
+        setFormData(prev => {
+            return { ...prev, tags: prev.tags.filter(t => t !== tagToRemove) };
+        });
     };
 
     const handleTagInputKeyDown = (e) => {
@@ -124,7 +134,7 @@ export default function SubmitPage() {
         }
 
         if (rateLimit.remaining <= 0) {
-            toast.error(`RATE LIMIT: Daily submission limit (${rateLimit.daily_limit}) reached. Try again tomorrow.`);
+            toast.error('RATE LIMIT: Daily submission limit reached');
             return;
         }
 
@@ -166,7 +176,7 @@ export default function SubmitPage() {
                 description: '',
                 category: '',
                 tags: [],
-                submitter_email: user?.email || '',
+                submitter_email: user && user.email ? user.email : '',
                 captcha_answer: '',
                 captcha_id: ''
             });
@@ -175,8 +185,8 @@ export default function SubmitPage() {
             setTimeout(() => navigate('/'), 2000);
         } catch (error) {
             console.error('Submission error:', error);
-            const message = error.response?.data?.detail || 'Could not submit';
-            toast.error(`TRANSMISSION FAILED: ${message}`);
+            const message = error.response && error.response.data && error.response.data.detail ? error.response.data.detail : 'Could not submit';
+            toast.error('TRANSMISSION FAILED: ' + message);
             fetchCaptcha();
         } finally {
             setSubmitting(false);
@@ -188,7 +198,6 @@ export default function SubmitPage() {
     return (
         <div className="main-content" data-testid="submit-page">
             <div className="retro-form">
-                {/* Terminal Header */}
                 <div style={{ 
                     borderBottom: '1px solid hsl(var(--border))', 
                     paddingBottom: '1rem', 
@@ -201,7 +210,7 @@ export default function SubmitPage() {
                                 SUBMIT NEW FILE
                             </h1>
                             <p style={{ fontSize: '0.875rem', opacity: 0.7 }}>
-                                {'>'} Enter file details below.
+                                Enter file details below.
                             </p>
                         </div>
                         {isLoggedIn ? (
@@ -212,7 +221,7 @@ export default function SubmitPage() {
                                 fontSize: '0.75rem'
                             }}>
                                 <User size={12} style={{ display: 'inline', marginRight: '0.5rem' }} />
-                                {user?.email}
+                                {user && user.email}
                                 <button 
                                     onClick={logout}
                                     style={{ marginLeft: '0.5rem', background: 'none', border: 'none', color: 'hsl(var(--destructive))', cursor: 'pointer', textDecoration: 'underline' }}
@@ -229,7 +238,6 @@ export default function SubmitPage() {
                     </div>
                 </div>
 
-                {/* Rate Limit Info */}
                 <div style={{
                     padding: '0.75rem',
                     marginBottom: '1.5rem',
@@ -254,10 +262,9 @@ export default function SubmitPage() {
                 </div>
 
                 <form onSubmit={handleSubmit}>
-                    {/* Required Fields */}
                     <div className="form-group">
                         <label className="form-label" htmlFor="name">
-                            {'>'} FILE_NAME: <span style={{ color: 'hsl(var(--destructive))' }}>*</span>
+                            FILE NAME: <span style={{ color: 'hsl(var(--destructive))' }}>*</span>
                         </label>
                         <input
                             type="text"
@@ -274,7 +281,7 @@ export default function SubmitPage() {
 
                     <div className="form-group">
                         <label className="form-label" htmlFor="download_link">
-                            {'>'} DOWNLOAD_LINK: <span style={{ color: 'hsl(var(--destructive))' }}>*</span>
+                            DOWNLOAD LINK: <span style={{ color: 'hsl(var(--destructive))' }}>*</span>
                         </label>
                         <input
                             type="url"
@@ -292,7 +299,7 @@ export default function SubmitPage() {
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                         <div className="form-group">
                             <label className="form-label" htmlFor="type">
-                                {'>'} FILE_TYPE: <span style={{ color: 'hsl(var(--destructive))' }}>*</span>
+                                FILE TYPE: <span style={{ color: 'hsl(var(--destructive))' }}>*</span>
                             </label>
                             <select
                                 id="type"
@@ -313,7 +320,7 @@ export default function SubmitPage() {
 
                         <div className="form-group">
                             <label className="form-label" htmlFor="category">
-                                {'>'} CATEGORY:
+                                CATEGORY:
                             </label>
                             <select
                                 id="category"
@@ -334,7 +341,6 @@ export default function SubmitPage() {
                         </div>
                     </div>
 
-                    {/* Tags */}
                     <div className="form-group">
                         <label className="form-label">
                             <Tag size={14} style={{ display: 'inline', marginRight: '0.5rem' }} />
@@ -401,7 +407,6 @@ export default function SubmitPage() {
                         )}
                     </div>
 
-                    {/* Optional Fields */}
                     <div style={{ 
                         borderTop: '1px dashed hsl(var(--border))', 
                         marginTop: '1.5rem', 
@@ -422,7 +427,7 @@ export default function SubmitPage() {
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                             <div className="form-group">
                                 <label className="form-label" htmlFor="file_size">
-                                    {'>'} FILE_SIZE:
+                                    FILE SIZE:
                                 </label>
                                 <input
                                     type="text"
@@ -439,7 +444,7 @@ export default function SubmitPage() {
 
                             <div className="form-group">
                                 <label className="form-label" htmlFor="submitter_email">
-                                    {'>'} YOUR_EMAIL:
+                                    YOUR EMAIL:
                                 </label>
                                 <input
                                     type="email"
@@ -457,7 +462,7 @@ export default function SubmitPage() {
 
                         <div className="form-group">
                             <label className="form-label" htmlFor="description">
-                                {'>'} DESCRIPTION:
+                                DESCRIPTION:
                             </label>
                             <textarea
                                 id="description"
@@ -474,7 +479,6 @@ export default function SubmitPage() {
                         </div>
                     </div>
 
-                    {/* Captcha */}
                     <div className="form-group" style={{ 
                         padding: '1rem', 
                         border: '2px solid hsl(var(--border))',
@@ -482,7 +486,7 @@ export default function SubmitPage() {
                         marginTop: '1.5rem'
                     }}>
                         <label className="form-label" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                            <span>{'>'} CAPTCHA: <span style={{ color: 'hsl(var(--destructive))' }}>*</span></span>
+                            <span>CAPTCHA: <span style={{ color: 'hsl(var(--destructive))' }}>*</span></span>
                             <button 
                                 type="button" 
                                 onClick={fetchCaptcha}
@@ -540,7 +544,7 @@ export default function SubmitPage() {
                             data-testid="submit-btn"
                         >
                             {submitting ? (
-                                <>TRANSMITTING...</>
+                                'TRANSMITTING...'
                             ) : (
                                 <>
                                     <Send size={14} style={{ display: 'inline', marginRight: '0.5rem' }} />
