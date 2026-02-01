@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'sonner';
-import { Terminal, Send, ArrowLeft, HelpCircle } from 'lucide-react';
+import { Terminal, Send, ArrowLeft, HelpCircle, AlertTriangle } from 'lucide-react';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -23,6 +23,20 @@ export default function SubmitPage() {
         description: ''
     });
     const [submitting, setSubmitting] = useState(false);
+    const [rateLimit, setRateLimit] = useState({ daily_limit: 10, used: 0, remaining: 10 });
+
+    useEffect(() => {
+        fetchRateLimit();
+    }, []);
+
+    const fetchRateLimit = async () => {
+        try {
+            const response = await axios.get(`${API}/submissions/remaining`);
+            setRateLimit(response.data);
+        } catch (error) {
+            console.error('Error fetching rate limit:', error);
+        }
+    };
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -41,6 +55,11 @@ export default function SubmitPage() {
             return;
         }
 
+        if (rateLimit.remaining <= 0) {
+            toast.error(`RATE LIMIT: Daily submission limit (${rateLimit.daily_limit}) reached. Try again tomorrow.`);
+            return;
+        }
+
         setSubmitting(true);
         try {
             const payload = {
@@ -48,7 +67,6 @@ export default function SubmitPage() {
                 download_link: formData.download_link,
                 type: formData.type
             };
-            // Only include optional fields if they have values
             if (formData.file_size.trim()) {
                 payload.file_size = formData.file_size.trim();
             }
@@ -59,10 +77,16 @@ export default function SubmitPage() {
             await axios.post(`${API}/submissions`, payload);
             toast.success('TRANSMISSION COMPLETE: Submission sent for approval');
             setFormData({ name: '', download_link: '', type: 'game', file_size: '', description: '' });
+            fetchRateLimit(); // Refresh rate limit
             setTimeout(() => navigate('/'), 2000);
         } catch (error) {
             console.error('Submission error:', error);
-            toast.error('TRANSMISSION FAILED: Could not submit');
+            if (error.response?.status === 429) {
+                toast.error(error.response.data.detail || 'Daily submission limit reached');
+                fetchRateLimit();
+            } else {
+                toast.error('TRANSMISSION FAILED: Could not submit');
+            }
         } finally {
             setSubmitting(false);
         }
@@ -82,9 +106,38 @@ export default function SubmitPage() {
                         SUBMIT NEW FILE
                     </h1>
                     <p style={{ fontSize: '0.875rem', opacity: 0.7 }}>
-                        {'>'} Enter file details below. Max 10 submissions per day.
+                        {'>'} Enter file details below.
                     </p>
                     <p className="blink" style={{ fontSize: '0.875rem' }}>_</p>
+                </div>
+
+                {/* Rate Limit Info */}
+                <div style={{
+                    padding: '0.75rem',
+                    marginBottom: '1.5rem',
+                    border: '1px solid',
+                    borderColor: rateLimit.remaining > 0 ? 'hsl(var(--primary))' : 'hsl(var(--destructive))',
+                    background: rateLimit.remaining > 0 ? 'hsl(var(--primary) / 0.1)' : 'hsl(var(--destructive) / 0.1)'
+                }} data-testid="rate-limit-info">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem' }}>
+                        {rateLimit.remaining <= 0 ? (
+                            <AlertTriangle size={16} style={{ color: 'hsl(var(--destructive))' }} />
+                        ) : (
+                            <Terminal size={16} />
+                        )}
+                        <span>
+                            DAILY SUBMISSIONS: <strong>{rateLimit.used}</strong> / <strong>{rateLimit.daily_limit}</strong>
+                            {' '} | {' '}
+                            REMAINING: <strong style={{ color: rateLimit.remaining > 0 ? 'hsl(var(--primary))' : 'hsl(var(--destructive))' }}>
+                                {rateLimit.remaining}
+                            </strong>
+                        </span>
+                    </div>
+                    {rateLimit.remaining <= 0 && (
+                        <p style={{ fontSize: '0.75rem', marginTop: '0.5rem', color: 'hsl(var(--destructive))' }}>
+                            Daily limit reached. Try again tomorrow.
+                        </p>
+                    )}
                 </div>
 
                 <form onSubmit={handleSubmit}>
@@ -100,6 +153,7 @@ export default function SubmitPage() {
                             onChange={handleChange}
                             className="form-input"
                             placeholder="Enter download name..."
+                            disabled={rateLimit.remaining <= 0}
                             data-testid="submit-name-input"
                         />
                     </div>
@@ -116,6 +170,7 @@ export default function SubmitPage() {
                             onChange={handleChange}
                             className="form-input"
                             placeholder="https://..."
+                            disabled={rateLimit.remaining <= 0}
                             data-testid="submit-link-input"
                         />
                     </div>
@@ -130,6 +185,7 @@ export default function SubmitPage() {
                             value={formData.type}
                             onChange={handleChange}
                             className="form-select"
+                            disabled={rateLimit.remaining <= 0}
                             data-testid="submit-type-select"
                         >
                             {typeOptions.map(option => (
@@ -170,6 +226,7 @@ export default function SubmitPage() {
                                 onChange={handleChange}
                                 className="form-input"
                                 placeholder="e.g., 4.5 GB, 500 MB"
+                                disabled={rateLimit.remaining <= 0}
                                 data-testid="submit-size-input"
                             />
                         </div>
@@ -187,6 +244,7 @@ export default function SubmitPage() {
                                 placeholder="Brief description of the file..."
                                 rows={3}
                                 style={{ resize: 'vertical', minHeight: '80px' }}
+                                disabled={rateLimit.remaining <= 0}
                                 data-testid="submit-description-input"
                             />
                         </div>
@@ -210,8 +268,8 @@ export default function SubmitPage() {
                         <button
                             type="submit"
                             className="submit-btn"
-                            disabled={submitting}
-                            style={{ flex: 2 }}
+                            disabled={submitting || rateLimit.remaining <= 0}
+                            style={{ flex: 2, opacity: rateLimit.remaining <= 0 ? 0.5 : 1 }}
                             data-testid="submit-btn"
                         >
                             {submitting ? (
