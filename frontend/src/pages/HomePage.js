@@ -568,6 +568,62 @@ export default function HomePage() {
                                 />
                             </div>
                         </div>
+
+                        {/* Tags Section */}
+                        {popularTags.length > 0 && (
+                            <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid hsl(var(--border))' }}>
+                                <label className="form-label" style={{ fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                    <Tag size={14} />
+                                    FILTER BY TAGS:
+                                </label>
+                                {selectedTags.length > 0 && (
+                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                                        {selectedTags.map(tag => (
+                                            <span 
+                                                key={tag}
+                                                style={{
+                                                    padding: '0.25rem 0.5rem',
+                                                    background: 'hsl(var(--primary))',
+                                                    color: 'hsl(var(--primary-foreground))',
+                                                    fontSize: '0.75rem',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '0.25rem'
+                                                }}
+                                            >
+                                                {tag}
+                                                <button
+                                                    onClick={() => { setSelectedTags(selectedTags.filter(t => t !== tag)); setPage(1); }}
+                                                    style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: 'inherit' }}
+                                                >
+                                                    <X size={12} />
+                                                </button>
+                                            </span>
+                                        ))}
+                                    </div>
+                                )}
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                                    {popularTags.slice(0, 15).map(tag => (
+                                        <button
+                                            key={tag.name}
+                                            onClick={() => {
+                                                if (selectedTags.includes(tag.name)) {
+                                                    setSelectedTags(selectedTags.filter(t => t !== tag.name));
+                                                } else {
+                                                    setSelectedTags([...selectedTags, tag.name]);
+                                                }
+                                                setPage(1);
+                                            }}
+                                            className={`filter-btn ${selectedTags.includes(tag.name) ? 'active' : ''}`}
+                                            style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem' }}
+                                            data-testid={`tag-${tag.name}`}
+                                        >
+                                            {tag.name} ({tag.count})
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                     </div>
                 )}
 
