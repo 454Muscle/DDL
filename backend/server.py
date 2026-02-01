@@ -251,6 +251,202 @@ async def update_theme(update: ThemeUpdate):
     )
     return ThemeSettings(**theme)
 
+# Seed database with sample data
+@api_router.post("/admin/seed")
+async def seed_database():
+    # Check if already seeded
+    count = await db.downloads.count_documents({})
+    if count >= 5000:
+        return {"success": False, "message": f"Database already has {count} items"}
+    
+    # Clear existing data
+    await db.downloads.delete_many({})
+    
+    # Sample data generators
+    game_prefixes = ["Super", "Mega", "Ultra", "Epic", "Cyber", "Dark", "Shadow", "Crystal", "Dragon", "Space", "Battle", "Star", "Legend of", "Tales of", "World of", "Age of", "Rise of", "Fall of", "Dawn of", "Realm of"]
+    game_suffixes = ["Warriors", "Quest", "Saga", "Chronicles", "Adventures", "Legends", "Heroes", "Knights", "Hunters", "Fighters", "Racers", "Simulator", "Tactics", "Empire", "Kingdom", "World", "Online", "Remastered", "Definitive Edition", "GOTY"]
+    game_themes = ["Fantasy", "Sci-Fi", "Horror", "RPG", "FPS", "Strategy", "Racing", "Sports", "Puzzle", "Platformer"]
+    
+    software_names = [
+        # Real open source
+        "VLC Media Player", "GIMP Image Editor", "Audacity Audio Editor", "LibreOffice Suite", "Firefox Browser",
+        "Blender 3D", "Inkscape Vector", "OBS Studio", "HandBrake Video", "7-Zip Archiver",
+        "Notepad++ Editor", "FileZilla FTP", "KeePass Password", "Thunderbird Mail", "XAMPP Server",
+        "Git Version Control", "Python Interpreter", "Node.js Runtime", "VS Code Editor", "Atom Editor",
+        "Krita Digital Art", "Scribus Publisher", "Calibre E-Book", "VirtualBox VM", "PuTTY SSH",
+        # Fictional
+        "TurboOffice Pro", "DataMaster Suite", "CodeForge IDE", "PhotoMax Studio", "VideoFlex Editor",
+        "SyncCloud Pro", "BackupGuard Plus", "SystemTuner Pro", "DriverBoost Max", "CleanSweep Ultra",
+        "PDFWizard Pro", "ArchiveX Pro", "ScreenCap Pro", "AudioMix Studio", "RenderFarm Pro",
+        "DevTools Ultimate", "DBAdmin Pro", "NetMonitor Plus", "SecureVault Pro", "TaskMaster Pro"
+    ]
+    
+    movie_genres = ["Action", "Comedy", "Drama", "Horror", "Sci-Fi", "Thriller", "Romance", "Adventure", "Mystery", "Fantasy"]
+    movie_adjectives = ["The", "A", "Last", "Final", "Dark", "Eternal", "Hidden", "Secret", "Lost", "Forgotten", "Ancient", "New", "Old"]
+    movie_nouns = ["Knight", "Storm", "Journey", "Mission", "Dream", "Night", "Day", "Legacy", "Code", "Protocol", "Truth", "Lies", "Shadows", "Light", "War", "Peace", "Love", "Hate", "Fear", "Hope"]
+    movie_years = list(range(2020, 2026))
+    
+    tv_shows = [
+        # Fictional shows with seasons
+        ("Quantum Detective", 5), ("Starship Voyagers", 7), ("The Last Frontier", 4), ("Midnight City", 6),
+        ("Corporate Chaos", 3), ("Medical Mayhem", 8), ("Legal Eagles", 5), ("Cooking Catastrophe", 4),
+        ("Reality Breakdown", 6), ("Historical Hijinks", 3), ("Animated Adventures", 9), ("Documentary Deep Dive", 4),
+        ("Crime Scene Alpha", 7), ("Supernatural Stories", 5), ("Romantic Rendezvous", 4), ("Family Fiascos", 6),
+        ("Teen Turmoil", 5), ("Senior Shenanigans", 3), ("Pet Pandemonium", 4), ("Home Improvement Hell", 5),
+        ("Game Show Galore", 8), ("Talk Show Titans", 6), ("News Network Nonsense", 4), ("Sports Spectacular", 7),
+        ("Mystery Manor", 5), ("Ghost Hunters Inc", 4), ("Alien Archives", 3), ("Time Travelers", 6),
+        ("Robot Revolution", 4), ("Cyber City", 5), ("Virtual Reality", 3), ("Digital Dreams", 4)
+    ]
+    
+    downloads = []
+    base_date = datetime(2024, 1, 1, tzinfo=timezone.utc)
+    
+    # Generate games (~1500)
+    for i in range(1500):
+        prefix = random.choice(game_prefixes)
+        suffix = random.choice(game_suffixes)
+        version = f"{random.randint(1,3)}.{random.randint(0,9)}"
+        name = f"{prefix} {suffix} {version}"
+        if random.random() > 0.7:
+            name += f" - {random.choice(game_themes)} Edition"
+        
+        days_offset = random.randint(0, 365)
+        date = base_date + __import__('datetime').timedelta(days=days_offset)
+        size = f"{random.randint(5, 100)}.{random.randint(0,9)} GB"
+        
+        downloads.append({
+            "id": str(uuid.uuid4()),
+            "name": name,
+            "download_link": f"https://example.com/games/{uuid.uuid4().hex[:8]}",
+            "type": "game",
+            "submission_date": date.strftime("%Y-%m-%d"),
+            "approved": True,
+            "created_at": date.isoformat(),
+            "download_count": random.randint(0, 50000),
+            "file_size": size,
+            "description": f"{random.choice(game_themes)} game with {random.choice(['stunning graphics', 'immersive gameplay', 'multiplayer support', 'mod support', 'achievements'])}"
+        })
+    
+    # Generate software (~1200)
+    for i in range(1200):
+        base_name = random.choice(software_names)
+        version = f"{random.randint(1,25)}.{random.randint(0,9)}.{random.randint(0,999)}"
+        name = f"{base_name} v{version}"
+        
+        days_offset = random.randint(0, 365)
+        date = base_date + __import__('datetime').timedelta(days=days_offset)
+        size = f"{random.randint(10, 2000)} MB"
+        
+        downloads.append({
+            "id": str(uuid.uuid4()),
+            "name": name,
+            "download_link": f"https://example.com/software/{uuid.uuid4().hex[:8]}",
+            "type": "software",
+            "submission_date": date.strftime("%Y-%m-%d"),
+            "approved": True,
+            "created_at": date.isoformat(),
+            "download_count": random.randint(0, 100000),
+            "file_size": size,
+            "description": f"{'Portable' if random.random() > 0.7 else 'Full'} version - {random.choice(['Windows', 'Mac', 'Linux', 'Cross-platform'])}"
+        })
+    
+    # Generate movies (~1300)
+    for i in range(1300):
+        adj = random.choice(movie_adjectives)
+        noun = random.choice(movie_nouns)
+        year = random.choice(movie_years)
+        genre = random.choice(movie_genres)
+        quality = random.choice(["720p", "1080p", "2160p 4K", "BluRay", "WEB-DL", "HDRip"])
+        name = f"{adj} {noun} ({year}) {quality}"
+        
+        days_offset = random.randint(0, 365)
+        date = base_date + __import__('datetime').timedelta(days=days_offset)
+        size = f"{random.randint(1, 20)}.{random.randint(0,9)} GB"
+        
+        downloads.append({
+            "id": str(uuid.uuid4()),
+            "name": name,
+            "download_link": f"https://example.com/movies/{uuid.uuid4().hex[:8]}",
+            "type": "movie",
+            "submission_date": date.strftime("%Y-%m-%d"),
+            "approved": True,
+            "created_at": date.isoformat(),
+            "download_count": random.randint(0, 75000),
+            "file_size": size,
+            "description": f"{genre} - {random.choice(['English', 'Multi-language'])} - {random.choice(['Subtitles included', 'No subtitles'])}"
+        })
+    
+    # Generate TV shows (~1000)
+    for show_name, seasons in tv_shows:
+        for season in range(1, seasons + 1):
+            episodes = random.randint(8, 24)
+            for episode in range(1, episodes + 1):
+                if len(downloads) >= 5000:
+                    break
+                quality = random.choice(["720p", "1080p", "WEB-DL", "HDTV"])
+                name = f"{show_name} S{season:02d}E{episode:02d} {quality}"
+                
+                days_offset = random.randint(0, 365)
+                date = base_date + __import__('datetime').timedelta(days=days_offset)
+                size = f"{random.randint(200, 1500)} MB"
+                
+                downloads.append({
+                    "id": str(uuid.uuid4()),
+                    "name": name,
+                    "download_link": f"https://example.com/tv/{uuid.uuid4().hex[:8]}",
+                    "type": "tv_show",
+                    "submission_date": date.strftime("%Y-%m-%d"),
+                    "approved": True,
+                    "created_at": date.isoformat(),
+                    "download_count": random.randint(0, 30000),
+                    "file_size": size,
+                    "description": f"Season {season}, Episode {episode}"
+                })
+            if len(downloads) >= 5000:
+                break
+        if len(downloads) >= 5000:
+            break
+    
+    # Ensure exactly 5000 items
+    downloads = downloads[:5000]
+    
+    # Bulk insert
+    if downloads:
+        await db.downloads.insert_many(downloads)
+    
+    # Create index for search
+    await db.downloads.create_index([("name", "text")])
+    await db.downloads.create_index([("type", 1)])
+    await db.downloads.create_index([("approved", 1)])
+    
+    return {"success": True, "message": f"Seeded {len(downloads)} downloads"}
+
+# Get statistics
+@api_router.get("/stats")
+async def get_stats():
+    total = await db.downloads.count_documents({"approved": True})
+    games = await db.downloads.count_documents({"approved": True, "type": "game"})
+    software = await db.downloads.count_documents({"approved": True, "type": "software"})
+    movies = await db.downloads.count_documents({"approved": True, "type": "movie"})
+    tv_shows = await db.downloads.count_documents({"approved": True, "type": "tv_show"})
+    
+    # Get top downloaded
+    top_downloads = await db.downloads.find(
+        {"approved": True}, 
+        {"_id": 0, "name": 1, "download_count": 1, "type": 1}
+    ).sort("download_count", -1).limit(5).to_list(5)
+    
+    return {
+        "total": total,
+        "by_type": {
+            "game": games,
+            "software": software,
+            "movie": movies,
+            "tv_show": tv_shows
+        },
+        "top_downloads": top_downloads
+    }
+
 # Include the router in the main app
 app.include_router(api_router)
 
