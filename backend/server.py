@@ -1,15 +1,18 @@
-from fastapi import FastAPI, APIRouter, HTTPException, Query
+from fastapi import FastAPI, APIRouter, HTTPException, Query, Request
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 import os
 import logging
 from pathlib import Path
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, Field, ConfigDict, EmailStr
 from typing import List, Optional
 import uuid
 from datetime import datetime, timezone
 import random
+import hashlib
+import asyncio
+import resend
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -28,6 +31,18 @@ api_router = APIRouter(prefix="/api")
 # Admin credentials (simple hardcoded)
 ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', 'admin123')
 
+# Resend email config
+RESEND_API_KEY = os.environ.get('RESEND_API_KEY', '')
+SENDER_EMAIL = os.environ.get('SENDER_EMAIL', 'onboarding@resend.dev')
+FRONTEND_URL = os.environ.get('FRONTEND_URL', 'https://contentcatalog-1.preview.emergentagent.com')
+
+if RESEND_API_KEY:
+    resend.api_key = RESEND_API_KEY
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 # ===== MODELS =====
 
 class Download(BaseModel):
@@ -41,14 +56,19 @@ class Download(BaseModel):
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     download_count: int = 0
     file_size: Optional[str] = None
+    file_size_bytes: Optional[int] = None  # For filtering
     description: Optional[str] = None
+    category: Optional[str] = None
+    tags: List[str] = []
 
 class DownloadCreate(BaseModel):
     name: str
     download_link: str
-    type: str  # game, software, movie, tv_show
+    type: str
     file_size: Optional[str] = None
     description: Optional[str] = None
+    category: Optional[str] = None
+    tags: Optional[List[str]] = None
 
 class Submission(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -57,10 +77,15 @@ class Submission(BaseModel):
     download_link: str
     type: str
     submission_date: str
-    status: str = "pending"  # pending, approved, rejected
+    status: str = "pending"
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
     file_size: Optional[str] = None
+    file_size_bytes: Optional[int] = None
     description: Optional[str] = None
+    category: Optional[str] = None
+    tags: List[str] = []
+    submitter_email: Optional[str] = None
+    submitter_user_id: Optional[str] = None
 
 class SubmissionCreate(BaseModel):
     name: str
@@ -68,12 +93,56 @@ class SubmissionCreate(BaseModel):
     type: str
     file_size: Optional[str] = None
     description: Optional[str] = None
+    category: Optional[str] = None
+    tags: Optional[List[str]] = None
+    submitter_email: Optional[str] = None
+    captcha_answer: Optional[int] = None
+    captcha_id: Optional[str] = None
+
+class User(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    email: str
+    password_hash: str
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    is_verified: bool = False
+
+class UserRegister(BaseModel):
+    email: EmailStr
+    password: str
+    captcha_answer: int
+    captcha_id: str
+
+class UserLogin(BaseModel):
+    email: EmailStr
+    password: str
+
+class Category(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    name: str
+    type: str  # game, software, movie, tv_show, all
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+class CategoryCreate(BaseModel):
+    name: str
+    type: str = "all"
+
+class Captcha(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    num1: int
+    num2: int
+    operator: str
+    answer: int
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    expires_at: str
 
 class ThemeSettings(BaseModel):
     model_config = ConfigDict(extra="ignore")
     id: str = "global_theme"
-    mode: str = "dark"  # dark or light
-    accent_color: str = "#00FF41"  # matrix green default
+    mode: str = "dark"
+    accent_color: str = "#00FF41"
 
 class ThemeUpdate(BaseModel):
     mode: Optional[str] = None
@@ -88,10 +157,10 @@ class SponsoredDownload(BaseModel):
 class SiteSettings(BaseModel):
     model_config = ConfigDict(extra="ignore")
     id: str = "site_settings"
-    daily_submission_limit: int = 10  # 5-100 configurable
+    daily_submission_limit: int = 10
     top_downloads_enabled: bool = True
-    top_downloads_count: int = 5  # 5-20 configurable
-    sponsored_downloads: List[dict] = []  # 0-5 sponsored items
+    top_downloads_count: int = 5
+    sponsored_downloads: List[dict] = []
 
 class SiteSettingsUpdate(BaseModel):
     daily_submission_limit: Optional[int] = None
@@ -105,9 +174,6 @@ class RateLimitEntry(BaseModel):
     date: str
     count: int = 0
 
-class AdminLogin(BaseModel):
-    password: str
-
 class PaginatedDownloads(BaseModel):
     items: List[Download]
     total: int
@@ -120,24 +186,268 @@ class PaginatedSubmissions(BaseModel):
     page: int
     pages: int
 
-# ===== ROUTES =====
+class AdminLogin(BaseModel):
+    password: str
+
+# ===== HELPER FUNCTIONS =====
+
+def hash_password(password: str) -> str:
+    return hashlib.sha256(password.encode()).hexdigest()
+
+def parse_file_size_to_bytes(size_str: str) -> Optional[int]:
+    """Convert file size string to bytes for filtering"""
+    if not size_str:
+        return None
+    size_str = size_str.upper().strip()
+    try:
+        if 'GB' in size_str:
+            return int(float(size_str.replace('GB', '').strip()) * 1024 * 1024 * 1024)
+        elif 'MB' in size_str:
+            return int(float(size_str.replace('MB', '').strip()) * 1024 * 1024)
+        elif 'KB' in size_str:
+            return int(float(size_str.replace('KB', '').strip()) * 1024)
+        elif 'B' in size_str:
+            return int(float(size_str.replace('B', '').strip()))
+        else:
+            return int(float(size_str) * 1024 * 1024)  # Assume MB
+    except:
+        return None
+
+async def send_submission_email(email: str, submission: dict):
+    """Send confirmation email to submitter"""
+    if not RESEND_API_KEY or not email:
+        logger.info(f"Email not sent: API key missing or no email provided")
+        return
+    
+    submit_url = f"{FRONTEND_URL}/submit"
+    html_content = f"""
+    <html>
+    <body style="font-family: 'Courier New', monospace; background-color: #0a0a0a; color: #00FF41; padding: 20px;">
+        <div style="max-width: 600px; margin: 0 auto; border: 2px solid #00FF41; padding: 20px;">
+            <h1 style="color: #00FF41; border-bottom: 1px solid #00FF41; padding-bottom: 10px;">
+                DOWNLOAD ZONE - SUBMISSION RECEIVED
+            </h1>
+            <p>Your submission has been received and is pending admin approval.</p>
+            
+            <h2 style="color: #00FFFF;">SUBMISSION DETAILS:</h2>
+            <table style="width: 100%; border-collapse: collapse;">
+                <tr>
+                    <td style="padding: 8px; border: 1px solid #333; color: #888;">Name:</td>
+                    <td style="padding: 8px; border: 1px solid #333; color: #00FF41;">{submission.get('name', 'N/A')}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px; border: 1px solid #333; color: #888;">Type:</td>
+                    <td style="padding: 8px; border: 1px solid #333; color: #00FF41;">{submission.get('type', 'N/A')}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px; border: 1px solid #333; color: #888;">Category:</td>
+                    <td style="padding: 8px; border: 1px solid #333; color: #00FF41;">{submission.get('category', 'N/A')}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px; border: 1px solid #333; color: #888;">File Size:</td>
+                    <td style="padding: 8px; border: 1px solid #333; color: #00FF41;">{submission.get('file_size', 'N/A')}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px; border: 1px solid #333; color: #888;">Date:</td>
+                    <td style="padding: 8px; border: 1px solid #333; color: #00FF41;">{submission.get('submission_date', 'N/A')}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px; border: 1px solid #333; color: #888;">Time:</td>
+                    <td style="padding: 8px; border: 1px solid #333; color: #00FF41;">{submission.get('created_at', 'N/A')}</td>
+                </tr>
+            </table>
+            
+            <p style="margin-top: 20px;">
+                <a href="{submit_url}" style="display: inline-block; padding: 10px 20px; background-color: #00FF41; color: #000; text-decoration: none; font-weight: bold;">
+                    SUBMIT ANOTHER FILE
+                </a>
+            </p>
+            
+            <p style="margin-top: 30px; font-size: 12px; color: #666;">
+                This is an automated message from Download Zone.
+            </p>
+        </div>
+    </body>
+    </html>
+    """
+    
+    params = {
+        "from": SENDER_EMAIL,
+        "to": [email],
+        "subject": f"Download Zone - Submission Received: {submission.get('name', 'Unknown')}",
+        "html": html_content
+    }
+    
+    try:
+        await asyncio.to_thread(resend.Emails.send, params)
+        logger.info(f"Email sent to {email}")
+    except Exception as e:
+        logger.error(f"Failed to send email: {str(e)}")
+
+# ===== CAPTCHA ROUTES =====
+
+@api_router.get("/captcha")
+async def generate_captcha():
+    """Generate a simple math captcha"""
+    num1 = random.randint(1, 20)
+    num2 = random.randint(1, 20)
+    operators = [('+', num1 + num2), ('-', abs(num1 - num2)), ('×', num1 * num2 if num1 < 10 and num2 < 10 else num1 + num2)]
+    operator, answer = random.choice(operators)
+    
+    # Make subtraction always positive
+    if operator == '-' and num1 < num2:
+        num1, num2 = num2, num1
+        answer = num1 - num2
+    
+    captcha_id = str(uuid.uuid4())
+    expires_at = datetime.now(timezone.utc).isoformat()
+    
+    captcha = {
+        "id": captcha_id,
+        "num1": num1,
+        "num2": num2,
+        "operator": operator,
+        "answer": answer,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "expires_at": expires_at
+    }
+    
+    await db.captchas.insert_one(captcha)
+    
+    return {
+        "id": captcha_id,
+        "question": f"What is {num1} {operator} {num2}?"
+    }
+
+async def verify_captcha(captcha_id: str, answer: int) -> bool:
+    """Verify captcha answer"""
+    if not captcha_id or answer is None:
+        return False
+    
+    captcha = await db.captchas.find_one({"id": captcha_id}, {"_id": 0})
+    if not captcha:
+        return False
+    
+    # Delete used captcha
+    await db.captchas.delete_one({"id": captcha_id})
+    
+    return captcha.get("answer") == answer
+
+# ===== USER AUTH ROUTES =====
+
+@api_router.post("/auth/register")
+async def register_user(user: UserRegister):
+    # Verify captcha
+    if not await verify_captcha(user.captcha_id, user.captcha_answer):
+        raise HTTPException(status_code=400, detail="Invalid captcha")
+    
+    # Check if email exists
+    existing = await db.users.find_one({"email": user.email.lower()}, {"_id": 0})
+    if existing:
+        raise HTTPException(status_code=400, detail="Email already registered")
+    
+    # Create user
+    user_obj = User(
+        email=user.email.lower(),
+        password_hash=hash_password(user.password),
+        is_verified=True  # Auto-verify for now
+    )
+    
+    await db.users.insert_one(user_obj.model_dump())
+    
+    return {
+        "success": True,
+        "message": "Registration successful",
+        "user_id": user_obj.id
+    }
+
+@api_router.post("/auth/login")
+async def login_user(user: UserLogin):
+    # Find user
+    db_user = await db.users.find_one({"email": user.email.lower()}, {"_id": 0})
+    if not db_user:
+        raise HTTPException(status_code=401, detail="Invalid email or password")
+    
+    # Check password
+    if db_user.get("password_hash") != hash_password(user.password):
+        raise HTTPException(status_code=401, detail="Invalid email or password")
+    
+    return {
+        "success": True,
+        "user_id": db_user.get("id"),
+        "email": db_user.get("email")
+    }
+
+@api_router.get("/auth/user/{user_id}")
+async def get_user(user_id: str):
+    user = await db.users.find_one({"id": user_id}, {"_id": 0, "password_hash": 0})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return user
+
+# ===== CATEGORY ROUTES =====
+
+@api_router.get("/categories")
+async def get_categories(type_filter: Optional[str] = None):
+    query = {}
+    if type_filter and type_filter != "all":
+        query["$or"] = [{"type": type_filter}, {"type": "all"}]
+    
+    categories = await db.categories.find(query, {"_id": 0}).to_list(100)
+    return {"items": categories}
+
+@api_router.post("/admin/categories")
+async def create_category(category: CategoryCreate):
+    # Check if exists
+    existing = await db.categories.find_one({"name": category.name, "type": category.type}, {"_id": 0})
+    if existing:
+        raise HTTPException(status_code=400, detail="Category already exists")
+    
+    cat_obj = Category(name=category.name, type=category.type)
+    await db.categories.insert_one(cat_obj.model_dump())
+    return cat_obj.model_dump()
+
+@api_router.delete("/admin/categories/{category_id}")
+async def delete_category(category_id: str):
+    result = await db.categories.delete_one({"id": category_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Category not found")
+    return {"success": True}
+
+# ===== TAGS ROUTES =====
+
+@api_router.get("/tags")
+async def get_popular_tags(limit: int = Query(50, ge=1, le=100)):
+    """Get popular tags from downloads"""
+    pipeline = [
+        {"$match": {"approved": True}},
+        {"$unwind": "$tags"},
+        {"$group": {"_id": "$tags", "count": {"$sum": 1}}},
+        {"$sort": {"count": -1}},
+        {"$limit": limit}
+    ]
+    tags = await db.downloads.aggregate(pipeline).to_list(limit)
+    return {"items": [{"name": t["_id"], "count": t["count"]} for t in tags]}
+
+# ===== DOWNLOADS ROUTES =====
 
 @api_router.get("/")
 async def root():
     return {"message": "Download Portal API"}
 
-# Downloads - Public
 @api_router.get("/downloads", response_model=PaginatedDownloads)
 async def get_downloads(
     page: int = Query(1, ge=1),
     limit: int = Query(50, ge=1, le=100),
     type_filter: Optional[str] = None,
     search: Optional[str] = None,
-    sort_by: Optional[str] = Query("date_desc", description="Sort options: date_desc, date_asc, downloads_desc, downloads_asc, name_asc, name_desc"),
+    sort_by: Optional[str] = Query("date_desc"),
     date_from: Optional[str] = None,
     date_to: Optional[str] = None,
     size_min: Optional[str] = None,
-    size_max: Optional[str] = None
+    size_max: Optional[str] = None,
+    category: Optional[str] = None,
+    tags: Optional[str] = None
 ):
     skip = (page - 1) * limit
     query = {"approved": True}
@@ -146,6 +456,12 @@ async def get_downloads(
         query["type"] = type_filter
     if search and search.strip():
         query["name"] = {"$regex": search.strip(), "$options": "i"}
+    if category:
+        query["category"] = category
+    if tags:
+        tag_list = [t.strip() for t in tags.split(",") if t.strip()]
+        if tag_list:
+            query["tags"] = {"$in": tag_list}
     
     # Date range filter
     if date_from or date_to:
@@ -156,6 +472,20 @@ async def get_downloads(
             date_query["$lte"] = date_to
         if date_query:
             query["submission_date"] = date_query
+    
+    # File size filter
+    if size_min or size_max:
+        size_query = {}
+        if size_min:
+            min_bytes = parse_file_size_to_bytes(size_min)
+            if min_bytes:
+                size_query["$gte"] = min_bytes
+        if size_max:
+            max_bytes = parse_file_size_to_bytes(size_max)
+            if max_bytes:
+                size_query["$lte"] = max_bytes
+        if size_query:
+            query["file_size_bytes"] = size_query
     
     # Sorting
     sort_field = "created_at"
@@ -172,6 +502,10 @@ async def get_downloads(
         sort_field, sort_order = "name", 1
     elif sort_by == "name_desc":
         sort_field, sort_order = "name", -1
+    elif sort_by == "size_desc":
+        sort_field, sort_order = "file_size_bytes", -1
+    elif sort_by == "size_asc":
+        sort_field, sort_order = "file_size_bytes", 1
     
     total = await db.downloads.count_documents(query)
     pages = max((total + limit - 1) // limit, 1)
@@ -183,7 +517,6 @@ async def get_downloads(
 # Top Downloads (includes sponsored)
 @api_router.get("/downloads/top")
 async def get_top_downloads():
-    # Get settings
     settings = await db.site_settings.find_one({"id": "site_settings"}, {"_id": 0})
     if not settings:
         settings = SiteSettings().model_dump()
@@ -195,7 +528,6 @@ async def get_top_downloads():
     if not enabled:
         return {"enabled": False, "items": [], "sponsored": []}
     
-    # Get top downloads (excluding count already filled by sponsored)
     remaining_count = max(0, count - len(sponsored))
     top = []
     if remaining_count > 0:
@@ -206,7 +538,7 @@ async def get_top_downloads():
     
     return {
         "enabled": True,
-        "sponsored": sponsored[:5],  # Max 5 sponsored
+        "sponsored": sponsored[:5],
         "items": top,
         "total_slots": count
     }
@@ -222,18 +554,22 @@ async def increment_download_count(download_id: str):
         raise HTTPException(status_code=404, detail="Download not found")
     return {"success": True}
 
-# Submissions - Public
+# Submissions - Public (with or without registration)
 @api_router.post("/submissions", response_model=Submission)
-async def create_submission(submission: SubmissionCreate, client_ip: Optional[str] = Query(None)):
+async def create_submission(submission: SubmissionCreate, request: Request):
+    # Verify captcha
+    if not await verify_captcha(submission.captcha_id, submission.captcha_answer):
+        raise HTTPException(status_code=400, detail="Invalid captcha. Please try again.")
+    
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     
     # Get rate limit settings
     settings = await db.site_settings.find_one({"id": "site_settings"}, {"_id": 0})
     daily_limit = settings.get("daily_submission_limit", 10) if settings else 10
     
-    # Check rate limit by IP (use a simple identifier if no IP provided)
-    ip_key = client_ip or "anonymous"
-    rate_entry = await db.rate_limits.find_one({"ip_address": ip_key, "date": today}, {"_id": 0})
+    # Check rate limit by IP
+    client_ip = request.client.host if request.client else "anonymous"
+    rate_entry = await db.rate_limits.find_one({"ip_address": client_ip, "date": today}, {"_id": 0})
     
     if rate_entry and rate_entry.get("count", 0) >= daily_limit:
         raise HTTPException(
@@ -243,34 +579,45 @@ async def create_submission(submission: SubmissionCreate, client_ip: Optional[st
     
     # Update rate limit counter
     await db.rate_limits.update_one(
-        {"ip_address": ip_key, "date": today},
+        {"ip_address": client_ip, "date": today},
         {"$inc": {"count": 1}},
         upsert=True
     )
     
-    submission_date = today
+    # Parse file size to bytes
+    file_size_bytes = parse_file_size_to_bytes(submission.file_size) if submission.file_size else None
+    
     submission_obj = Submission(
         name=submission.name,
         download_link=submission.download_link,
         type=submission.type,
-        submission_date=submission_date,
+        submission_date=today,
         file_size=submission.file_size,
-        description=submission.description
+        file_size_bytes=file_size_bytes,
+        description=submission.description,
+        category=submission.category,
+        tags=submission.tags or [],
+        submitter_email=submission.submitter_email
     )
     doc = submission_obj.model_dump()
     await db.submissions.insert_one(doc)
+    
+    # Send confirmation email
+    if submission.submitter_email:
+        asyncio.create_task(send_submission_email(submission.submitter_email, doc))
+    
     return submission_obj
 
 # Check remaining submissions for today
 @api_router.get("/submissions/remaining")
-async def get_remaining_submissions(client_ip: Optional[str] = Query(None)):
+async def get_remaining_submissions(request: Request):
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     
     settings = await db.site_settings.find_one({"id": "site_settings"}, {"_id": 0})
     daily_limit = settings.get("daily_submission_limit", 10) if settings else 10
     
-    ip_key = client_ip or "anonymous"
-    rate_entry = await db.rate_limits.find_one({"ip_address": ip_key, "date": today}, {"_id": 0})
+    client_ip = request.client.host if request.client else "anonymous"
+    rate_entry = await db.rate_limits.find_one({"ip_address": client_ip, "date": today}, {"_id": 0})
     
     used = rate_entry.get("count", 0) if rate_entry else 0
     remaining = max(0, daily_limit - used)
@@ -310,7 +657,6 @@ async def approve_submission(submission_id: str):
     if not submission:
         raise HTTPException(status_code=404, detail="Submission not found")
     
-    # Create download from submission
     download_obj = Download(
         name=submission["name"],
         download_link=submission["download_link"],
@@ -318,7 +664,10 @@ async def approve_submission(submission_id: str):
         submission_date=submission["submission_date"],
         approved=True,
         file_size=submission.get("file_size"),
-        description=submission.get("description")
+        file_size_bytes=submission.get("file_size_bytes"),
+        description=submission.get("description"),
+        category=submission.get("category"),
+        tags=submission.get("tags", [])
     )
     
     await db.downloads.insert_one(download_obj.model_dump())
@@ -397,18 +746,15 @@ async def update_site_settings(update: SiteSettingsUpdate):
         settings = SiteSettings().model_dump()
     
     if update.daily_submission_limit is not None:
-        # Clamp between 5 and 100
         settings["daily_submission_limit"] = max(5, min(100, update.daily_submission_limit))
     
     if update.top_downloads_enabled is not None:
         settings["top_downloads_enabled"] = update.top_downloads_enabled
     
     if update.top_downloads_count is not None:
-        # Clamp between 5 and 20
         settings["top_downloads_count"] = max(5, min(20, update.top_downloads_count))
     
     if update.sponsored_downloads is not None:
-        # Limit to 5 sponsored items
         settings["sponsored_downloads"] = update.sponsored_downloads[:5]
     
     await db.site_settings.update_one(
@@ -417,176 +763,6 @@ async def update_site_settings(update: SiteSettingsUpdate):
         upsert=True
     )
     return settings
-
-# Seed database with sample data
-@api_router.post("/admin/seed")
-async def seed_database():
-    # Check if already seeded
-    count = await db.downloads.count_documents({})
-    if count >= 5000:
-        return {"success": False, "message": f"Database already has {count} items"}
-    
-    # Clear existing data
-    await db.downloads.delete_many({})
-    
-    # Sample data generators
-    game_prefixes = ["Super", "Mega", "Ultra", "Epic", "Cyber", "Dark", "Shadow", "Crystal", "Dragon", "Space", "Battle", "Star", "Legend of", "Tales of", "World of", "Age of", "Rise of", "Fall of", "Dawn of", "Realm of"]
-    game_suffixes = ["Warriors", "Quest", "Saga", "Chronicles", "Adventures", "Legends", "Heroes", "Knights", "Hunters", "Fighters", "Racers", "Simulator", "Tactics", "Empire", "Kingdom", "World", "Online", "Remastered", "Definitive Edition", "GOTY"]
-    game_themes = ["Fantasy", "Sci-Fi", "Horror", "RPG", "FPS", "Strategy", "Racing", "Sports", "Puzzle", "Platformer"]
-    
-    software_names = [
-        # Real open source
-        "VLC Media Player", "GIMP Image Editor", "Audacity Audio Editor", "LibreOffice Suite", "Firefox Browser",
-        "Blender 3D", "Inkscape Vector", "OBS Studio", "HandBrake Video", "7-Zip Archiver",
-        "Notepad++ Editor", "FileZilla FTP", "KeePass Password", "Thunderbird Mail", "XAMPP Server",
-        "Git Version Control", "Python Interpreter", "Node.js Runtime", "VS Code Editor", "Atom Editor",
-        "Krita Digital Art", "Scribus Publisher", "Calibre E-Book", "VirtualBox VM", "PuTTY SSH",
-        # Fictional
-        "TurboOffice Pro", "DataMaster Suite", "CodeForge IDE", "PhotoMax Studio", "VideoFlex Editor",
-        "SyncCloud Pro", "BackupGuard Plus", "SystemTuner Pro", "DriverBoost Max", "CleanSweep Ultra",
-        "PDFWizard Pro", "ArchiveX Pro", "ScreenCap Pro", "AudioMix Studio", "RenderFarm Pro",
-        "DevTools Ultimate", "DBAdmin Pro", "NetMonitor Plus", "SecureVault Pro", "TaskMaster Pro"
-    ]
-    
-    movie_genres = ["Action", "Comedy", "Drama", "Horror", "Sci-Fi", "Thriller", "Romance", "Adventure", "Mystery", "Fantasy"]
-    movie_adjectives = ["The", "A", "Last", "Final", "Dark", "Eternal", "Hidden", "Secret", "Lost", "Forgotten", "Ancient", "New", "Old"]
-    movie_nouns = ["Knight", "Storm", "Journey", "Mission", "Dream", "Night", "Day", "Legacy", "Code", "Protocol", "Truth", "Lies", "Shadows", "Light", "War", "Peace", "Love", "Hate", "Fear", "Hope"]
-    movie_years = list(range(2020, 2026))
-    
-    tv_shows = [
-        # Fictional shows with seasons
-        ("Quantum Detective", 5), ("Starship Voyagers", 7), ("The Last Frontier", 4), ("Midnight City", 6),
-        ("Corporate Chaos", 3), ("Medical Mayhem", 8), ("Legal Eagles", 5), ("Cooking Catastrophe", 4),
-        ("Reality Breakdown", 6), ("Historical Hijinks", 3), ("Animated Adventures", 9), ("Documentary Deep Dive", 4),
-        ("Crime Scene Alpha", 7), ("Supernatural Stories", 5), ("Romantic Rendezvous", 4), ("Family Fiascos", 6),
-        ("Teen Turmoil", 5), ("Senior Shenanigans", 3), ("Pet Pandemonium", 4), ("Home Improvement Hell", 5),
-        ("Game Show Galore", 8), ("Talk Show Titans", 6), ("News Network Nonsense", 4), ("Sports Spectacular", 7),
-        ("Mystery Manor", 5), ("Ghost Hunters Inc", 4), ("Alien Archives", 3), ("Time Travelers", 6),
-        ("Robot Revolution", 4), ("Cyber City", 5), ("Virtual Reality", 3), ("Digital Dreams", 4)
-    ]
-    
-    downloads = []
-    base_date = datetime(2024, 1, 1, tzinfo=timezone.utc)
-    
-    # Generate games (~1500)
-    for i in range(1500):
-        prefix = random.choice(game_prefixes)
-        suffix = random.choice(game_suffixes)
-        version = f"{random.randint(1,3)}.{random.randint(0,9)}"
-        name = f"{prefix} {suffix} {version}"
-        if random.random() > 0.7:
-            name += f" - {random.choice(game_themes)} Edition"
-        
-        days_offset = random.randint(0, 365)
-        date = base_date + __import__('datetime').timedelta(days=days_offset)
-        size = f"{random.randint(5, 100)}.{random.randint(0,9)} GB"
-        
-        downloads.append({
-            "id": str(uuid.uuid4()),
-            "name": name,
-            "download_link": f"https://example.com/games/{uuid.uuid4().hex[:8]}",
-            "type": "game",
-            "submission_date": date.strftime("%Y-%m-%d"),
-            "approved": True,
-            "created_at": date.isoformat(),
-            "download_count": random.randint(0, 50000),
-            "file_size": size,
-            "description": f"{random.choice(game_themes)} game with {random.choice(['stunning graphics', 'immersive gameplay', 'multiplayer support', 'mod support', 'achievements'])}"
-        })
-    
-    # Generate software (~1200)
-    for i in range(1200):
-        base_name = random.choice(software_names)
-        version = f"{random.randint(1,25)}.{random.randint(0,9)}.{random.randint(0,999)}"
-        name = f"{base_name} v{version}"
-        
-        days_offset = random.randint(0, 365)
-        date = base_date + __import__('datetime').timedelta(days=days_offset)
-        size = f"{random.randint(10, 2000)} MB"
-        
-        downloads.append({
-            "id": str(uuid.uuid4()),
-            "name": name,
-            "download_link": f"https://example.com/software/{uuid.uuid4().hex[:8]}",
-            "type": "software",
-            "submission_date": date.strftime("%Y-%m-%d"),
-            "approved": True,
-            "created_at": date.isoformat(),
-            "download_count": random.randint(0, 100000),
-            "file_size": size,
-            "description": f"{'Portable' if random.random() > 0.7 else 'Full'} version - {random.choice(['Windows', 'Mac', 'Linux', 'Cross-platform'])}"
-        })
-    
-    # Generate movies (~1300)
-    for i in range(1300):
-        adj = random.choice(movie_adjectives)
-        noun = random.choice(movie_nouns)
-        year = random.choice(movie_years)
-        genre = random.choice(movie_genres)
-        quality = random.choice(["720p", "1080p", "2160p 4K", "BluRay", "WEB-DL", "HDRip"])
-        name = f"{adj} {noun} ({year}) {quality}"
-        
-        days_offset = random.randint(0, 365)
-        date = base_date + __import__('datetime').timedelta(days=days_offset)
-        size = f"{random.randint(1, 20)}.{random.randint(0,9)} GB"
-        
-        downloads.append({
-            "id": str(uuid.uuid4()),
-            "name": name,
-            "download_link": f"https://example.com/movies/{uuid.uuid4().hex[:8]}",
-            "type": "movie",
-            "submission_date": date.strftime("%Y-%m-%d"),
-            "approved": True,
-            "created_at": date.isoformat(),
-            "download_count": random.randint(0, 75000),
-            "file_size": size,
-            "description": f"{genre} - {random.choice(['English', 'Multi-language'])} - {random.choice(['Subtitles included', 'No subtitles'])}"
-        })
-    
-    # Generate TV shows (~1000)
-    for show_name, seasons in tv_shows:
-        for season in range(1, seasons + 1):
-            episodes = random.randint(8, 24)
-            for episode in range(1, episodes + 1):
-                if len(downloads) >= 5000:
-                    break
-                quality = random.choice(["720p", "1080p", "WEB-DL", "HDTV"])
-                name = f"{show_name} S{season:02d}E{episode:02d} {quality}"
-                
-                days_offset = random.randint(0, 365)
-                date = base_date + __import__('datetime').timedelta(days=days_offset)
-                size = f"{random.randint(200, 1500)} MB"
-                
-                downloads.append({
-                    "id": str(uuid.uuid4()),
-                    "name": name,
-                    "download_link": f"https://example.com/tv/{uuid.uuid4().hex[:8]}",
-                    "type": "tv_show",
-                    "submission_date": date.strftime("%Y-%m-%d"),
-                    "approved": True,
-                    "created_at": date.isoformat(),
-                    "download_count": random.randint(0, 30000),
-                    "file_size": size,
-                    "description": f"Season {season}, Episode {episode}"
-                })
-            if len(downloads) >= 5000:
-                break
-        if len(downloads) >= 5000:
-            break
-    
-    # Ensure exactly 5000 items
-    downloads = downloads[:5000]
-    
-    # Bulk insert
-    if downloads:
-        await db.downloads.insert_many(downloads)
-    
-    # Create index for search
-    await db.downloads.create_index([("name", "text")])
-    await db.downloads.create_index([("type", 1)])
-    await db.downloads.create_index([("approved", 1)])
-    
-    return {"success": True, "message": f"Seeded {len(downloads)} downloads"}
 
 # Get statistics
 @api_router.get("/stats")
@@ -597,7 +773,6 @@ async def get_stats():
     movies = await db.downloads.count_documents({"approved": True, "type": "movie"})
     tv_shows = await db.downloads.count_documents({"approved": True, "type": "tv_show"})
     
-    # Get top downloaded
     top_downloads = await db.downloads.find(
         {"approved": True}, 
         {"_id": 0, "name": 1, "download_count": 1, "type": 1}
@@ -614,6 +789,202 @@ async def get_stats():
         "top_downloads": top_downloads
     }
 
+# Seed database with sample data (includes categories and tags)
+@api_router.post("/admin/seed")
+async def seed_database():
+    count = await db.downloads.count_documents({})
+    if count >= 5000:
+        return {"success": False, "message": f"Database already has {count} items"}
+    
+    await db.downloads.delete_many({})
+    
+    # Seed default categories
+    default_categories = [
+        {"name": "Action", "type": "game"}, {"name": "RPG", "type": "game"}, {"name": "Strategy", "type": "game"},
+        {"name": "FPS", "type": "game"}, {"name": "Racing", "type": "game"}, {"name": "Sports", "type": "game"},
+        {"name": "Productivity", "type": "software"}, {"name": "Development", "type": "software"},
+        {"name": "Graphics", "type": "software"}, {"name": "Utilities", "type": "software"},
+        {"name": "Action", "type": "movie"}, {"name": "Comedy", "type": "movie"}, {"name": "Drama", "type": "movie"},
+        {"name": "Sci-Fi", "type": "movie"}, {"name": "Horror", "type": "movie"}, {"name": "Thriller", "type": "movie"},
+        {"name": "Drama", "type": "tv_show"}, {"name": "Comedy", "type": "tv_show"}, {"name": "Sci-Fi", "type": "tv_show"},
+        {"name": "Crime", "type": "tv_show"}, {"name": "Documentary", "type": "tv_show"}
+    ]
+    
+    for cat in default_categories:
+        existing = await db.categories.find_one({"name": cat["name"], "type": cat["type"]}, {"_id": 0})
+        if not existing:
+            cat_obj = Category(name=cat["name"], type=cat["type"])
+            await db.categories.insert_one(cat_obj.model_dump())
+    
+    # Sample data generators
+    game_prefixes = ["Super", "Mega", "Ultra", "Epic", "Cyber", "Dark", "Shadow", "Crystal", "Dragon", "Space"]
+    game_suffixes = ["Warriors", "Quest", "Saga", "Chronicles", "Adventures", "Legends", "Heroes", "Knights"]
+    game_categories = ["Action", "RPG", "Strategy", "FPS", "Racing", "Sports"]
+    game_tags = ["multiplayer", "singleplayer", "co-op", "open-world", "indie", "AAA", "remastered", "GOTY"]
+    
+    software_names = [
+        "VLC Media Player", "GIMP Image Editor", "Audacity Audio Editor", "LibreOffice Suite", "Firefox Browser",
+        "Blender 3D", "Inkscape Vector", "OBS Studio", "HandBrake Video", "7-Zip Archiver",
+        "Notepad++ Editor", "FileZilla FTP", "KeePass Password", "Thunderbird Mail", "XAMPP Server",
+        "TurboOffice Pro", "DataMaster Suite", "CodeForge IDE", "PhotoMax Studio", "VideoFlex Editor"
+    ]
+    software_categories = ["Productivity", "Development", "Graphics", "Utilities"]
+    software_tags = ["portable", "open-source", "freeware", "cross-platform", "windows", "mac", "linux"]
+    
+    movie_genres = ["Action", "Comedy", "Drama", "Sci-Fi", "Horror", "Thriller"]
+    movie_tags = ["720p", "1080p", "4K", "HDR", "BluRay", "WEB-DL", "subtitles", "dual-audio"]
+    
+    tv_shows = [
+        ("Quantum Detective", 5), ("Starship Voyagers", 7), ("The Last Frontier", 4), ("Midnight City", 6),
+        ("Corporate Chaos", 3), ("Medical Mayhem", 8), ("Legal Eagles", 5), ("Cooking Catastrophe", 4)
+    ]
+    tv_categories = ["Drama", "Comedy", "Sci-Fi", "Crime", "Documentary"]
+    tv_tags = ["complete-season", "ongoing", "finale", "premiere", "HDTV", "WEB-DL"]
+    
+    downloads = []
+    base_date = datetime(2024, 1, 1, tzinfo=timezone.utc)
+    
+    # Generate games (~1500)
+    for i in range(1500):
+        prefix = random.choice(game_prefixes)
+        suffix = random.choice(game_suffixes)
+        version = f"{random.randint(1,3)}.{random.randint(0,9)}"
+        name = f"{prefix} {suffix} {version}"
+        
+        days_offset = random.randint(0, 365)
+        date = base_date + __import__('datetime').timedelta(days=days_offset)
+        size_gb = random.randint(5, 100)
+        size = f"{size_gb}.{random.randint(0,9)} GB"
+        size_bytes = size_gb * 1024 * 1024 * 1024
+        
+        downloads.append({
+            "id": str(uuid.uuid4()),
+            "name": name,
+            "download_link": f"https://example.com/games/{uuid.uuid4().hex[:8]}",
+            "type": "game",
+            "submission_date": date.strftime("%Y-%m-%d"),
+            "approved": True,
+            "created_at": date.isoformat(),
+            "download_count": random.randint(0, 50000),
+            "file_size": size,
+            "file_size_bytes": size_bytes,
+            "description": f"Epic {random.choice(['adventure', 'action', 'strategy'])} game",
+            "category": random.choice(game_categories),
+            "tags": random.sample(game_tags, random.randint(2, 4))
+        })
+    
+    # Generate software (~1200)
+    for i in range(1200):
+        base_name = random.choice(software_names)
+        version = f"{random.randint(1,25)}.{random.randint(0,9)}.{random.randint(0,999)}"
+        name = f"{base_name} v{version}"
+        
+        days_offset = random.randint(0, 365)
+        date = base_date + __import__('datetime').timedelta(days=days_offset)
+        size_mb = random.randint(10, 2000)
+        size = f"{size_mb} MB"
+        size_bytes = size_mb * 1024 * 1024
+        
+        downloads.append({
+            "id": str(uuid.uuid4()),
+            "name": name,
+            "download_link": f"https://example.com/software/{uuid.uuid4().hex[:8]}",
+            "type": "software",
+            "submission_date": date.strftime("%Y-%m-%d"),
+            "approved": True,
+            "created_at": date.isoformat(),
+            "download_count": random.randint(0, 100000),
+            "file_size": size,
+            "file_size_bytes": size_bytes,
+            "description": f"{'Portable' if random.random() > 0.7 else 'Full'} version",
+            "category": random.choice(software_categories),
+            "tags": random.sample(software_tags, random.randint(2, 4))
+        })
+    
+    # Generate movies (~1300)
+    movie_adjectives = ["The", "A", "Last", "Final", "Dark", "Eternal", "Hidden", "Secret", "Lost"]
+    movie_nouns = ["Knight", "Storm", "Journey", "Mission", "Dream", "Night", "Day", "Legacy", "Code"]
+    
+    for i in range(1300):
+        adj = random.choice(movie_adjectives)
+        noun = random.choice(movie_nouns)
+        year = random.randint(2020, 2025)
+        quality = random.choice(["720p", "1080p", "2160p 4K", "BluRay", "WEB-DL"])
+        name = f"{adj} {noun} ({year}) {quality}"
+        
+        days_offset = random.randint(0, 365)
+        date = base_date + __import__('datetime').timedelta(days=days_offset)
+        size_gb = random.randint(1, 20)
+        size = f"{size_gb}.{random.randint(0,9)} GB"
+        size_bytes = size_gb * 1024 * 1024 * 1024
+        
+        downloads.append({
+            "id": str(uuid.uuid4()),
+            "name": name,
+            "download_link": f"https://example.com/movies/{uuid.uuid4().hex[:8]}",
+            "type": "movie",
+            "submission_date": date.strftime("%Y-%m-%d"),
+            "approved": True,
+            "created_at": date.isoformat(),
+            "download_count": random.randint(0, 75000),
+            "file_size": size,
+            "file_size_bytes": size_bytes,
+            "description": f"{random.choice(movie_genres)} film",
+            "category": random.choice(movie_genres),
+            "tags": random.sample(movie_tags, random.randint(2, 4))
+        })
+    
+    # Generate TV shows (~1000)
+    for show_name, seasons in tv_shows:
+        for season in range(1, seasons + 1):
+            episodes = random.randint(8, 24)
+            for episode in range(1, episodes + 1):
+                if len(downloads) >= 5000:
+                    break
+                quality = random.choice(["720p", "1080p", "WEB-DL", "HDTV"])
+                name = f"{show_name} S{season:02d}E{episode:02d} {quality}"
+                
+                days_offset = random.randint(0, 365)
+                date = base_date + __import__('datetime').timedelta(days=days_offset)
+                size_mb = random.randint(200, 1500)
+                size = f"{size_mb} MB"
+                size_bytes = size_mb * 1024 * 1024
+                
+                downloads.append({
+                    "id": str(uuid.uuid4()),
+                    "name": name,
+                    "download_link": f"https://example.com/tv/{uuid.uuid4().hex[:8]}",
+                    "type": "tv_show",
+                    "submission_date": date.strftime("%Y-%m-%d"),
+                    "approved": True,
+                    "created_at": date.isoformat(),
+                    "download_count": random.randint(0, 30000),
+                    "file_size": size,
+                    "file_size_bytes": size_bytes,
+                    "description": f"Season {season}, Episode {episode}",
+                    "category": random.choice(tv_categories),
+                    "tags": random.sample(tv_tags, random.randint(2, 3))
+                })
+            if len(downloads) >= 5000:
+                break
+        if len(downloads) >= 5000:
+            break
+    
+    downloads = downloads[:5000]
+    
+    if downloads:
+        await db.downloads.insert_many(downloads)
+    
+    # Create indexes
+    await db.downloads.create_index([("name", "text")])
+    await db.downloads.create_index([("type", 1)])
+    await db.downloads.create_index([("approved", 1)])
+    await db.downloads.create_index([("category", 1)])
+    await db.downloads.create_index([("tags", 1)])
+    await db.downloads.create_index([("file_size_bytes", 1)])
+    
+    return {"success": True, "message": f"Seeded {len(downloads)} downloads with categories and tags"}
+
 # Include the router in the main app
 app.include_router(api_router)
 
@@ -624,13 +995,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
-logger = logging.getLogger(__name__)
 
 @app.on_event("shutdown")
 async def shutdown_db_client():
