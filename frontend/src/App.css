@@ -1,34 +1,407 @@
-.App-logo {
-    height: 40vmin;
-    pointer-events: none;
-}
+/* Main App Styles - Retro Download Portal */
 
-@media (prefers-reduced-motion: no-preference) {
-    .App-logo {
-        animation: App-logo-spin infinite 20s linear;
-    }
-}
-
-.App-header {
-    background-color: #0f0f10;
+.app-container {
     min-height: 100vh;
     display: flex;
     flex-direction: column;
+}
+
+/* Header Navigation */
+.nav-header {
+    border-bottom: 2px solid hsl(var(--border));
+    padding: 1rem;
+    background: hsl(var(--card));
+}
+
+.nav-link {
+    padding: 0.5rem 1rem;
+    border: 1px solid transparent;
+    transition: border-color 0.2s, background-color 0.2s;
+}
+
+.nav-link:hover {
+    border-color: hsl(var(--primary));
+    background: hsl(var(--primary) / 0.1);
+}
+
+.nav-link.active {
+    border-color: hsl(var(--primary));
+    background: hsl(var(--primary) / 0.2);
+}
+
+/* Main Content */
+.main-content {
+    flex: 1;
+    padding: 1.5rem;
+    max-width: 1400px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+/* Downloads Table */
+.downloads-table {
+    width: 100%;
+    border-collapse: collapse;
+    border: 2px solid hsl(var(--border));
+    background: hsl(var(--card));
+}
+
+.downloads-table th,
+.downloads-table td {
+    border: 1px solid hsl(var(--border));
+    padding: 0.75rem 1rem;
+    text-align: left;
+}
+
+.downloads-table th {
+    background: hsl(var(--primary) / 0.15);
+    font-weight: bold;
+    text-transform: uppercase;
+    font-size: 0.875rem;
+    letter-spacing: 0.1em;
+}
+
+.downloads-table tr:nth-child(even) {
+    background: hsl(var(--muted) / 0.3);
+}
+
+.downloads-table tr:hover {
+    background: hsl(var(--primary) / 0.1);
+}
+
+/* Type badges */
+.type-badge {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    border: 1px solid currentColor;
+    font-weight: bold;
+}
+
+.type-game {
+    color: #FF00FF;
+}
+
+.type-software {
+    color: #00FFFF;
+}
+
+.type-movie {
+    color: #FFFF00;
+}
+
+.type-tv_show {
+    color: #FF6600;
+}
+
+/* Pagination */
+.pagination {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+    margin-top: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.page-btn {
+    min-width: 2.5rem;
+    height: 2.5rem;
+    display: flex;
     align-items: center;
     justify-content: center;
-    font-size: calc(10px + 2vmin);
-    color: white;
+    border: 1px solid hsl(var(--border));
+    background: hsl(var(--card));
+    color: hsl(var(--foreground));
+    font-family: 'JetBrains Mono', monospace;
+    cursor: pointer;
+    transition: background-color 0.2s, border-color 0.2s;
 }
 
-.App-link {
-    color: #61dafb;
+.page-btn:hover:not(:disabled) {
+    background: hsl(var(--primary) / 0.2);
+    border-color: hsl(var(--primary));
 }
 
-@keyframes App-logo-spin {
-    from {
-        transform: rotate(0deg);
+.page-btn.active {
+    background: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
+    border-color: hsl(var(--primary));
+}
+
+.page-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Form Styles */
+.retro-form {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 2rem;
+    border: 2px solid hsl(var(--border));
+    background: hsl(var(--card));
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-label {
+    display: block;
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    font-size: 0.875rem;
+    letter-spacing: 0.1em;
+}
+
+.form-input {
+    width: 100%;
+    padding: 0.75rem;
+    border: 2px solid hsl(var(--border));
+    background: hsl(var(--input));
+    color: hsl(var(--foreground));
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1rem;
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: hsl(var(--primary));
+    box-shadow: 0 0 5px hsl(var(--primary) / 0.5);
+}
+
+.form-select {
+    width: 100%;
+    padding: 0.75rem;
+    border: 2px solid hsl(var(--border));
+    background: hsl(var(--input));
+    color: hsl(var(--foreground));
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1rem;
+    cursor: pointer;
+}
+
+/* Submit Button */
+.submit-btn {
+    width: 100%;
+    padding: 1rem;
+    border: 2px solid hsl(var(--primary));
+    background: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.75rem;
+    cursor: pointer;
+    text-transform: uppercase;
+    box-shadow: 4px 4px 0px 0px hsl(var(--primary) / 0.5);
+    transition: transform 0.1s, box-shadow 0.1s;
+}
+
+.submit-btn:hover {
+    background: hsl(var(--primary) / 0.8);
+}
+
+.submit-btn:active {
+    transform: translate(2px, 2px);
+    box-shadow: 2px 2px 0px 0px hsl(var(--primary) / 0.5);
+}
+
+/* Admin Panel */
+.admin-container {
+    padding: 1.5rem;
+}
+
+.admin-card {
+    border: 2px solid hsl(var(--border));
+    background: hsl(var(--card));
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.admin-title {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid hsl(var(--border));
+    padding-bottom: 0.5rem;
+}
+
+/* Action Buttons */
+.action-btn {
+    padding: 0.5rem 1rem;
+    border: 1px solid;
+    background: transparent;
+    cursor: pointer;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    margin-right: 0.5rem;
+    transition: background-color 0.2s;
+}
+
+.action-btn.approve {
+    color: #00FF41;
+    border-color: #00FF41;
+}
+
+.action-btn.approve:hover {
+    background: rgba(0, 255, 65, 0.2);
+}
+
+.action-btn.reject {
+    color: #FF0000;
+    border-color: #FF0000;
+}
+
+.action-btn.reject:hover {
+    background: rgba(255, 0, 0, 0.2);
+}
+
+/* Theme Editor */
+.theme-editor {
+    display: grid;
+    gap: 1rem;
+}
+
+.color-picker-group {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.color-picker {
+    width: 60px;
+    height: 40px;
+    border: 2px solid hsl(var(--border));
+    cursor: pointer;
+    background: none;
+    padding: 0;
+}
+
+/* Marquee Banner */
+.marquee-container {
+    overflow: hidden;
+    background: hsl(var(--primary) / 0.1);
+    border-bottom: 1px solid hsl(var(--border));
+    padding: 0.5rem 0;
+}
+
+.marquee-content {
+    display: flex;
+    white-space: nowrap;
+    animation: marquee 30s linear infinite;
+}
+
+.marquee-item {
+    padding: 0 3rem;
+}
+
+/* Filter Bar */
+.filter-bar {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.filter-btn {
+    padding: 0.5rem 1rem;
+    border: 1px solid hsl(var(--border));
+    background: transparent;
+    color: hsl(var(--foreground));
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: background-color 0.2s, border-color 0.2s;
+}
+
+.filter-btn:hover {
+    border-color: hsl(var(--primary));
+}
+
+.filter-btn.active {
+    background: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
+    border-color: hsl(var(--primary));
+}
+
+/* Stats Bar */
+.stats-bar {
+    display: flex;
+    gap: 2rem;
+    padding: 1rem;
+    border: 1px solid hsl(var(--border));
+    background: hsl(var(--card));
+    margin-bottom: 1.5rem;
+}
+
+.stat-item {
+    text-align: center;
+}
+
+.stat-value {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: hsl(var(--primary));
+}
+
+.stat-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    opacity: 0.7;
+}
+
+/* Login Form */
+.login-container {
+    min-height: 80vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.login-box {
+    width: 100%;
+    max-width: 400px;
+    padding: 2rem;
+    border: 2px solid hsl(var(--border));
+    background: hsl(var(--card));
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 3rem;
+    color: hsl(var(--muted-foreground));
+}
+
+/* Loading State */
+.loading-state {
+    text-align: center;
+    padding: 3rem;
+}
+
+.loading-text {
+    animation: blink 1s step-end infinite;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .downloads-table {
+        font-size: 0.875rem;
     }
-    to {
-        transform: rotate(360deg);
+    
+    .downloads-table th,
+    .downloads-table td {
+        padding: 0.5rem;
+    }
+    
+    .stats-bar {
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+    
+    .filter-bar {
+        flex-direction: column;
+        align-items: stretch;
     }
 }
