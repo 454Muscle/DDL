@@ -94,6 +94,9 @@ Build a download website where you can download software, games, movies, tv show
 - [x] Rate limiting (configurable 5-100/day)
 - [x] Advanced search filters (date range)
 - [x] Top downloads section
+- [x] Top downloads toggle (enable/disable)
+- [x] Top downloads count (5-20)
+- [x] Sponsored downloads (1-5 admin-configured)
 
 ### P2 (Medium)
 - [ ] User authentication for submitters
