@@ -180,14 +180,36 @@ async def get_downloads(
     
     return PaginatedDownloads(items=downloads, total=total, page=page, pages=pages)
 
-# Top Downloads
+# Top Downloads (includes sponsored)
 @api_router.get("/downloads/top")
-async def get_top_downloads(limit: int = Query(10, ge=1, le=20)):
-    top = await db.downloads.find(
-        {"approved": True},
-        {"_id": 0}
-    ).sort("download_count", -1).limit(limit).to_list(limit)
-    return {"items": top}
+async def get_top_downloads():
+    # Get settings
+    settings = await db.site_settings.find_one({"id": "site_settings"}, {"_id": 0})
+    if not settings:
+        settings = SiteSettings().model_dump()
+    
+    enabled = settings.get("top_downloads_enabled", True)
+    count = settings.get("top_downloads_count", 5)
+    sponsored = settings.get("sponsored_downloads", [])
+    
+    if not enabled:
+        return {"enabled": False, "items": [], "sponsored": []}
+    
+    # Get top downloads (excluding count already filled by sponsored)
+    remaining_count = max(0, count - len(sponsored))
+    top = []
+    if remaining_count > 0:
+        top = await db.downloads.find(
+            {"approved": True},
+            {"_id": 0}
+        ).sort("download_count", -1).limit(remaining_count).to_list(remaining_count)
+    
+    return {
+        "enabled": True,
+        "sponsored": sponsored[:5],  # Max 5 sponsored
+        "items": top,
+        "total_slots": count
+    }
 
 # Increment download count
 @api_router.post("/downloads/{download_id}/increment")
