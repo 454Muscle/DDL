@@ -1,10 +1,12 @@
 import { Link, useLocation } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
-import { Download, Upload, Shield, Sun, Moon } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { Download, Upload, Shield, Sun, Moon, User, LogOut } from 'lucide-react';
 
 export const Header = () => {
     const location = useLocation();
     const { theme, updateTheme } = useTheme();
+    const { user, isLoggedIn, logout } = useAuth();
 
     const isActive = (path) => location.pathname === path;
 
@@ -47,7 +49,7 @@ export const Header = () => {
                 </Link>
 
                 {/* Navigation */}
-                <nav style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                <nav style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
                     <Link 
                         to="/" 
                         className={`nav-link ${isActive('/') ? 'active' : ''}`}
@@ -64,6 +66,46 @@ export const Header = () => {
                         <Upload size={14} style={{ display: 'inline', marginRight: '0.25rem' }} />
                         SUBMIT
                     </Link>
+                    
+                    {isLoggedIn ? (
+                        <div style={{ 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            gap: '0.5rem',
+                            padding: '0.25rem 0.5rem',
+                            border: '1px solid hsl(var(--primary))',
+                            background: 'hsl(var(--primary) / 0.1)'
+                        }}>
+                            <User size={14} />
+                            <span style={{ fontSize: '0.75rem', maxWidth: '120px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                {user?.email}
+                            </span>
+                            <button
+                                onClick={logout}
+                                style={{ 
+                                    background: 'none', 
+                                    border: 'none', 
+                                    cursor: 'pointer', 
+                                    color: 'hsl(var(--destructive))',
+                                    padding: '0.25rem'
+                                }}
+                                title="Logout"
+                                data-testid="header-logout-btn"
+                            >
+                                <LogOut size={14} />
+                            </button>
+                        </div>
+                    ) : (
+                        <Link 
+                            to="/auth" 
+                            className={`nav-link ${isActive('/auth') ? 'active' : ''}`}
+                            data-testid="nav-auth"
+                        >
+                            <User size={14} style={{ display: 'inline', marginRight: '0.25rem' }} />
+                            LOGIN
+                        </Link>
+                    )}
+                    
                     <Link 
                         to="/admin" 
                         className={`nav-link ${isActive('/admin') || isActive('/admin/dashboard') ? 'active' : ''}`}
