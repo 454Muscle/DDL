@@ -15,7 +15,9 @@ import {
     LogOut,
     ExternalLink,
     Database,
-    Loader2
+    Loader2,
+    Settings,
+    Clock
 } from 'lucide-react';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
@@ -46,15 +48,17 @@ export default function AdminDashboardPage() {
     const [customAccent, setCustomAccent] = useState(theme.accent_color);
     const [seeding, setSeeding] = useState(false);
     const [stats, setStats] = useState(null);
+    const [siteSettings, setSiteSettings] = useState({ daily_submission_limit: 10 });
+    const [newLimit, setNewLimit] = useState(10);
 
     useEffect(() => {
-        // Check auth
         if (!sessionStorage.getItem('admin_auth')) {
             navigate('/admin');
             return;
         }
         fetchSubmissions();
         fetchStats();
+        fetchSiteSettings();
     }, [page, statusFilter, navigate]);
 
     const fetchSubmissions = async () => {
@@ -81,6 +85,16 @@ export default function AdminDashboardPage() {
             setStats(response.data);
         } catch (error) {
             console.error('Error fetching stats:', error);
+        }
+    };
+
+    const fetchSiteSettings = async () => {
+        try {
+            const response = await axios.get(`${API}/settings`);
+            setSiteSettings(response.data);
+            setNewLimit(response.data.daily_submission_limit || 10);
+        } catch (error) {
+            console.error('Error fetching settings:', error);
         }
     };
 
@@ -158,6 +172,21 @@ export default function AdminDashboardPage() {
         }
     };
 
+    const handleUpdateRateLimit = async () => {
+        const limitValue = Math.max(5, Math.min(100, parseInt(newLimit) || 10));
+        try {
+            const response = await axios.put(`${API}/admin/settings`, {
+                daily_submission_limit: limitValue
+            });
+            setSiteSettings(response.data);
+            setNewLimit(response.data.daily_submission_limit);
+            toast.success(`Daily submission limit updated to ${response.data.daily_submission_limit}`);
+        } catch (error) {
+            console.error('Update settings error:', error);
+            toast.error('Failed to update settings');
+        }
+    };
+
     const handleLogout = () => {
         sessionStorage.removeItem('admin_auth');
         toast.success('Logged out');
@@ -227,7 +256,7 @@ export default function AdminDashboardPage() {
                         >
                             {seeding ? (
                                 <>
-                                    <Loader2 size={14} style={{ display: 'inline', marginRight: '0.5rem', animation: 'spin 1s linear infinite' }} />
+                                    <Loader2 size={14} className="animate-spin" style={{ display: 'inline', marginRight: '0.5rem' }} />
                                     SEEDING DATABASE...
                                 </>
                             ) : (
@@ -243,6 +272,44 @@ export default function AdminDashboardPage() {
                     </div>
                 </div>
             )}
+
+            {/* Site Settings Card */}
+            <div className="admin-card" data-testid="site-settings">
+                <h2 className="admin-title">
+                    <Settings size={18} style={{ display: 'inline', marginRight: '0.5rem' }} />
+                    SITE SETTINGS
+                </h2>
+                
+                <div style={{ display: 'flex', alignItems: 'flex-end', gap: '1rem', flexWrap: 'wrap' }}>
+                    <div style={{ flex: 1, minWidth: '200px' }}>
+                        <label className="form-label" style={{ fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <Clock size={14} />
+                            DAILY SUBMISSION LIMIT (5-100):
+                        </label>
+                        <input
+                            type="number"
+                            min="5"
+                            max="100"
+                            value={newLimit}
+                            onChange={(e) => setNewLimit(e.target.value)}
+                            className="form-input"
+                            style={{ width: '100%' }}
+                            data-testid="rate-limit-input"
+                        />
+                    </div>
+                    <button
+                        onClick={handleUpdateRateLimit}
+                        className="action-btn approve"
+                        style={{ padding: '0.75rem 1.5rem', marginBottom: '0.25rem' }}
+                        data-testid="update-rate-limit-btn"
+                    >
+                        UPDATE LIMIT
+                    </button>
+                </div>
+                <p style={{ fontSize: '0.75rem', opacity: 0.6, marginTop: '0.5rem' }}>
+                    Current limit: <strong>{siteSettings.daily_submission_limit}</strong> submissions per IP per day
+                </p>
+            </div>
 
             {/* Theme Editor Card */}
             <div className="admin-card" data-testid="theme-editor">
@@ -435,7 +502,7 @@ export default function AdminDashboardPage() {
                 {/* Pagination */}
                 {totalPages > 1 && (
                     <div className="pagination">
-                        {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
+                        {Array.from({ length: Math.min(totalPages, 10) }, (_, i) => i + 1).map(p => (
                             <button
                                 key={p}
                                 className={`page-btn ${page === p ? 'active' : ''}`}
