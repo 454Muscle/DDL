@@ -1388,21 +1388,28 @@ async def admin_login(login: AdminLogin):
 
     raise HTTPException(status_code=401, detail="Invalid password")
 
-# Admin - Get Pending Submissions
+# Admin - Get Submissions (with optional status filter)
 @api_router.get("/admin/submissions", response_model=PaginatedSubmissions)
-async def get_submissions(page: int = 1, limit: int = 20):
+async def get_submissions(page: int = 1, limit: int = 20, status: Optional[str] = None):
     skip = (page - 1) * limit
+    
+    # Build filter based on status param
+    query = {}
+    if status and status in ["pending", "approved", "rejected"]:
+        query["status"] = status
+    
     submissions = await db.submissions.find(
-        {"status": "pending"},
+        query,
         {"_id": 0}
     ).sort("created_at", -1).skip(skip).limit(limit).to_list(limit)
 
-    # mark returned submissions as seen
-    ids = [s.get("id") for s in submissions if s.get("id")]
-    if ids:
-        await db.submissions.update_many({"id": {"$in": ids}}, {"$set": {"seen_by_admin": True}})
+    # mark returned submissions as seen (only for pending)
+    if status == "pending" or not status:
+        ids = [s.get("id") for s in submissions if s.get("id") and s.get("status") == "pending"]
+        if ids:
+            await db.submissions.update_many({"id": {"$in": ids}}, {"$set": {"seen_by_admin": True}})
 
-    total = await db.submissions.count_documents({"status": "pending"})
+    total = await db.submissions.count_documents(query)
     pages = (total + limit - 1) // limit
 
     return {
