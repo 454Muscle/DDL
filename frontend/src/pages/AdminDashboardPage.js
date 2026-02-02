@@ -123,6 +123,11 @@ export default function AdminDashboardPage() {
             fetchUnseenSubmissionsCount();
         } catch (error) {
             console.error('Error fetching submissions:', error);
+            toast.error('Failed to load submissions');
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const fetchUnseenSubmissionsCount = async () => {
         try {
@@ -130,12 +135,6 @@ export default function AdminDashboardPage() {
             setUnseenSubmissionsCount(res.data.count || 0);
         } catch (e) {
             console.error('unseen submissions count error', e);
-        }
-    };
-
-            toast.error('Failed to load submissions');
-        } finally {
-            setLoading(false);
         }
     };
 
