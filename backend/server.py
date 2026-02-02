@@ -784,9 +784,6 @@ async def admin_init(payload: AdminInitRequest):
     if settings.get("admin_password_hash"):
         raise HTTPException(status_code=400, detail="Admin is already initialized")
 
-    if not payload.email:
-        raise HTTPException(status_code=400, detail="Admin email is required")
-
     settings["admin_email"] = payload.email.lower()
     settings["admin_password_hash"] = hash_password(payload.password)
 
