@@ -613,9 +613,22 @@ async def increment_download_count(download_id: str):
 # Submissions - Public (with or without registration)
 @api_router.post("/submissions", response_model=Submission)
 async def create_submission(submission: SubmissionCreate, request: Request):
-    # Verify captcha
-    if not await verify_captcha(submission.captcha_id, submission.captcha_answer):
-        raise HTTPException(status_code=400, detail="Invalid captcha. Please try again.")
+    settings = await db.site_settings.find_one({"id": "site_settings"}, {"_id": 0})
+    if not settings:
+        settings = SiteSettings().model_dump()
+
+    # Verify captcha (math) OR reCAPTCHA depending on admin settings
+    if settings.get("recaptcha_enable_submit"):
+        ok = await verify_recaptcha(
+            submission.recaptcha_token,
+            request.client.host if request.client else None,
+            settings.get("recaptcha_secret_key", ""),
+        )
+        if not ok:
+            raise HTTPException(status_code=400, detail="Invalid reCAPTCHA. Please try again.")
+    else:
+        if not await verify_captcha(submission.captcha_id, submission.captcha_answer):
+            raise HTTPException(status_code=400, detail="Invalid captcha. Please try again.")
     
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     
