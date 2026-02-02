@@ -160,7 +160,7 @@ export default function AuthPage() {
                         LOGIN
                     </button>
                     <button
-                        onClick={() => { setMode('register'); fetchCaptcha(); }}
+                        onClick={() => { setMode('register'); if (!recaptchaSettings.enable_auth) fetchCaptcha(); }}
                         className={`filter-btn ${mode === 'register' ? 'active' : ''}`}
                         style={{ flex: 1, borderRadius: 0 }}
                         data-testid="register-tab"
