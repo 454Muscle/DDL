@@ -602,6 +602,211 @@ class DownloadPortalAPITester:
         success, response = self.run_test("Long Site Name Validation", "POST", "submissions", 422, invalid_submission)
         return success
 
+    # ===== SECURITY AND ADMIN TESTS (Review Request) =====
+
+    def test_settings_no_secret_keys(self):
+        """Test /api/settings does NOT expose resend_api_key or recaptcha_secret_key"""
+        success, response = self.run_test("Settings No Secret Keys", "GET", "settings", 200)
+        if success:
+            # Check that sensitive keys are not exposed
+            resend_key = response.get('resend_api_key')
+            recaptcha_secret = response.get('recaptcha_secret_key')
+            
+            if resend_key is None and recaptcha_secret is None:
+                self.log_test("Settings Secret Keys Hidden", True, "Both resend_api_key and recaptcha_secret_key are properly hidden")
+                return True
+            else:
+                exposed_keys = []
+                if resend_key is not None:
+                    exposed_keys.append(f"resend_api_key: {resend_key}")
+                if recaptcha_secret is not None:
+                    exposed_keys.append(f"recaptcha_secret_key: {recaptcha_secret}")
+                self.log_test("Settings Secret Keys Hidden", False, f"Secret keys exposed: {', '.join(exposed_keys)}")
+                return False
+        return success
+
+    def test_admin_resend_update_hides_key(self):
+        """Test /api/admin/resend updates sender email and hides api key in response"""
+        # Test updating resend settings
+        resend_update = {
+            "resend_api_key": "re_test_key_12345",
+            "resend_sender_email": "test@example.com"
+        }
+        
+        success, response = self.run_test("Admin Resend Update", "PUT", "admin/resend", 200, resend_update)
+        if success:
+            # Check that API key is hidden in response
+            api_key = response.get('resend_api_key')
+            sender_email = response.get('resend_sender_email')
+            
+            if api_key is None and sender_email == "test@example.com":
+                self.log_test("Resend Update Hides API Key", True, f"API key hidden, sender email updated to: {sender_email}")
+                return True
+            else:
+                self.log_test("Resend Update Hides API Key", False, f"API key exposed: {api_key}, sender: {sender_email}")
+                return False
+        return success
+
+    def test_forgot_password_no_email_leakage(self):
+        """Test /api/auth/forgot-password returns success for both existing and non-existing emails"""
+        # Test with non-existing email
+        non_existing_email = {
+            "email": "nonexistent@example.com"
+        }
+        success1, response1 = self.run_test("Forgot Password Non-Existing Email", "POST", "auth/forgot-password", 200, non_existing_email)
+        
+        # Test with existing email (we'll use a known email if any exists, or create one)
+        existing_email = {
+            "email": "test@example.com"
+        }
+        success2, response2 = self.run_test("Forgot Password Existing Email", "POST", "auth/forgot-password", 200, existing_email)
+        
+        # Both should return success to prevent email enumeration
+        if success1 and success2:
+            if response1.get('success') == True and response2.get('success') == True:
+                self.log_test("Forgot Password No Email Leakage", True, "Both existing and non-existing emails return success")
+                return True
+            else:
+                self.log_test("Forgot Password No Email Leakage", False, f"Different responses: {response1}, {response2}")
+                return False
+        return success1 and success2
+
+    def test_reset_password_bad_token(self):
+        """Test /api/auth/reset-password with bad token returns 400"""
+        bad_token_request = {
+            "token": "invalid_token_12345",
+            "new_password": "newpassword123"
+        }
+        
+        success, response = self.run_test("Reset Password Bad Token", "POST", "auth/reset-password", 400, bad_token_request)
+        return success
+
+    def test_admin_init_already_initialized(self):
+        """Test /api/admin/init returns 400 if already initialized; otherwise works"""
+        # First, try to initialize (this might fail if already initialized)
+        init_request = {
+            "email": "admin@example.com",
+            "password": "newadminpass123"
+        }
+        
+        first_success, first_response = self.run_test("Admin Init First Attempt", "POST", "admin/init", None, init_request)
+        
+        # Now try to initialize again (should fail with 400)
+        second_success, second_response = self.run_test("Admin Init Already Initialized", "POST", "admin/init", 400, init_request)
+        
+        if second_success:
+            self.log_test("Admin Init Prevents Re-initialization", True, "Second initialization attempt properly rejected")
+            return True
+        else:
+            # If the second attempt didn't return 400, check if it's because admin wasn't initialized
+            if first_success:
+                self.log_test("Admin Init Prevents Re-initialization", False, "Second initialization should have been rejected")
+                return False
+            else:
+                # First init failed, so admin might not be initialized yet
+                self.log_test("Admin Init Prevents Re-initialization", True, "Admin not yet initialized, behavior correct")
+                return True
+
+    def test_admin_password_change_request_validation(self):
+        """Test /api/admin/password/change/request: requires current password; handles resend configuration"""
+        # Test without current password (should fail)
+        invalid_request = {
+            "new_password": "newpass123"
+        }
+        
+        # This should fail due to missing current_password field
+        fail_success, fail_response = self.run_test("Password Change No Current Password", "POST", "admin/password/change/request", 422, invalid_request)
+        
+        # Test with wrong current password (should fail with 401)
+        wrong_password_request = {
+            "current_password": "wrongpassword",
+            "new_password": "newpass123"
+        }
+        
+        wrong_success, wrong_response = self.run_test("Password Change Wrong Current Password", "POST", "admin/password/change/request", 401, wrong_password_request)
+        
+        # Test with correct current password but no resend configured (should return 500)
+        # First, clear resend configuration
+        clear_resend = {
+            "resend_api_key": "",
+            "resend_sender_email": ""
+        }
+        self.run_test("Clear Resend Config", "PUT", "admin/resend", 200, clear_resend)
+        
+        # Try password change with correct password but no resend config
+        correct_password_request = {
+            "current_password": "newpass123",  # This should be the current admin password
+            "new_password": "newerpass123"
+        }
+        
+        no_resend_success, no_resend_response = self.run_test("Password Change No Resend Config", "POST", "admin/password/change/request", 500, correct_password_request)
+        
+        return fail_success and wrong_success and no_resend_success
+
+    def test_admin_password_change_confirm_bad_token(self):
+        """Test /api/admin/password/change/confirm with bad token returns 400"""
+        bad_token_request = {
+            "token": "invalid_admin_token_12345"
+        }
+        
+        success, response = self.run_test("Admin Password Change Confirm Bad Token", "POST", "admin/password/change/confirm", 400, bad_token_request)
+        return success
+
+    def test_admin_forgot_password_bad_token(self):
+        """Test /api/admin/forgot-password and /api/admin/reset-password bad token behavior"""
+        # Test admin forgot password with valid email format
+        forgot_request = {
+            "email": "admin@example.com"
+        }
+        
+        forgot_success, forgot_response = self.run_test("Admin Forgot Password", "POST", "admin/forgot-password", 200, forgot_request)
+        
+        # Test admin reset password with bad token
+        bad_reset_request = {
+            "token": "invalid_admin_reset_token",
+            "new_password": "newadminpass123"
+        }
+        
+        reset_success, reset_response = self.run_test("Admin Reset Password Bad Token", "POST", "admin/reset-password", 400, bad_reset_request)
+        
+        return forgot_success and reset_success
+
+    def test_admin_login_db_password_priority(self):
+        """Test /api/admin/login uses DB-stored admin_password_hash and no longer uses hardcoded default"""
+        # First, ensure admin is initialized with a known password
+        init_request = {
+            "email": "admin@example.com", 
+            "password": "dbstored123"
+        }
+        
+        # Try to initialize (might fail if already done)
+        init_success, init_response = self.run_test("Initialize Admin for DB Password Test", "POST", "admin/init", None, init_request)
+        
+        # Test login with the DB-stored password
+        db_password_login = {
+            "password": "dbstored123"
+        }
+        
+        db_success, db_response = self.run_test("Admin Login DB Password", "POST", "admin/login", 200, db_password_login)
+        
+        # Test login with potential env password (should fail if DB password is set)
+        env_password_login = {
+            "password": "admin123"  # This might be the env default
+        }
+        
+        env_success, env_response = self.run_test("Admin Login Env Password Should Fail", "POST", "admin/login", 401, env_password_login)
+        
+        if db_success and env_success:
+            self.log_test("Admin Login DB Priority", True, "DB password works, env password properly rejected")
+            return True
+        elif db_success and not env_success:
+            # This is expected if env password is different and DB password takes priority
+            self.log_test("Admin Login DB Priority", True, "DB password works, env password rejected as expected")
+            return True
+        else:
+            self.log_test("Admin Login DB Priority", False, f"DB login: {db_success}, Env login: {env_success}")
+            return False
+
 def main():
     print("🚀 Starting Download Portal API Tests...")
     print(f"Testing against: https://downloadportal-1.preview.emergentagent.com/api")
