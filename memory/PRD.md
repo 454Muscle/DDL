@@ -135,7 +135,7 @@ Build a download website where you can download software, games, movies, tv show
 ### P2 (Medium)
 - [ ] Download history tracking
 - [ ] Bulk download selection
-- [ ] Refactor server.py into proper project structure
+- [x] Refactor server.py into proper project structure ✅
 
 ### P3 (Nice to have)
 - [ ] User comments on downloads
@@ -144,9 +144,8 @@ Build a download website where you can download software, games, movies, tv show
 - [ ] Extended admin analytics dashboard
 
 ## Next Tasks
-1. **(P0)** Refactor `server.py` into routers/models/services structure (1600+ lines - technical debt)
-2. **(P2)** Add download history tracking per user
-3. **(P2)** Implement bulk download selection
+1. **(P2)** Add download history tracking per user
+2. **(P2)** Implement bulk download selection
 
 ## Test Credentials
 - **Admin Password**: admin123
