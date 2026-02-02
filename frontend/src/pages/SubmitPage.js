@@ -90,6 +90,14 @@ function SubmitPage() {
     }
 
     function fetchPopularTags() {
+        axios.get(API + '/tags?limit=20')
+            .then(function(response) {
+                setPopularTags(response.data.items || []);
+            })
+            .catch(function(error) {
+                console.error('Error fetching tags:', error);
+            });
+    }
 
     function fetchRecaptchaSettings() {
         axios.get(API + '/recaptcha/settings')
@@ -99,15 +107,6 @@ function SubmitPage() {
             })
             .catch(function(error) {
                 console.error('Error fetching recaptcha settings:', error);
-            });
-    }
-
-        axios.get(API + '/tags?limit=20')
-            .then(function(response) {
-                setPopularTags(response.data.items || []);
-            })
-            .catch(function(error) {
-                console.error('Error fetching tags:', error);
             });
     }
 
