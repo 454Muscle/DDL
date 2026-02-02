@@ -90,6 +90,18 @@ function SubmitPage() {
     }
 
     function fetchPopularTags() {
+
+    function fetchRecaptchaSettings() {
+        axios.get(API + '/recaptcha/settings')
+            .then(function(response) {
+                setRecaptchaSettings(response.data || { site_key: null, enable_submit: false, enable_auth: false });
+                setRecaptchaToken('');
+            })
+            .catch(function(error) {
+                console.error('Error fetching recaptcha settings:', error);
+            });
+    }
+
         axios.get(API + '/tags?limit=20')
             .then(function(response) {
                 setPopularTags(response.data.items || []);
