@@ -4,6 +4,7 @@ import axios from 'axios';
 import { toast } from 'sonner';
 import { useAuth } from '../context/AuthContext';
 import { UserPlus, LogIn, RefreshCw } from 'lucide-react';
+import ReCAPTCHA from 'react-google-recaptcha';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
