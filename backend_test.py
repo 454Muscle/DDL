@@ -1076,6 +1076,13 @@ def main():
         tester.test_root_endpoint,
         tester.test_get_downloads_empty,
         
+        # REVIEW REQUEST PRIORITY TESTS
+        tester.test_single_submission_math_captcha,
+        tester.test_bulk_submissions_with_captcha,
+        tester.test_bulk_rate_limit_increment,
+        tester.test_admin_resend_test_dummy_vs_real_key,
+        tester.test_admin_forgot_password_link_format,
+        
         # Security tests (Review Request Priority)
         tester.test_settings_no_secret_keys,
         tester.test_admin_resend_update_hides_key,
