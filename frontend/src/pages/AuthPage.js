@@ -80,12 +80,17 @@ export default function AuthPage() {
         setLoading(true);
         try {
             if (mode === 'register') {
-                await axios.post(`${API}/auth/register`, {
+                const payload = {
                     email: formData.email,
-                    password: formData.password,
-                    captcha_answer: parseInt(formData.captcha_answer),
-                    captcha_id: formData.captcha_id
-                });
+                    password: formData.password
+                };
+                if (recaptchaSettings.enable_auth) {
+                    payload.recaptcha_token = recaptchaToken;
+                } else {
+                    payload.captcha_answer = parseInt(formData.captcha_answer);
+                    payload.captcha_id = formData.captcha_id;
+                }
+                await axios.post(`${API}/auth/register`, payload);
                 toast.success('Registration successful! Please login.');
                 setMode('login');
                 fetchCaptcha();
