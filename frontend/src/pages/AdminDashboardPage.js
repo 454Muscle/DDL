@@ -1359,7 +1359,8 @@ export default function AdminDashboardPage() {
                         </tbody>
                     </table>
 
-                    <AlertDialog open={deleteConfirm.open} onOpenChange={(open) => setDeleteConfirm({ ...deleteConfirm, open })}>
+                    <div>
+                        <AlertDialog open={deleteConfirm.open} onOpenChange={(open) => setDeleteConfirm({ ...deleteConfirm, open })}>
                         <AlertDialogContent>
                             <AlertDialogHeader>
                                 <AlertDialogTitle>Delete download?</AlertDialogTitle>
