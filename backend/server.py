@@ -1096,6 +1096,27 @@ async def reject_submission(submission_id: str):
 
 # Admin - Delete Submission
 @api_router.delete("/admin/submissions/{submission_id}")
+
+# Resend test email (Admin)
+@api_router.post("/admin/resend/test")
+async def resend_test_email():
+    settings = await fetch_site_settings()
+    if not settings.get("admin_email"):
+        raise HTTPException(status_code=400, detail="Admin email is not configured")
+
+    html = """
+    <html><body style='font-family: Arial, sans-serif;'>
+      <h2>Resend Test Email</h2>
+      <p>This is a test email to confirm your Resend configuration is working.</p>
+    </body></html>
+    """
+
+    ok = await send_email_via_resend(settings["admin_email"], "Resend test email", html)
+    if not ok:
+        raise HTTPException(status_code=500, detail="Failed to send test email")
+
+    return {"success": True}
+
 async def delete_submission(submission_id: str):
     result = await db.submissions.delete_one({"id": submission_id})
     if result.deleted_count == 0:
