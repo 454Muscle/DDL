@@ -226,18 +226,33 @@ class RateLimitEntry(BaseModel):
     model_config = ConfigDict(extra="ignore")
     ip_address: str
     date: str
+    count: int = 0
+
+class PaginatedDownloads(BaseModel):
+    items: List[Download]
+    total: int
+    page: int
+    pages: int
+
+class PaginatedSubmissions(BaseModel):
+    items: List[Submission]
+    total: int
+    page: int
+    pages: int
+
+class AdminLogin(BaseModel):
+    password: str
 
 class AdminInitRequest(BaseModel):
     email: EmailStr
     password: str
-def generate_token() -> str:
-    return secrets.token_urlsafe(32)
-
-
 
 class AdminChangePasswordRequest(BaseModel):
     current_password: str
     new_password: str
+
+class AdminForgotPasswordRequest(BaseModel):
+    email: EmailStr
 
 class UserForgotPasswordRequest(BaseModel):
     email: EmailStr
@@ -246,12 +261,12 @@ class PasswordResetConfirmRequest(BaseModel):
     token: str
     new_password: str
 
+# ===== SETTINGS / EMAIL HELPERS =====
 
-    count: int = 0
+def generate_token() -> str:
+    return secrets.token_urlsafe(32)
 
-class PaginatedDownloads(BaseModel):
-
-async def get_site_settings() -> dict:
+async def fetch_site_settings() -> dict:
     settings = await db.site_settings.find_one({"id": "site_settings"}, {"_id": 0})
     if not settings:
         settings = SiteSettings().model_dump()
@@ -259,7 +274,7 @@ async def get_site_settings() -> dict:
     return settings
 
 async def send_email_via_resend(to_email: str, subject: str, html: str) -> bool:
-    settings = await get_site_settings()
+    settings = await fetch_site_settings()
     api_key = settings.get("resend_api_key") or RESEND_API_KEY
     sender = settings.get("resend_sender_email") or SENDER_EMAIL
 
@@ -280,20 +295,6 @@ async def send_email_via_resend(to_email: str, subject: str, html: str) -> bool:
     except Exception as e:
         logger.error(f"Failed to send email: {str(e)}")
         return False
-
-    items: List[Download]
-    total: int
-    page: int
-    pages: int
-
-class PaginatedSubmissions(BaseModel):
-    items: List[Submission]
-    total: int
-    page: int
-    pages: int
-
-class AdminLogin(BaseModel):
-    password: str
 
 # ===== HELPER FUNCTIONS =====
 
