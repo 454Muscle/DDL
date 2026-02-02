@@ -12,6 +12,8 @@ import {
     Sun, 
     Moon,
     RefreshCw,
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "../components/ui/alert-dialog";
+
     LogOut,
     ExternalLink,
     Database,
