@@ -65,6 +65,11 @@ export default function AdminDashboardPage() {
     const [sponsoredDownloads, setSponsoredDownloads] = useState([]);
     const [newSponsored, setNewSponsored] = useState({ name: '', download_link: '', type: 'software', description: '' });
 
+    const [recaptchaSiteKey, setRecaptchaSiteKey] = useState('');
+    const [recaptchaSecretKey, setRecaptchaSecretKey] = useState('');
+    const [recaptchaEnableSubmit, setRecaptchaEnableSubmit] = useState(false);
+    const [recaptchaEnableAuth, setRecaptchaEnableAuth] = useState(false);
+
     useEffect(() => {
         if (!sessionStorage.getItem('admin_auth')) {
             navigate('/admin');
