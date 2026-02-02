@@ -940,6 +940,7 @@ async def create_submissions_bulk(payload: BulkSubmissionCreate, request: Reques
             download_link=s.download_link,
             type=s.type,
             submission_date=today,
+            seen_by_admin=False,
             file_size=s.file_size,
             file_size_bytes=file_size_bytes,
             description=s.description,
