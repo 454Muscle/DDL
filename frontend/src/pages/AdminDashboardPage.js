@@ -289,7 +289,7 @@ export default function AdminDashboardPage() {
             const response = await axios.put(`${API}/admin/settings`, payload);
             setSiteSettings(response.data);
             setRecaptchaSiteKey(response.data.recaptcha_site_key || '');
-            setRecaptchaSecretKey(response.data.recaptcha_secret_key || '');
+            // secret key is not returned by API responses; keep current input value
             setRecaptchaEnableSubmit(!!response.data.recaptcha_enable_submit);
             setRecaptchaEnableAuth(!!response.data.recaptcha_enable_auth);
             toast.success('reCAPTCHA settings updated');
