@@ -23,6 +23,8 @@ function SubmitPage() {
 
     const [name, setName] = useState('');
     const [downloadLink, setDownloadLink] = useState('');
+    const [siteName, setSiteName] = useState('');
+    const [siteUrl, setSiteUrl] = useState('');
     const [fileType, setFileType] = useState('game');
     const [fileSize, setFileSize] = useState('');
     const [description, setDescription] = useState('');
