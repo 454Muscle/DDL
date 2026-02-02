@@ -1391,7 +1391,7 @@ export default function AdminDashboardPage() {
                                 <AlertDialogHeader>
                                 <AlertDialogTitle>Delete download?</AlertDialogTitle>
                                 <AlertDialogDescription>
-                                    Delete “{deleteConfirm.name}”. This cannot be undone.
+                                    Delete “{downloadDeleteConfirm.name}”. This cannot be undone.
                                 </AlertDialogDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>
