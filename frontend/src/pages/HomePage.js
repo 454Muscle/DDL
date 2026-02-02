@@ -122,6 +122,21 @@ export default function HomePage() {
         }
     };
 
+    const fetchTrendingDownloads = async () => {
+        try {
+            const response = await axios.get(`${API}/downloads/trending`);
+            if (response.data.enabled) {
+                setTrendingDownloads(response.data.items || []);
+                setTrendingEnabled(true);
+            } else {
+                setTrendingDownloads([]);
+                setTrendingEnabled(false);
+            }
+        } catch (error) {
+            console.error('Error fetching trending downloads:', error);
+        }
+    };
+
     const fetchStats = async () => {
         try {
             const response = await axios.get(`${API}/stats`);
