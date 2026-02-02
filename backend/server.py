@@ -938,6 +938,21 @@ async def admin_confirm_password_change(payload: TokenOnlyRequest):
     await db.admin_password_resets.delete_one({"token": payload.token})
     return {"success": True}
 
+# Admin update email (requires current password)
+@api_router.post("/admin/email/update")
+async def admin_update_email(payload: AdminUpdateEmailRequest):
+    settings = await fetch_site_settings()
+    if settings.get("admin_password_hash"):
+        if hash_password(payload.current_password) != settings.get("admin_password_hash"):
+            raise HTTPException(status_code=401, detail="Invalid current password")
+    else:
+        if not ADMIN_PASSWORD or payload.current_password != ADMIN_PASSWORD:
+            raise HTTPException(status_code=401, detail="Invalid current password")
+
+    settings["admin_email"] = payload.new_email.lower()
+    await db.site_settings.update_one({"id": "site_settings"}, {"$set": settings}, upsert=True)
+    return {"success": True}
+
 # User forgot password (send magic link)
 @api_router.post("/auth/forgot-password")
 async def user_forgot_password(payload: UserForgotPasswordRequest):
