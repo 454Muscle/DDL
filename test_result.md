@@ -197,3 +197,5 @@ test_plan:
 agent_communication:
   - agent: "main"
     message: "Implemented Site fields end-to-end and added optional Google reCAPTCHA v2 with admin-configurable keys + toggles for Submit and Auth. Please run backend+frontend tests focusing on toggles off (math captcha) and toggles on (reCAPTCHA) flows. Admin password for local UI: admin123 (as currently configured)."
+  - agent: "testing"
+    message: "TESTING COMPLETE: Found 1 critical issue with Site column display on home page. Site column header exists but shows 'SITE' instead of 'Site' in table headers. All other functionality working: site fields validation, reCAPTCHA toggle functionality, admin settings, and UI switching between math captcha and reCAPTCHA widget. Backend API returns site data correctly."
