@@ -437,7 +437,8 @@ export default function AdminDashboardPage() {
                 body_font_weight: bodyFontWeight,
                 footer_enabled: footerEnabled,
                 footer_line1_template: footerLine1,
-                footer_line2_template: footerLine2
+                footer_line2_template: footerLine2,
+                auto_approve_submissions: autoApproveSubmissions
             };
             const res = await axios.put(`${API}/admin/settings`, payload);
             setSiteSettings(res.data);
