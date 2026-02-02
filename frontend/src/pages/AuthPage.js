@@ -318,6 +318,10 @@ export default function AuthPage() {
                             Or submit without an account →
                         </Link>
                     </p>
+
+                    <p style={{ marginTop: '0.5rem', fontSize: '0.75rem', opacity: 0.7 }}>
+                        If reCAPTCHA is enabled for Auth, it applies to both registration and login.
+                    </p>
                 </div>
             </div>
         </div>
