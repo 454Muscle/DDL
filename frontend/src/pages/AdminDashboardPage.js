@@ -77,6 +77,21 @@ export default function AdminDashboardPage() {
     const [adminCurrentPassword, setAdminCurrentPassword] = useState('');
     const [adminNewPassword, setAdminNewPassword] = useState('');
 
+    const [siteName, setSiteName] = useState('');
+    const [siteNameFontFamily, setSiteNameFontFamily] = useState('JetBrains Mono');
+    const [siteNameFontWeight, setSiteNameFontWeight] = useState('700');
+    const [siteNameFontColor, setSiteNameFontColor] = useState('#00FF41');
+    const [bodyFontFamily, setBodyFontFamily] = useState('JetBrains Mono');
+    const [bodyFontWeight, setBodyFontWeight] = useState('400');
+    const [footerEnabled, setFooterEnabled] = useState(true);
+    const [footerLine1, setFooterLine1] = useState('For DMCA copyright complaints send an email to {admin_email}.');
+    const [footerLine2, setFooterLine2] = useState('Copyright © {site_name} {year}. All rights reserved.');
+
+    const [downloadsSearch, setDownloadsSearch] = useState('');
+    const [downloadsResults, setDownloadsResults] = useState([]);
+    const [downloadsPage, setDownloadsPage] = useState(1);
+    const [downloadsTotalPages, setDownloadsTotalPages] = useState(1);
+
     useEffect(() => {
         if (!sessionStorage.getItem('admin_auth')) {
             navigate('/admin');
