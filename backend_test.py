@@ -266,6 +266,299 @@ class DownloadPortalAPITester:
                 return False
         return success
 
+    # ===== NEW TESTS FOR SITE FIELDS AND RECAPTCHA =====
+
+    def test_captcha_generation(self):
+        """Test /api/captcha returns a captcha"""
+        success, response = self.run_test("Generate Captcha", "GET", "captcha", 200)
+        if success:
+            required_fields = ['id', 'question']
+            has_fields = all(field in response for field in required_fields)
+            if has_fields:
+                self.captcha_data = response
+                self.log_test("Captcha Structure", True, f"Captcha generated: {response['question']}")
+                return True
+            else:
+                self.log_test("Captcha Structure", False, f"Missing fields in captcha response: {response}")
+                return False
+        return success
+
+    def test_submission_with_site_fields(self):
+        """Test creating submission with required site fields and math captcha"""
+        # First get a captcha
+        captcha_success, captcha_response = self.run_test("Get Captcha for Submission", "GET", "captcha", 200)
+        if not captcha_success:
+            return False
+        
+        # Parse the math question to get the answer
+        question = captcha_response['question']
+        # Extract numbers and operator from question like "What is 5 + 3?"
+        import re
+        match = re.search(r'What is (\d+) ([\+\-×]) (\d+)\?', question)
+        if not match:
+            self.log_test("Parse Captcha Question", False, f"Could not parse question: {question}")
+            return False
+        
+        num1, operator, num2 = int(match.group(1)), match.group(2), int(match.group(3))
+        if operator == '+':
+            answer = num1 + num2
+        elif operator == '-':
+            answer = num1 - num2
+        elif operator == '×':
+            answer = num1 * num2
+        
+        test_submission = {
+            "name": "Epic Adventure Game",
+            "download_link": "https://example.com/epic-adventure.zip",
+            "type": "game",
+            "site_name": "GameHub",
+            "site_url": "https://gamehub.com",
+            "file_size": "2.5 GB",
+            "description": "An epic adventure game",
+            "captcha_id": captcha_response['id'],
+            "captcha_answer": answer
+        }
+        
+        success, response = self.run_test("Create Submission with Site Fields", "POST", "submissions", 200, test_submission)
+        if success:
+            # Verify site fields are in response
+            if response.get('site_name') == "GameHub" and response.get('site_url') == "https://gamehub.com":
+                self.submission_id = response['id']
+                self.log_test("Site Fields in Submission", True, f"Site fields saved: {response.get('site_name')}, {response.get('site_url')}")
+                return True
+            else:
+                self.log_test("Site Fields in Submission", False, f"Site fields missing or incorrect: {response}")
+                return False
+        return success
+
+    def test_approve_submission_with_site_fields(self):
+        """Test approving submission and verify download includes site fields"""
+        if not self.submission_id:
+            self.log_test("Approve Submission with Site Fields", False, "No submission ID available")
+            return False
+        
+        # Approve the submission
+        approve_success, _ = self.run_test("Approve Submission with Site Fields", "POST", f"admin/submissions/{self.submission_id}/approve", 200)
+        if not approve_success:
+            return False
+        
+        # Get downloads and verify site fields are present
+        success, response = self.run_test("Verify Site Fields in Downloads", "GET", "downloads", 200)
+        if success and response.get('items'):
+            # Find our approved download
+            approved_download = None
+            for download in response['items']:
+                if download.get('site_name') == "GameHub":
+                    approved_download = download
+                    break
+            
+            if approved_download:
+                if approved_download.get('site_name') == "GameHub" and approved_download.get('site_url') == "https://gamehub.com":
+                    self.log_test("Site Fields in Download", True, f"Download contains site fields: {approved_download.get('site_name')}, {approved_download.get('site_url')}")
+                    return True
+                else:
+                    self.log_test("Site Fields in Download", False, f"Site fields missing in download: {approved_download}")
+                    return False
+            else:
+                self.log_test("Site Fields in Download", False, "Could not find approved download with site fields")
+                return False
+        return success
+
+    def test_site_url_validation(self):
+        """Test that submission with invalid site_url is rejected"""
+        # Get a captcha first
+        captcha_success, captcha_response = self.run_test("Get Captcha for URL Validation", "GET", "captcha", 200)
+        if not captcha_success:
+            return False
+        
+        # Parse captcha answer
+        question = captcha_response['question']
+        import re
+        match = re.search(r'What is (\d+) ([\+\-×]) (\d+)\?', question)
+        if not match:
+            return False
+        
+        num1, operator, num2 = int(match.group(1)), match.group(2), int(match.group(3))
+        if operator == '+':
+            answer = num1 + num2
+        elif operator == '-':
+            answer = num1 - num2
+        elif operator == '×':
+            answer = num1 * num2
+        
+        # Test with invalid URL (missing http/https)
+        invalid_submission = {
+            "name": "Test Invalid URL",
+            "download_link": "https://example.com/test.zip",
+            "type": "game",
+            "site_name": "TestSite",
+            "site_url": "invalid-url.com",  # Missing http/https
+            "captcha_id": captcha_response['id'],
+            "captcha_answer": answer
+        }
+        
+        # This should fail with 400 status
+        success, response = self.run_test("Invalid Site URL Validation", "POST", "submissions", 400, invalid_submission)
+        return success
+
+    def test_recaptcha_settings_public(self):
+        """Test /api/recaptcha/settings returns only site_key + toggles (no secret)"""
+        success, response = self.run_test("Get reCAPTCHA Settings Public", "GET", "recaptcha/settings", 200)
+        if success:
+            expected_fields = ['site_key', 'enable_submit', 'enable_auth']
+            has_fields = all(field in response for field in expected_fields)
+            has_secret = 'secret_key' in response or 'recaptcha_secret_key' in response
+            
+            if has_fields and not has_secret:
+                self.log_test("reCAPTCHA Settings Structure", True, f"Public settings correct: {list(response.keys())}")
+                return True
+            else:
+                self.log_test("reCAPTCHA Settings Structure", False, f"Invalid structure or secret exposed: {response}")
+                return False
+        return success
+
+    def test_site_settings_no_secret(self):
+        """Test /api/settings never returns recaptcha_secret_key"""
+        success, response = self.run_test("Get Site Settings", "GET", "settings", 200)
+        if success:
+            # Check that recaptcha_secret_key is None or not present
+            secret_key = response.get('recaptcha_secret_key')
+            if secret_key is None:
+                self.log_test("Site Settings Secret Key Hidden", True, "recaptcha_secret_key is properly hidden (None)")
+                return True
+            else:
+                self.log_test("Site Settings Secret Key Hidden", False, f"recaptcha_secret_key exposed: {secret_key}")
+                return False
+        return success
+
+    def test_admin_settings_recaptcha_validation(self):
+        """Test admin settings update: enabling recaptcha without keys fails, with keys succeeds"""
+        
+        # Test 1: Try to enable reCAPTCHA without keys (should fail)
+        invalid_settings = {
+            "recaptcha_enable_submit": True,
+            "recaptcha_site_key": "",
+            "recaptcha_secret_key": ""
+        }
+        
+        fail_success, _ = self.run_test("Enable reCAPTCHA Without Keys", "PUT", "admin/settings", 400, invalid_settings)
+        
+        # Test 2: Enable reCAPTCHA with keys (should succeed)
+        valid_settings = {
+            "recaptcha_enable_submit": True,
+            "recaptcha_site_key": "6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI",  # Test key
+            "recaptcha_secret_key": "6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe"  # Test secret
+        }
+        
+        success_success, _ = self.run_test("Enable reCAPTCHA With Keys", "PUT", "admin/settings", 200, valid_settings)
+        
+        return fail_success and success_success
+
+    def test_recaptcha_submission_validation(self):
+        """Test that when reCAPTCHA is enabled, submissions without token are rejected"""
+        
+        # First ensure reCAPTCHA is enabled for submissions
+        enable_settings = {
+            "recaptcha_enable_submit": True,
+            "recaptcha_site_key": "6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI",
+            "recaptcha_secret_key": "6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe"
+        }
+        
+        setup_success, _ = self.run_test("Setup reCAPTCHA for Testing", "PUT", "admin/settings", 200, enable_settings)
+        if not setup_success:
+            return False
+        
+        # Try to submit without reCAPTCHA token (should fail)
+        submission_without_token = {
+            "name": "Test reCAPTCHA Validation",
+            "download_link": "https://example.com/test.zip",
+            "type": "game",
+            "site_name": "TestSite",
+            "site_url": "https://testsite.com"
+            # No recaptcha_token provided
+        }
+        
+        # This should fail with 400 and "Invalid reCAPTCHA" message
+        success, response = self.run_test("Submission Without reCAPTCHA Token", "POST", "submissions", 400, submission_without_token)
+        
+        # Disable reCAPTCHA for other tests
+        disable_settings = {
+            "recaptcha_enable_submit": False,
+            "recaptcha_enable_auth": False
+        }
+        self.run_test("Disable reCAPTCHA After Testing", "PUT", "admin/settings", 200, disable_settings)
+        
+        return success
+
+    def test_recaptcha_auth_validation(self):
+        """Test that when reCAPTCHA is enabled for auth, registration without token is rejected"""
+        
+        # Enable reCAPTCHA for auth
+        enable_settings = {
+            "recaptcha_enable_auth": True,
+            "recaptcha_site_key": "6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI",
+            "recaptcha_secret_key": "6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe"
+        }
+        
+        setup_success, _ = self.run_test("Setup reCAPTCHA for Auth Testing", "PUT", "admin/settings", 200, enable_settings)
+        if not setup_success:
+            return False
+        
+        # Try to register without reCAPTCHA token (should fail)
+        registration_without_token = {
+            "email": "test@example.com",
+            "password": "testpassword123"
+            # No recaptcha_token provided
+        }
+        
+        success, response = self.run_test("Registration Without reCAPTCHA Token", "POST", "auth/register", 400, registration_without_token)
+        
+        # Disable reCAPTCHA for other tests
+        disable_settings = {
+            "recaptcha_enable_submit": False,
+            "recaptcha_enable_auth": False
+        }
+        self.run_test("Disable reCAPTCHA After Auth Testing", "PUT", "admin/settings", 200, disable_settings)
+        
+        return success
+
+    def test_site_name_length_validation(self):
+        """Test that site_name with more than 15 characters is rejected"""
+        # Get a captcha first
+        captcha_success, captcha_response = self.run_test("Get Captcha for Site Name Validation", "GET", "captcha", 200)
+        if not captcha_success:
+            return False
+        
+        # Parse captcha answer
+        question = captcha_response['question']
+        import re
+        match = re.search(r'What is (\d+) ([\+\-×]) (\d+)\?', question)
+        if not match:
+            return False
+        
+        num1, operator, num2 = int(match.group(1)), match.group(2), int(match.group(3))
+        if operator == '+':
+            answer = num1 + num2
+        elif operator == '-':
+            answer = num1 - num2
+        elif operator == '×':
+            answer = num1 * num2
+        
+        # Test with site_name longer than 15 characters
+        invalid_submission = {
+            "name": "Test Long Site Name",
+            "download_link": "https://example.com/test.zip",
+            "type": "game",
+            "site_name": "ThisSiteNameIsTooLongForValidation",  # 34 characters > 15
+            "site_url": "https://example.com",
+            "captcha_id": captcha_response['id'],
+            "captcha_answer": answer
+        }
+        
+        # This should fail with 422 status (validation error)
+        success, response = self.run_test("Long Site Name Validation", "POST", "submissions", 422, invalid_submission)
+        return success
+
 def main():
     print("🚀 Starting Download Portal API Tests...")
     print(f"Testing against: https://downloadportal-1.preview.emergentagent.com/api")
