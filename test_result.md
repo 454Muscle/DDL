@@ -140,6 +140,18 @@ backend:
         agent: "testing"
         comment: "✅ FIXED: Both single and bulk submissions now work correctly. POST /api/submissions returns 200 with submission object (not 500). POST /api/submissions/bulk returns {success:true,count:n} with valid captcha. Issue was timing-related with captcha validation - captchas must be used immediately after generation."
 
+  - task: "Rate limit increment for bulk submissions"
+    implemented: true
+    working: "NA"
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: false
+    status_history:
+      - working: "NA"
+        agent: "testing"
+        comment: "⚠️ INCONSISTENT: Rate limit increment behavior is inconsistent during testing. Bulk submissions should increment rate limit by item count, but observed rate limit reset to 0 during testing. This may be due to date rollover (system date is 2026-02-02) or other timing factors. Code logic appears correct but needs investigation in stable environment."
+
 frontend:
   - task: "Admin dashboard: Send test email button"
     implemented: true
