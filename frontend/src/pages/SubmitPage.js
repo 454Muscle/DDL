@@ -131,6 +131,33 @@ function SubmitPage() {
         if (cleanTag && !tags.includes(cleanTag) && tags.length < 10) {
             setTags([...tags, cleanTag]);
             setTagInput('');
+
+    function canAddMoreItems() {
+        return multiItems.length < Math.max(1, rateLimit.remaining);
+    }
+
+    function handleAddItemRow() {
+        if (!canAddMoreItems()) {
+            toast.error('RATE LIMIT: Cannot add more items than remaining today');
+            return;
+        }
+        setMultiItems([
+            ...multiItems,
+            { name: '', downloadLink: '', fileType: fileType, siteName: '', siteUrl: '', fileSize: '', description: '', category: '', tags: [] }
+        ]);
+    }
+
+    function handleRemoveItemRow(index) {
+        if (multiItems.length <= 1) {
+            return;
+        }
+        setMultiItems(multiItems.filter((_, i) => i !== index));
+    }
+
+    function updateMultiItem(index, patch) {
+        setMultiItems(multiItems.map((it, i) => (i === index ? { ...it, ...patch } : it)));
+    }
+
         }
     }
 
