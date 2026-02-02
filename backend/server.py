@@ -254,6 +254,10 @@ class AdminChangePasswordRequest(BaseModel):
 class AdminForgotPasswordRequest(BaseModel):
     email: EmailStr
 
+class ResendSettingsUpdate(BaseModel):
+    resend_api_key: Optional[str] = None
+    resend_sender_email: Optional[str] = None
+
 class UserForgotPasswordRequest(BaseModel):
     email: EmailStr
 
