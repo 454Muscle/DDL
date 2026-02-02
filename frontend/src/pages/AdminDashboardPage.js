@@ -332,19 +332,6 @@ export default function AdminDashboardPage() {
         }
     };
 
-    const handleUpdateResend = async () => {
-        try {
-            await axios.put(`${API}/admin/resend`, {
-                resend_api_key: resendApiKey,
-                resend_sender_email: resendSenderEmail
-            });
-            toast.success('Resend settings updated');
-        } catch (error) {
-            console.error('Update Resend error:', error);
-            toast.error(error.response?.data?.detail || 'Failed to update Resend settings');
-        }
-    };
-
     const handleInitAdmin = async () => {
         try {
             if (!adminEmail.trim()) {
