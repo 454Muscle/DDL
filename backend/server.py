@@ -764,6 +764,19 @@ async def delete_submission(submission_id: str):
         raise HTTPException(status_code=404, detail="Submission not found")
     return {"success": True, "message": "Submission deleted"}
 
+# Public: expose only safe reCAPTCHA settings (site key + toggles)
+@api_router.get("/recaptcha/settings")
+async def get_recaptcha_settings_public():
+    settings = await db.site_settings.find_one({"id": "site_settings"}, {"_id": 0})
+    if not settings:
+        settings = SiteSettings().model_dump()
+    return {
+        "site_key": settings.get("recaptcha_site_key"),
+        "enable_submit": bool(settings.get("recaptcha_enable_submit")),
+        "enable_auth": bool(settings.get("recaptcha_enable_auth")),
+    }
+
+
 # Admin - Delete Download
 @api_router.delete("/admin/downloads/{download_id}")
 async def delete_download(download_id: str):
