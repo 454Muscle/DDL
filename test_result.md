@@ -141,11 +141,14 @@ frontend:
     file: "/app/frontend/src/pages/AdminDashboardPage.js"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: true
         agent: "main"
         comment: "Added SEND TEST EMAIL button in Resend section calling /api/admin/resend/test and toast result."
+      - working: true
+        agent: "testing"
+        comment: "✅ TESTED: Admin dashboard accessible with 'newpass123' password. Resend section found and scrolled to successfully. SEND TEST EMAIL button works correctly, shows expected 'Failed to send test email' toast (expected behavior with dummy/missing Resend API configuration)."
 
   - task: "Submit page: multi-item mode"
     implemented: true
