@@ -21,6 +21,8 @@ export default function AuthPage() {
     });
     const [captcha, setCaptcha] = useState({ question: '', id: '' });
     const [loading, setLoading] = useState(false);
+    const [recaptchaSettings, setRecaptchaSettings] = useState({ site_key: null, enable_submit: false, enable_auth: false });
+    const [recaptchaToken, setRecaptchaToken] = useState('');
 
     useEffect(() => {
         if (isLoggedIn) {
