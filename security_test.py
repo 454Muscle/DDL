@@ -44,7 +44,7 @@ class SecurityTester:
             elif method == 'DELETE':
                 response = requests.delete(url, headers=headers)
 
-            success = response.status_code == expected_status
+            success = expected_status is None or response.status_code == expected_status
             details = f"Status: {response.status_code}"
             
             if not success:
@@ -56,7 +56,14 @@ class SecurityTester:
                     details += f" - {response.text[:100]}"
 
             self.log_test(name, success, details)
-            return success, response.json() if success and response.content else {}
+            
+            # Return response data for further validation
+            try:
+                response_data = response.json() if response.content else {}
+            except:
+                response_data = {}
+                
+            return success, response_data
 
         except Exception as e:
             self.log_test(name, False, f"Exception: {str(e)}")
