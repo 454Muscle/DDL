@@ -188,6 +188,10 @@ class SiteSettings(BaseModel):
     top_downloads_count: int = 5
     sponsored_downloads: List[dict] = []
 
+    # Trending downloads settings
+    trending_downloads_enabled: bool = False
+    trending_downloads_count: int = 5
+
     # Branding / typography
     site_name: Optional[str] = "DOWNLOAD ZONE"
     site_name_font_family: str = "JetBrains Mono"
