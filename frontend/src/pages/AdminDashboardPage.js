@@ -93,6 +93,7 @@ export default function AdminDashboardPage() {
     const [unseenSubmissionsCount, setUnseenSubmissionsCount] = useState(0);
 
     const [deleteConfirm, setDeleteConfirm] = useState({ open: false, id: null, name: '' });
+    const [downloadDeleteConfirm, setDownloadDeleteConfirm] = useState({ open: false, id: null, name: '' });
 
     const [downloadsSearch, setDownloadsSearch] = useState('');
     const [downloadsResults, setDownloadsResults] = useState([]);
