@@ -197,7 +197,7 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Rate limit increment verification"
+    - "All review request items completed and verified"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
