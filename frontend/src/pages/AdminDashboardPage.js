@@ -490,6 +490,8 @@ export default function AdminDashboardPage() {
             };
             const res = await axios.put(`${API}/admin/settings`, payload);
             setSiteSettings(res.data);
+            // Refresh global site settings so header/footer update immediately
+            refreshGlobalSettings();
             toast.success('Site settings updated');
         } catch (error) {
             console.error('Update branding error:', error);
