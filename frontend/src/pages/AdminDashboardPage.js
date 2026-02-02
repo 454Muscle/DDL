@@ -1048,29 +1048,6 @@ export default function AdminDashboardPage() {
                             value={adminEmail}
                             onChange={(e) => setAdminEmail(e.target.value)}
 
-            <AlertDialog open={deleteConfirm.open} onOpenChange={(open) => setDeleteConfirm({ ...deleteConfirm, open })}>
-                <AlertDialogContent>
-                    <AlertDialogHeader>
-                        <AlertDialogTitle>Delete download?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            Delete “{deleteConfirm.name}”. This cannot be undone.
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogCancel onClick={() => setDeleteConfirm({ open: false, id: null, name: '' })}>Cancel</AlertDialogCancel>
-                        <AlertDialogAction
-                            onClick={() => {
-                                if (deleteConfirm.id) {
-                                    handleDeleteDownload(deleteConfirm.id);
-                                }
-                                setDeleteConfirm({ open: false, id: null, name: '' });
-                            }}
-                        >
-                            Delete
-                        </AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
 
                             className="form-input"
                             placeholder="admin@example.com"
