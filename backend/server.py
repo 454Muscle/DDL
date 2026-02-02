@@ -493,6 +493,70 @@ async def send_bulk_submission_email(email: str, submissions: List[dict]):
     await send_email_via_resend(email, f"Download Zone - Batch Submission Received ({len(submissions)})", html)
 
 
+async def send_approval_email(email: str, submission: dict):
+    """Send notification email to submitter when their submission is approved"""
+    if not email:
+        return
+    
+    if not FRONTEND_URL:
+        logger.info("Approval email not sent: FRONTEND_URL is not configured")
+        return
+    
+    home_url = FRONTEND_URL
+    html_content = f"""
+    <html>
+    <body style="font-family: 'Courier New', monospace; background-color: #0a0a0a; color: #00FF41; padding: 20px;">
+        <div style="max-width: 600px; margin: 0 auto; border: 2px solid #00FF41; padding: 20px;">
+            <h1 style="color: #00FF41; border-bottom: 1px solid #00FF41; padding-bottom: 10px;">
+                DOWNLOAD ZONE - SUBMISSION APPROVED
+            </h1>
+            <p style="color: #00FF41; font-size: 16px;">Great news! Your submission has been approved and is now live on Download Zone.</p>
+            
+            <h2 style="color: #00FFFF;">APPROVED CONTENT:</h2>
+            <table style="width: 100%; border-collapse: collapse;">
+                <tr>
+                    <td style="padding: 8px; border: 1px solid #333; color: #888;">Name:</td>
+                    <td style="padding: 8px; border: 1px solid #333; color: #00FF41;">{submission.get('name', 'N/A')}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px; border: 1px solid #333; color: #888;">Type:</td>
+                    <td style="padding: 8px; border: 1px solid #333; color: #00FF41;">{submission.get('type', 'N/A')}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px; border: 1px solid #333; color: #888;">Category:</td>
+                    <td style="padding: 8px; border: 1px solid #333; color: #00FF41;">{submission.get('category', 'N/A')}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 8px; border: 1px solid #333; color: #888;">File Size:</td>
+                    <td style="padding: 8px; border: 1px solid #333; color: #00FF41;">{submission.get('file_size', 'N/A')}</td>
+                </tr>
+            </table>
+            
+            <p style="margin-top: 20px;">
+                <a href="{home_url}" style="display: inline-block; padding: 10px 20px; background-color: #00FF41; color: #000; text-decoration: none; font-weight: bold;">
+                    VIEW ON DOWNLOAD ZONE
+                </a>
+            </p>
+            
+            <p style="margin-top: 30px; font-size: 12px; color: #666;">
+                Thank you for contributing to Download Zone!
+            </p>
+        </div>
+    </body>
+    </html>
+    """
+    
+    ok = await send_email_via_resend(
+        email,
+        f"Download Zone - Submission Approved: {submission.get('name', 'Unknown')}",
+        html_content
+    )
+    if ok:
+        logger.info(f"Approval email sent to {email}")
+    else:
+        logger.info(f"Approval email not sent to {email}")
+
+
 # ===== CAPTCHA ROUTES =====
 
 @api_router.get("/captcha")
