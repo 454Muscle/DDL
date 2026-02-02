@@ -267,7 +267,9 @@ def generate_token() -> str:
     return secrets.token_urlsafe(32)
 
 async def fetch_site_settings() -> dict:
-    settings = await fetch_site_settings()
+    settings = await db.site_settings.find_one({"id": "site_settings"}, {"_id": 0})
+    if not settings:
+        settings = SiteSettings().model_dump()
         await db.site_settings.insert_one(settings)
     return settings
 
