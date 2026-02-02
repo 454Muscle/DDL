@@ -1525,6 +1525,17 @@ async def update_site_settings(update: SiteSettingsUpdate):
     if update.footer_line2_template is not None:
         settings["footer_line2_template"] = update.footer_line2_template
 
+    # Trending downloads settings
+    if update.trending_downloads_enabled is not None:
+        settings["trending_downloads_enabled"] = bool(update.trending_downloads_enabled)
+
+    if update.trending_downloads_count is not None:
+        settings["trending_downloads_count"] = max(5, min(20, update.trending_downloads_count))
+
+    # Submissions workflow
+    if update.auto_approve_submissions is not None:
+        settings["auto_approve_submissions"] = bool(update.auto_approve_submissions)
+
     await db.site_settings.update_one(
         {"id": "site_settings"},
         {"$set": settings},
@@ -1532,10 +1543,6 @@ async def update_site_settings(update: SiteSettingsUpdate):
     )
     return settings
 
-
-    # Submissions workflow
-    if update.auto_approve_submissions is not None:
-        settings["auto_approve_submissions"] = bool(update.auto_approve_submissions)
 
 # Get statistics
 @api_router.get("/stats")
