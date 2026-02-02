@@ -1083,6 +1083,26 @@ async def get_recaptcha_settings_public():
     return {
         "site_key": settings.get("recaptcha_site_key"),
         "enable_submit": bool(settings.get("recaptcha_enable_submit")),
+
+# Resend settings update (Admin)
+@api_router.put("/admin/resend")
+async def update_resend_settings(update: ResendSettingsUpdate):
+    settings = await fetch_site_settings()
+
+    if update.resend_api_key is not None:
+        settings["resend_api_key"] = update.resend_api_key.strip() or None
+
+    if update.resend_sender_email is not None:
+        settings["resend_sender_email"] = update.resend_sender_email.strip() or None
+
+    await db.site_settings.update_one({"id": "site_settings"}, {"$set": settings}, upsert=True)
+
+    # never return api key in response
+    settings = dict(settings)
+    settings["resend_api_key"] = None
+    settings["recaptcha_secret_key"] = None
+    return settings
+
         "enable_auth": bool(settings.get("recaptcha_enable_auth")),
     }
 
