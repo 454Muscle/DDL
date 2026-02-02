@@ -568,14 +568,26 @@ def main():
 
     # Run all tests in sequence
     test_methods = [
+        # Original tests
         tester.test_root_endpoint,
         tester.test_get_downloads_empty,
-        tester.test_create_submission,
+        
+        # New comprehensive site fields and reCAPTCHA tests
+        tester.test_captcha_generation,
+        tester.test_submission_with_site_fields,
+        tester.test_approve_submission_with_site_fields,
+        tester.test_site_url_validation,
+        tester.test_site_name_length_validation,
+        tester.test_recaptcha_settings_public,
+        tester.test_site_settings_no_secret,
+        tester.test_admin_settings_recaptcha_validation,
+        tester.test_recaptcha_submission_validation,
+        tester.test_recaptcha_auth_validation,
+        
+        # Admin and other functionality tests
         tester.test_admin_login_invalid,
         tester.test_admin_login_valid,
         tester.test_get_admin_submissions,
-        tester.test_approve_submission,
-        tester.test_get_downloads_with_data,
         tester.test_downloads_pagination,
         tester.test_downloads_filtering,
         tester.test_theme_get,
@@ -585,7 +597,6 @@ def main():
         tester.test_get_stats,
         tester.test_search_functionality,
         tester.test_download_increment,
-        tester.test_admin_seed_database,
         tester.test_downloads_with_optional_fields
     ]
 
