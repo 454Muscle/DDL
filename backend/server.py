@@ -745,7 +745,7 @@ async def create_submission(submission: SubmissionCreate, request: Request):
 # Admin init (set email + password the first time)
 @api_router.post("/admin/init")
 async def admin_init(payload: AdminInitRequest):
-    settings = await get_site_settings()
+    settings = await fetch_site_settings()
     if settings.get("admin_password_hash"):
         raise HTTPException(status_code=400, detail="Admin is already initialized")
 
@@ -761,7 +761,7 @@ async def admin_init(payload: AdminInitRequest):
 # Admin request password change (requires current password; sends magic link)
 @api_router.post("/admin/password/change/request")
 async def admin_request_password_change(payload: AdminChangePasswordRequest):
-    settings = await get_site_settings()
+    settings = await fetch_site_settings()
     if not settings.get("admin_email"):
         raise HTTPException(status_code=400, detail="Admin email is not configured")
 
@@ -806,7 +806,7 @@ async def admin_request_password_change(payload: AdminChangePasswordRequest):
 # Admin confirm password change
 @api_router.post("/admin/password/change/confirm")
 async def admin_confirm_password_change(payload: PasswordResetConfirmRequest):
-    settings = await get_site_settings()
+    settings = await fetch_site_settings()
     req = await db.admin_password_resets.find_one({"token": payload.token}, {"_id": 0})
     if not req:
         raise HTTPException(status_code=400, detail="Invalid or expired token")
@@ -960,7 +960,7 @@ async def get_remaining_submissions(request: Request):
 # Admin Login
 @api_router.post("/admin/login")
 async def admin_login(login: AdminLogin):
-    settings = await get_site_settings()
+    settings = await fetch_site_settings()
     # Prefer DB-stored password hash; fallback to env for bootstrap
     if settings.get("admin_password_hash"):
         if hash_password(login.password) == settings.get("admin_password_hash"):
