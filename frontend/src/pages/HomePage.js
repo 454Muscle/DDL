@@ -171,6 +171,7 @@ export default function HomePage() {
     useEffect(() => {
         fetchStats();
         fetchTopDownloads();
+        fetchTrendingDownloads();
         fetchCategories();
         fetchPopularTags();
     }, []);
