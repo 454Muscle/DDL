@@ -197,6 +197,9 @@ function SubmitPage() {
                 }
                 setName('');
                 setDownloadLink('');
+                setSiteName('');
+                setSiteUrl('');
+                setRecaptchaToken('');
                 setFileType('game');
                 setFileSize('');
                 setDescription('');
