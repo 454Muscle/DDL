@@ -419,6 +419,19 @@ async def register_user(user: UserRegister, request: Request):
 
 @api_router.post("/auth/login")
 async def login_user(user: UserLogin):
+    settings = await db.site_settings.find_one({"id": "site_settings"}, {"_id": 0})
+    if not settings:
+        settings = SiteSettings().model_dump()
+
+    if settings.get("recaptcha_enable_auth"):
+        ok = await verify_recaptcha(
+            user.recaptcha_token,
+            None,
+            settings.get("recaptcha_secret_key", ""),
+        )
+        if not ok:
+            raise HTTPException(status_code=400, detail="Invalid reCAPTCHA")
+
     # Find user
     db_user = await db.users.find_one({"email": user.email.lower()}, {"_id": 0})
     if not db_user:
