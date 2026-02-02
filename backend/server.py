@@ -1518,6 +1518,11 @@ async def approve_submission(submission_id: str):
     await db.downloads.insert_one(download_obj.model_dump())
     await db.submissions.update_one({"id": submission_id}, {"$set": {"status": "approved"}})
     
+    # Send approval notification email to submitter (async, non-blocking)
+    submitter_email = submission.get("submitter_email")
+    if submitter_email:
+        asyncio.create_task(send_approval_email(submitter_email, submission))
+    
     return {"success": True, "message": "Submission approved"}
 
 # Admin - Reject Submission
