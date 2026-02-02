@@ -223,6 +223,37 @@ class RateLimitEntry(BaseModel):
     count: int = 0
 
 class PaginatedDownloads(BaseModel):
+
+async def get_site_settings() -> dict:
+    settings = await db.site_settings.find_one({"id": "site_settings"}, {"_id": 0})
+    if not settings:
+        settings = SiteSettings().model_dump()
+        await db.site_settings.insert_one(settings)
+    return settings
+
+async def send_email_via_resend(to_email: str, subject: str, html: str) -> bool:
+    settings = await get_site_settings()
+    api_key = settings.get("resend_api_key") or RESEND_API_KEY
+    sender = settings.get("resend_sender_email") or SENDER_EMAIL
+
+    if not api_key or not sender or not to_email:
+        logger.info("Email not sent: missing Resend configuration or recipient")
+        return False
+
+    resend.api_key = api_key
+    params = {
+        "from": sender,
+        "to": [to_email],
+        "subject": subject,
+        "html": html,
+    }
+    try:
+        await asyncio.to_thread(resend.Emails.send, params)
+        return True
+    except Exception as e:
+        logger.error(f"Failed to send email: {str(e)}")
+        return False
+
     items: List[Download]
     total: int
     page: int
