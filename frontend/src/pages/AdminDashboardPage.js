@@ -430,6 +430,73 @@ export default function AdminDashboardPage() {
                                     ENABLED
                                 </button>
                                 <button
+
+                {/* Google reCAPTCHA Settings */}
+                <div style={{ borderTop: '1px solid hsl(var(--border))', paddingTop: '1.5rem' }} data-testid="recaptcha-settings">
+                    <h3 style={{ fontSize: '0.875rem', marginBottom: '0.75rem' }}>
+                        Google reCAPTCHA 2.0
+                    </h3>
+                    <p style={{ fontSize: '0.75rem', opacity: 0.7, marginBottom: '1rem' }}>
+                        Create keys at https://www.google.com/recaptcha/admin/create and choose reCAPTCHA v2 “I’m not a robot”.
+                        Add your site domain(s) + localhost for testing.
+                    </p>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                        <div>
+                            <label className="form-label" style={{ fontSize: '0.75rem' }}>SITE KEY (PUBLIC)</label>
+                            <input
+                                type="text"
+                                value={recaptchaSiteKey}
+                                onChange={(e) => setRecaptchaSiteKey(e.target.value)}
+                                className="form-input"
+                                placeholder="6Le..."
+                                data-testid="recaptcha-site-key-input"
+                            />
+                        </div>
+                        <div>
+                            <label className="form-label" style={{ fontSize: '0.75rem' }}>SECRET KEY (PRIVATE)</label>
+                            <input
+                                type="password"
+                                value={recaptchaSecretKey}
+                                onChange={(e) => setRecaptchaSecretKey(e.target.value)}
+                                className="form-input"
+                                placeholder="6Le..."
+                                data-testid="recaptcha-secret-key-input"
+                            />
+                        </div>
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginTop: '1rem' }}>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.75rem' }}>
+                            <input
+                                type="checkbox"
+                                checked={recaptchaEnableSubmit}
+                                onChange={(e) => setRecaptchaEnableSubmit(e.target.checked)}
+                                data-testid="recaptcha-enable-submit"
+                            />
+                            Enable on Submit page
+                        </label>
+                        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.75rem' }}>
+                            <input
+                                type="checkbox"
+                                checked={recaptchaEnableAuth}
+                                onChange={(e) => setRecaptchaEnableAuth(e.target.checked)}
+                                data-testid="recaptcha-enable-auth"
+                            />
+                            Enable on Login/Register
+                        </label>
+                    </div>
+
+                    <button
+                        onClick={handleUpdateRecaptcha}
+                        className="action-btn approve"
+                        style={{ padding: '0.75rem 1.5rem', marginTop: '1rem' }}
+                        data-testid="update-recaptcha-btn"
+                    >
+                        UPDATE reCAPTCHA
+                    </button>
+                </div>
+
                                     onClick={() => setTopEnabled(false)}
                                     className={`filter-btn ${!topEnabled ? 'active' : ''}`}
                                     data-testid="top-disabled-btn"
