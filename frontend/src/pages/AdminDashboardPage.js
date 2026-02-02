@@ -126,6 +126,8 @@ export default function AdminDashboardPage() {
             // secret key is not returned from /api/settings; keep current input value
             setRecaptchaEnableSubmit(!!response.data.recaptcha_enable_submit);
             setRecaptchaEnableAuth(!!response.data.recaptcha_enable_auth);
+            setAdminEmail(response.data.admin_email || '');
+            setResendSenderEmail(response.data.resend_sender_email || '');
         } catch (error) {
             console.error('Error fetching settings:', error);
         }
