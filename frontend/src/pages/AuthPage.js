@@ -301,7 +301,13 @@ export default function AuthPage() {
                     <p style={{ opacity: 0.7 }}>
                         {mode === 'login' ? "Don't have an account? " : 'Already have an account? '}
                         <button
-                            onClick={() => { setMode(mode === 'login' ? 'register' : 'login'); if (mode === 'login') fetchCaptcha(); }}
+                            onClick={() => { 
+                                const nextMode = mode === 'login' ? 'register' : 'login';
+                                setMode(nextMode);
+                                if (nextMode === 'register' && !recaptchaSettings.enable_auth) {
+                                    fetchCaptcha();
+                                }
+                            }}
                             style={{ background: 'none', border: 'none', color: 'hsl(var(--primary))', cursor: 'pointer', textDecoration: 'underline' }}
                         >
                             {mode === 'login' ? 'Register' : 'Login'}
