@@ -926,8 +926,8 @@ async def user_reset_password(payload: PasswordResetConfirmRequest):
 async def get_remaining_submissions(request: Request):
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     
-    settings = await db.site_settings.find_one({"id": "site_settings"}, {"_id": 0})
-    daily_limit = settings.get("daily_submission_limit", 10) if settings else 10
+    settings = await fetch_site_settings()
+    daily_limit = settings.get("daily_submission_limit", 10)
     
     client_ip = request.client.host if request.client else "anonymous"
     rate_entry = await db.rate_limits.find_one({"ip_address": client_ip, "date": today}, {"_id": 0})
