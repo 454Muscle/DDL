@@ -25,12 +25,12 @@
     --input: 0 0% 10%;
     --ring: 120 100% 50%;
     --radius: 0;
-}
     --body-font-family: 'JetBrains Mono';
     --body-font-weight: 400;
     --site-name-font-family: 'JetBrains Mono';
     --site-name-font-weight: 700;
     --site-name-font-color: #00FF41;
+}
 
 
 .light-theme {
