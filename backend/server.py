@@ -1083,6 +1083,8 @@ async def get_recaptcha_settings_public():
     return {
         "site_key": settings.get("recaptcha_site_key"),
         "enable_submit": bool(settings.get("recaptcha_enable_submit")),
+        "enable_auth": bool(settings.get("recaptcha_enable_auth")),
+    }
 
 # Resend settings update (Admin)
 @api_router.put("/admin/resend")
@@ -1102,9 +1104,6 @@ async def update_resend_settings(update: ResendSettingsUpdate):
     settings["resend_api_key"] = None
     settings["recaptcha_secret_key"] = None
     return settings
-
-        "enable_auth": bool(settings.get("recaptcha_enable_auth")),
-    }
 
 
 # Admin - Delete Download
