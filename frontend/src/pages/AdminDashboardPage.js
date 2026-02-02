@@ -650,6 +650,13 @@ export default function AdminDashboardPage() {
                             className="action-btn approve"
                             style={{ marginTop: '1rem', padding: '0.75rem 1.5rem' }}
                             data-testid="add-sponsored-btn"
+                        >
+                            <Plus size={14} style={{ display: 'inline', marginRight: '0.5rem' }} />
+                            ADD SPONSORED
+                        </button>
+                    </div>
+                )}
+            </div>
 
             {/* Resend Email Settings Card */}
             <div className="admin-card" data-testid="resend-settings">
