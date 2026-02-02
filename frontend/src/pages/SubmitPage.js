@@ -163,9 +163,16 @@ function SubmitPage() {
             name: name,
             download_link: downloadLink,
             type: fileType,
-            captcha_answer: parseInt(captchaAnswer),
-            captcha_id: captchaId
+            site_name: siteName,
+            site_url: siteUrl
         };
+
+        if (recaptchaSettings.enable_submit) {
+            payload.recaptcha_token = recaptchaToken;
+        } else {
+            payload.captcha_answer = parseInt(captchaAnswer);
+            payload.captcha_id = captchaId;
+        }
         if (fileSize.trim()) {
             payload.file_size = fileSize.trim();
         }
