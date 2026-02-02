@@ -623,6 +623,43 @@ export default function AdminDashboardPage() {
                                 >
                                     DISABLED
                                 </button>
+
+                <div style={{ marginTop: '1rem', padding: '0.75rem', border: '1px dashed hsl(var(--border))', background: 'hsl(var(--background))' }}>
+                    <div style={{ fontSize: '0.75rem', opacity: 0.7, marginBottom: '0.5rem' }}>FOOTER PREVIEW</div>
+                    <div style={{ fontSize: '0.75rem', textAlign: 'center', opacity: 0.85 }}>
+                        {footerEnabled ? (
+                            <>
+                                {adminEmail && footerLine1 ? (
+                                    <div>
+                                        {footerLine1
+                                            .replaceAll('{admin_email}', adminEmail)
+                                            .replaceAll('{site_name}', siteName || '')
+                                            .replaceAll('{year}', String(new Date().getFullYear()))}
+                                    </div>
+                                ) : (
+                                    footerLine1 && footerLine1.includes('{admin_email}') ? (
+                                        <div style={{ opacity: 0.5 }}>(Line 1 hidden — admin email missing)</div>
+                                    ) : null
+                                )}
+                                {siteName && footerLine2 ? (
+                                    <div>
+                                        {footerLine2
+                                            .replaceAll('{admin_email}', adminEmail || '')
+                                            .replaceAll('{site_name}', siteName)
+                                            .replaceAll('{year}', String(new Date().getFullYear()))}
+                                    </div>
+                                ) : (
+                                    footerLine2 && footerLine2.includes('{site_name}') ? (
+                                        <div style={{ opacity: 0.5 }}>(Line 2 hidden — site name missing)</div>
+                                    ) : null
+                                )}
+                            </>
+                        ) : (
+                            <div style={{ opacity: 0.6 }}>(Footer disabled)</div>
+                        )}
+                    </div>
+                </div>
+
                             </div>
                         </div>
                         <div style={{ minWidth: '150px' }}>
