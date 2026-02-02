@@ -63,7 +63,7 @@ class Download(BaseModel):
     category: Optional[str] = None
     tags: List[str] = []
     site_name: Optional[str] = None
-    site_url: Optional[AnyHttpUrl] = None
+    site_url: Optional[str] = None
 
 class DownloadCreate(BaseModel):
     name: str
