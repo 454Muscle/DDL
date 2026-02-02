@@ -508,7 +508,9 @@ function SubmitPage() {
                                 return (
                                     <div key={idx} style={{ border: '1px solid hsl(var(--border))', padding: '1rem', marginTop: '0.75rem' }}>
                                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                            <span style={{ fontSize: '0.75rem', opacity: 0.7 }}>ITEM {idx + 1}</span>
+                                            <span style={{ fontSize: '0.75rem', opacity: 0.7 }}>
+                                                ITEM {idx + 1} • Counts as 1 • Remaining after batch: {Math.max(0, rateLimit.remaining - multiItems.length)}
+                                            </span>
                                             <button type="button" className="action-btn reject" onClick={function() { handleRemoveItemRow(idx); }} disabled={multiItems.length <= 1} data-testid={`remove-item-${idx}`}>
                                                 REMOVE
                                             </button>
