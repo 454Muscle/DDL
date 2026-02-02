@@ -386,8 +386,11 @@ async def register_user(user: UserRegister, request: Request):
 
     # Verify captcha (math) OR reCAPTCHA depending on admin settings
     if settings.get("recaptcha_enable_auth"):
-        token = request.headers.get("X-Recaptcha-Token")
-        ok = await verify_recaptcha(token, request.client.host if request.client else None, settings.get("recaptcha_secret_key", ""))
+        ok = await verify_recaptcha(
+            user.recaptcha_token,
+            request.client.host if request.client else None,
+            settings.get("recaptcha_secret_key", ""),
+        )
         if not ok:
             raise HTTPException(status_code=400, detail="Invalid reCAPTCHA")
     else:
