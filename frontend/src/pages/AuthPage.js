@@ -28,7 +28,6 @@ export default function AuthPage() {
         if (isLoggedIn) {
             navigate('/submit');
         }
-        fetchCaptcha();
         fetchRecaptchaSettings();
     }, [isLoggedIn, navigate]);
 
