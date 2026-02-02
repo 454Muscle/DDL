@@ -86,6 +86,10 @@ export default function AdminDashboardPage() {
     const [footerEnabled, setFooterEnabled] = useState(true);
     const [footerLine1, setFooterLine1] = useState('For DMCA copyright complaints send an email to {admin_email}.');
     const [footerLine2, setFooterLine2] = useState('Copyright © {site_name} {year}. All rights reserved.');
+    const [autoApproveSubmissions, setAutoApproveSubmissions] = useState(false);
+    const [unseenSubmissionsCount, setUnseenSubmissionsCount] = useState(0);
+
+    const [deleteConfirm, setDeleteConfirm] = useState({ open: false, id: null, name: '' });
 
     const [downloadsSearch, setDownloadsSearch] = useState('');
     const [downloadsResults, setDownloadsResults] = useState([]);
