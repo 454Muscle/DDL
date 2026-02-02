@@ -118,6 +118,9 @@ backend:
       - working: true
         agent: "testing"
         comment: "✅ Backend API working correctly. Admin dashboard Resend section renders properly with API key and sender email inputs. Update Resend button shows success toast when clicked with dummy values (returns 200 status). UI flows and API integration confirmed working."
+      - working: true
+        agent: "testing"
+        comment: "✅ SECURITY VERIFIED: /api/settings properly hides resend_api_key. /api/admin/resend updates sender email and hides API key in response. All security requirements for Resend configuration confirmed working."
 
   - task: "Admin credentials (DB-stored) + magic-link password change"
     implemented: true
