@@ -147,11 +147,14 @@ frontend:
     file: "/app/frontend/src/pages/HomePage.js"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: true
         agent: "main"
         comment: "Added Site column to downloads table. Renders link with target=_blank when site_url present, otherwise shows '---'. Screenshot-based smoke test passed."
+      - working: true
+        agent: "testing"
+        comment: "✅ TESTED: Site column working correctly. Table shows 'SITE' header (uppercase), displays clickable links for items with site_url, shows '---' for items without site. Backend API returns site data correctly. Minor: Header shows 'SITE' instead of 'Site' but functionality works."
 
   - task: "Admin dashboard: reCAPTCHA keys + toggles"
     implemented: true
