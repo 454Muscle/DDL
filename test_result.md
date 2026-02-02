@@ -136,6 +136,9 @@ backend:
       - working: true
         agent: "testing"
         comment: "✅ Admin credentials system working correctly. Admin login successful with DB-stored password hash (password: 'newpass123'). Admin Credentials section renders properly in dashboard. Password change request shows expected backend error when email sending fails (no valid Resend API configured). All API endpoints responding correctly."
+      - working: true
+        agent: "testing"
+        comment: "✅ SECURITY VERIFIED: /api/admin/login uses DB-stored admin_password_hash and properly rejects env fallback. /api/admin/init returns 400 if already initialized. /api/admin/password/change/request requires current password and handles resend configuration properly. /api/admin/password/change/confirm with bad token returns 400. All admin credential security measures confirmed working."
 
   - task: "Forgot password flows (user + admin)"
     implemented: true
