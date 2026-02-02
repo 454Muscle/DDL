@@ -109,8 +109,11 @@ export default function AuthPage() {
             const message = error.response?.data?.detail || 'Authentication failed';
             toast.error(message);
             if (mode === 'register') {
-                fetchCaptcha();
+                if (!recaptchaSettings.enable_auth) {
+                    fetchCaptcha();
+                }
             }
+            setRecaptchaToken('');
         } finally {
             setLoading(false);
         }
