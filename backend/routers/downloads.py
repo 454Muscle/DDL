@@ -309,10 +309,6 @@ async def get_stats():
     tv_shows = await db.downloads.count_documents({"approved": True, "type": "tv_show"})
     
     # Get total downloads
-    pipeline = [
-        {"approved": True}, 
-        {"$group": {"_id": None, "total_downloads": {"$sum": "$download_count"}}}
-    ]
     result = await db.downloads.aggregate([
         {"$match": {"approved": True}},
         {"$group": {"_id": None, "total_downloads": {"$sum": "$download_count"}}}
