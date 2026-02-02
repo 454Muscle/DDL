@@ -954,10 +954,32 @@ async def create_submissions_bulk(payload: BulkSubmissionCreate, request: Reques
         await db.submissions.insert_one(doc)
         created_docs.append(doc)
 
-    # send a single summary email
+    # emails (one per request)
     email = (payload.submitter_email or '').strip()
     if email:
         asyncio.create_task(send_bulk_submission_email(email, created_docs))
+
+    asyncio.create_task(send_admin_submissions_summary(created_docs))
+
+    # auto-approve if enabled
+    if settings.get("auto_approve_submissions"):
+        for doc in created_docs:
+            download_obj = Download(
+                name=doc["name"],
+                download_link=doc["download_link"],
+                type=doc["type"],
+                submission_date=doc["submission_date"],
+                approved=True,
+                file_size=doc.get("file_size"),
+                file_size_bytes=doc.get("file_size_bytes"),
+                description=doc.get("description"),
+                category=doc.get("category"),
+                tags=doc.get("tags", []),
+                site_name=doc.get("site_name"),
+                site_url=doc.get("site_url")
+            )
+            await db.downloads.insert_one(download_obj.model_dump())
+            await db.submissions.update_one({"id": doc["id"]}, {"$set": {"status": "approved", "seen_by_admin": True}})
 
     return {"success": True, "count": len(created_docs)}
 
