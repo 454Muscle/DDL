@@ -101,127 +101,85 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "Add a new 'Site' column to downloads and collect required site name + URL on submissions; additionally, add optional Google reCAPTCHA v2 configurable via Admin to replace math captcha on Submit and/or Auth."
+user_problem_statement: "Activate Resend emails (admin-configurable), move admin password to env/DB with email-confirmed change, add forgot-password flows for user + admin."
 
 backend:
-  - task: "Site fields on submissions/downloads"
+  - task: "Resend email via admin-configurable settings"
     implemented: true
     working: true
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
       - working: true
         agent: "main"
-        comment: "Added site_name + site_url to SubmissionCreate; persisted to submissions; approval copies fields into downloads. Manual curl verified approved download returns site fields."
-      - working: true
-        agent: "testing"
-        comment: "✅ TESTED: Backend API returns site fields correctly. Downloads API shows site_name and site_url for items that have them. Integration working properly."
-      - working: true
-        agent: "testing"
-        comment: "✅ COMPREHENSIVE BACKEND TESTING COMPLETE: All site field functionality verified. 1) /api/captcha generates math captcha correctly. 2) Submissions with site_name (≤15 chars) and site_url (http/https required) work perfectly with math captcha. 3) Approved submissions correctly copy site fields to downloads. 4) Site URL validation properly rejects URLs without http/https prefix. 5) Site name validation rejects names >15 characters. All 53 backend API tests passed (100% success rate)."
+        comment: "Added resend_api_key + resend_sender_email to site_settings; implemented /api/admin/resend; send_submission_email now uses settings-driven send_email_via_resend. Public /api/settings hides resend_api_key."
 
-  - task: "Google reCAPTCHA v2 verification + settings"
+  - task: "Admin credentials (DB-stored) + magic-link password change"
     implemented: true
     working: true
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
       - working: true
         agent: "main"
-        comment: "Added SiteSettings recaptcha keys/toggles; /api/recaptcha/settings public endpoint; server-side verification via google siteverify when enabled; /api/settings hides secret key. Manual curl verified secret not exposed."
+        comment: "Admin login prefers DB admin_password_hash; fallback to env ADMIN_PASSWORD for bootstrap only. Added /api/admin/init, /api/admin/password/change/request (requires current password; emails magic link), /api/admin/password/change/confirm (token-only), /api/admin/email/update (requires current password)."
+
+  - task: "Forgot password flows (user + admin)"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
       - working: true
-        agent: "testing"
-        comment: "✅ TESTED: reCAPTCHA settings API working. Admin can update keys and toggles. Backend properly validates and saves settings. Frontend receives correct configuration."
-      - working: true
-        agent: "testing"
-        comment: "✅ COMPREHENSIVE BACKEND TESTING COMPLETE: All reCAPTCHA functionality verified. 1) /api/recaptcha/settings returns only site_key + toggles (no secret exposed). 2) /api/settings never returns recaptcha_secret_key (properly null). 3) Admin settings validation: enabling reCAPTCHA without keys properly rejected (400), enabling with keys succeeds (200). 4) When reCAPTCHA enabled for submissions, requests without recaptcha_token properly rejected with 'Invalid reCAPTCHA'. 5) When reCAPTCHA enabled for auth, registration without recaptcha_token properly rejected. All security and validation requirements met."
+        agent: "main"
+        comment: "Added /api/auth/forgot-password + /api/auth/reset-password; added /api/admin/forgot-password + /api/admin/reset-password. Uses token stored in MongoDB collections with 30 min expiry."
 
 frontend:
-  - task: "Submit page: required site fields + reCAPTCHA widget toggle"
+  - task: "Forgot/Reset password pages + links"
     implemented: true
     working: true
-    file: "/app/frontend/src/pages/SubmitPage.js"
+    file: "/app/frontend/src/App.js"
     stuck_count: 0
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
       - working: true
         agent: "main"
-        comment: "Added site name/url inputs (required) and reCAPTCHA widget when enabled via /api/recaptcha/settings; fallback to math captcha otherwise. Screenshot-based smoke test passed."
-      - working: true
-        agent: "testing"
-        comment: "✅ TESTED: Site fields validation working correctly - site name max 15 chars, site URL must start with http/https. reCAPTCHA widget displays when enabled with dummy keys, math captcha shows when disabled. UI switching works properly."
+        comment: "Added ForgotPasswordPage, ResetPasswordPage, AdminForgotPasswordPage, AdminResetPasswordPage, AdminConfirmPasswordChangePage + routes. Added small 'Forgot password?' links on user login and admin login pages."
 
-  - task: "Home page: add Site column"
-    implemented: true
-    working: true
-    file: "/app/frontend/src/pages/HomePage.js"
-    stuck_count: 0
-    priority: "high"
-    needs_retesting: false
-    status_history:
-      - working: true
-        agent: "main"
-        comment: "Added Site column to downloads table. Renders link with target=_blank when site_url present, otherwise shows '---'. Screenshot-based smoke test passed."
-      - working: true
-        agent: "testing"
-        comment: "✅ TESTED: Site column working correctly. Table shows 'SITE' header (uppercase), displays clickable links for items with site_url, shows '---' for items without site. Backend API returns site data correctly. Minor: Header shows 'SITE' instead of 'Site' but functionality works."
-
-  - task: "Admin dashboard: reCAPTCHA keys + toggles"
+  - task: "Admin dashboard: Resend + admin credential management UI"
     implemented: true
     working: true
     file: "/app/frontend/src/pages/AdminDashboardPage.js"
     stuck_count: 0
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
       - working: true
         agent: "main"
-        comment: "Added Google reCAPTCHA 2.0 section with Site Key + Secret Key inputs and toggles for Submit/Auth; update button saves to /api/admin/settings. Screenshot shows section rendered after admin login."
-      - working: true
-        agent: "testing"
-        comment: "✅ TESTED: Admin login works with password 'admin123'. Google reCAPTCHA 2.0 section renders with all inputs/toggles. Update button makes requests and saves settings. Backend properly validates keys when enabling toggles."
-
-  - task: "Auth page: reCAPTCHA widget toggle"
-    implemented: true
-    working: true
-    file: "/app/frontend/src/pages/AuthPage.js"
-    stuck_count: 0
-    priority: "high"
-    needs_retesting: false
-    status_history:
-      - working: true
-        agent: "main"
-        comment: "When enabled, registration shows reCAPTCHA widget and sends token to backend; login also sends token. Otherwise uses math captcha for register. Needs e2e test with real keys."
-      - working: true
-        agent: "testing"
-        comment: "✅ TESTED: Auth page correctly switches between math captcha (when reCAPTCHA disabled) and reCAPTCHA widget (when enabled). Toggle functionality works through admin settings. Registration form shows appropriate captcha type based on settings."
+        comment: "Added Resend section (API key + sender email + instructions) and Admin Credentials section (init, request password change)." 
 
 metadata:
   created_by: "main_agent"
   version: "1.0"
-  test_sequence: 1
+  test_sequence: 2
   run_ui: true
 
 test_plan:
   current_focus:
-    - "Site fields on submissions/downloads"
-    - "Home page: add Site column"
-    - "Submit page: required site fields + reCAPTCHA widget toggle"
-    - "Admin dashboard: reCAPTCHA keys + toggles"
-    - "Auth page: reCAPTCHA widget toggle"
+    - "Resend email via admin-configurable settings"
+    - "Forgot/Reset password pages + links"
+    - "Admin init + password change confirmation flow"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
 
 agent_communication:
   - agent: "main"
-    message: "Implemented Site fields end-to-end and added optional Google reCAPTCHA v2 with admin-configurable keys + toggles for Submit and Auth. Please run backend+frontend tests focusing on toggles off (math captcha) and toggles on (reCAPTCHA) flows. Admin password for local UI: admin123 (as currently configured)."
-  - agent: "testing"
-    message: "TESTING COMPLETE: Found 1 critical issue with Site column display on home page. Site column header exists but shows 'SITE' instead of 'Site' in table headers. All other functionality working: site fields validation, reCAPTCHA toggle functionality, admin settings, and UI switching between math captcha and reCAPTCHA widget. Backend API returns site data correctly."
-  - agent: "testing"
-    message: "✅ COMPREHENSIVE BACKEND API TESTING COMPLETE (100% SUCCESS): Executed 53 backend API tests covering all review requirements. VERIFIED: 1) /api/captcha generates math captcha correctly. 2) Submissions with required site_name (≤15 chars) and site_url (http/https) work with math captcha, response includes site fields. 3) Approved submissions copy site fields to downloads correctly. 4) Site URL validation rejects URLs missing http/https. 5) /api/recaptcha/settings returns only site_key + toggles (no secret). 6) /api/settings never exposes recaptcha_secret_key (null). 7) Admin settings: enabling reCAPTCHA without keys rejected, with keys succeeds. 8) When reCAPTCHA enabled, submissions/auth without recaptcha_token properly rejected with 'Invalid reCAPTCHA'. All backend functionality working perfectly - ready for production."
+    message: "Implemented admin-configurable Resend + password reset flows. NOTE: actual email sending requires valid Resend API key + sender configured. Please test UI routing + API responses; magic link flows can be simulated by reading token from DB or response logs if needed."
