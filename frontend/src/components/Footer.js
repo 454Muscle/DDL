@@ -1,13 +1,16 @@
 import { useMemo } from 'react';
 import { useSiteSettings } from '../context/SiteSettingsContext';
 
+function hasPlaceholder(template, key) {
+    return (template || '').includes(`{${key}}`);
+}
+
 function renderTemplate(template, vars) {
     if (!template) return '';
     let out = template;
     Object.keys(vars).forEach((k) => {
         out = out.replaceAll(`{${k}}`, vars[k] || '');
     });
-    // trim and collapse if placeholders missing
     return out.replace(/\s+/g, ' ').trim();
 }
 
@@ -16,22 +19,32 @@ export default function Footer() {
 
     const lines = useMemo(() => {
         if (!settings || !settings.footer_enabled) return [];
+
         const vars = {
             admin_email: settings.admin_email || '',
             site_name: settings.site_name || '',
             year: String(new Date().getFullYear()),
         };
 
-        const line1 = renderTemplate(settings.footer_line1_template, vars);
-        const line2 = renderTemplate(settings.footer_line2_template, vars);
+        const t1 = settings.footer_line1_template;
+        const t2 = settings.footer_line2_template;
+
+        // Hide lines if required placeholder values are missing
+        if (hasPlaceholder(t1, 'admin_email') && !vars.admin_email) {
+            // hide
+        }
 
         const out = [];
-        if (line1 && !line1.includes('{') && vars.admin_email) out.push(line1);
-        else if (line1 && vars.admin_email) out.push(line1);
+        if (!(hasPlaceholder(t1, 'admin_email') && !vars.admin_email)) {
+            const l1 = renderTemplate(t1, vars);
+            if (l1) out.push(l1);
+        }
 
-        if (line2 && vars.site_name) out.push(line2);
+        if (!(hasPlaceholder(t2, 'site_name') && !vars.site_name)) {
+            const l2 = renderTemplate(t2, vars);
+            if (l2) out.push(l2);
+        }
 
-        // Hide lines if required values missing
         return out;
     }, [settings]);
 

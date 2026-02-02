@@ -26,6 +26,12 @@
     --ring: 120 100% 50%;
     --radius: 0;
 }
+    --body-font-family: 'JetBrains Mono';
+    --body-font-weight: 400;
+    --site-name-font-family: 'JetBrains Mono';
+    --site-name-font-weight: 700;
+    --site-name-font-color: #00FF41;
+
 
 .light-theme {
     --background: 0 0% 75%;
@@ -55,7 +61,8 @@
 
 body {
     margin: 0;
-    font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+    font-family: var(--body-font-family, 'JetBrains Mono'), 'Fira Code', 'Courier New', monospace;
+    font-weight: var(--body-font-weight, 400);
     background-color: hsl(var(--background));
     color: hsl(var(--foreground));
     -webkit-font-smoothing: antialiased;

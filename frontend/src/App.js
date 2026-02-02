@@ -3,7 +3,9 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "./context/ThemeContext";
 import { AuthProvider } from "./context/AuthContext";
+import { SiteSettingsProvider } from "./context/SiteSettingsContext";
 import { Header } from "./components/Header";
+import Footer from "./components/Footer";
 import HomePage from "./pages/HomePage";
 import SubmitPage from "./pages/SubmitPage";
 import AuthPage from "./pages/AuthPage";
@@ -18,8 +20,9 @@ import AdminConfirmPasswordChangePage from "./pages/AdminConfirmPasswordChangePa
 function App() {
     return (
         <ThemeProvider>
-            <AuthProvider>
-                <div className="app-container">
+            <SiteSettingsProvider>
+                <AuthProvider>
+                    <div className="app-container">
                     <BrowserRouter>
                         <Header />
                         <Routes>
@@ -34,6 +37,7 @@ function App() {
                             <Route path="/admin/confirm-password-change" element={<AdminConfirmPasswordChangePage />} />
                             <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
                         </Routes>
+                        <Footer />
                     </BrowserRouter>
                     <Toaster 
                         position="top-right"
@@ -47,7 +51,8 @@ function App() {
                         }}
                     />
                 </div>
-            </AuthProvider>
+                </AuthProvider>
+            </SiteSettingsProvider>
         </ThemeProvider>
     );
 }

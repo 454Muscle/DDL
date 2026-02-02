@@ -1,12 +1,16 @@
 import { Link, useLocation } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
+import { useSiteSettings } from '../context/SiteSettingsContext';
 import { Download, Upload, Shield, Sun, Moon, User, LogOut } from 'lucide-react';
 
 export const Header = () => {
     const location = useLocation();
     const { theme, updateTheme } = useTheme();
     const { user, isLoggedIn, logout } = useAuth();
+    const { settings } = useSiteSettings();
+
+    const siteName = settings?.site_name || 'DOWNLOAD ZONE';
 
     const isActive = (path) => location.pathname === path;
 
@@ -36,15 +40,18 @@ export const Header = () => {
                     style={{ textDecoration: 'none' }}
                     data-testid="header-logo"
                 >
-                    <h1 className="pixel-font neon-glow" style={{ 
+                    <h1 className="neon-glow" style={{
                         fontSize: '0.875rem',
                         margin: 0,
                         display: 'flex',
                         alignItems: 'center',
-                        gap: '0.5rem'
+                        gap: '0.5rem',
+                        fontFamily: 'var(--site-name-font-family)',
+                        fontWeight: 'var(--site-name-font-weight)',
+                        color: 'var(--site-name-font-color)'
                     }}>
                         <Download size={20} />
-                        DOWNLOAD ZONE
+                        {siteName}
                     </h1>
                 </Link>
 
