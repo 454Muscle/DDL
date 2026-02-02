@@ -610,13 +610,6 @@ export default function AdminDashboardPage() {
                                 <button
                                     onClick={() => setTopEnabled(true)}
 
-                <div style={{ borderTop: '1px solid hsl(var(--border))', marginTop: '1.25rem', paddingTop: '1.25rem' }}>
-                    <h3 style={{ fontSize: '0.875rem', marginBottom: '0.75rem' }}>Submissions</h3>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.75rem' }}>
-                        <input type="checkbox" checked={autoApproveSubmissions} onChange={(e) => setAutoApproveSubmissions(e.target.checked)} data-testid="auto-approve-submissions" />
-                        Auto approve submissions
-                    </label>
-                </div>
 
                                     className={`filter-btn ${topEnabled ? 'active' : ''}`}
                                     data-testid="top-enabled-btn"
