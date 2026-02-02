@@ -650,6 +650,128 @@ export default function AdminDashboardPage() {
                             className="action-btn approve"
                             style={{ marginTop: '1rem', padding: '0.75rem 1.5rem' }}
                             data-testid="add-sponsored-btn"
+
+            {/* Resend Email Settings Card */}
+            <div className="admin-card" data-testid="resend-settings">
+                <h2 className="admin-title">Resend Email</h2>
+                <p style={{ fontSize: '0.75rem', opacity: 0.7, marginBottom: '1rem' }}>
+                    Create an API key at https://resend.com/api-keys (Dashboard → API Keys). In test mode, Resend may require verifying your sender domain/email.
+                </p>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                    <div>
+                        <label className="form-label" style={{ fontSize: '0.75rem' }}>RESEND API KEY</label>
+                        <input
+                            type="password"
+                            value={resendApiKey}
+                            onChange={(e) => setResendApiKey(e.target.value)}
+                            className="form-input"
+                            placeholder="re_..."
+                            data-testid="resend-api-key-input"
+                        />
+                    </div>
+                    <div>
+                        <label className="form-label" style={{ fontSize: '0.75rem' }}>SENDER EMAIL (FROM)</label>
+                        <input
+                            type="email"
+                            value={resendSenderEmail}
+                            onChange={(e) => setResendSenderEmail(e.target.value)}
+                            className="form-input"
+                            placeholder="onboarding@resend.dev"
+                            data-testid="resend-sender-email-input"
+                        />
+                    </div>
+                </div>
+
+                <button
+                    onClick={handleUpdateResend}
+                    className="action-btn approve"
+                    style={{ padding: '0.75rem 1.5rem', marginTop: '1rem' }}
+                    data-testid="update-resend-btn"
+                >
+                    UPDATE RESEND
+                </button>
+            </div>
+
+            {/* Admin Credentials Card */}
+            <div className="admin-card" data-testid="admin-credentials">
+                <h2 className="admin-title">Admin Credentials</h2>
+                <p style={{ fontSize: '0.75rem', opacity: 0.7, marginBottom: '1rem' }}>
+                    Set the admin email (required). Password changes require current password and are confirmed via a magic link sent to the admin email.
+                </p>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                    <div>
+                        <label className="form-label" style={{ fontSize: '0.75rem' }}>ADMIN EMAIL</label>
+                        <input
+                            type="email"
+                            value={adminEmail}
+                            onChange={(e) => setAdminEmail(e.target.value)}
+                            className="form-input"
+                            placeholder="admin@example.com"
+                            data-testid="admin-email-input"
+                        />
+                    </div>
+                    <div>
+                        <label className="form-label" style={{ fontSize: '0.75rem' }}>INITIAL ADMIN PASSWORD (FIRST TIME ONLY)</label>
+                        <input
+                            type="password"
+                            value={adminInitPassword}
+                            onChange={(e) => setAdminInitPassword(e.target.value)}
+                            className="form-input"
+                            placeholder="••••••••"
+                            data-testid="admin-init-password-input"
+                        />
+                    </div>
+                </div>
+
+                <button
+                    onClick={handleInitAdmin}
+                    className="action-btn approve"
+                    style={{ padding: '0.75rem 1.5rem', marginTop: '1rem' }}
+                    data-testid="admin-init-btn"
+                >
+                    INITIALIZE ADMIN
+                </button>
+
+                <div style={{ borderTop: '1px solid hsl(var(--border))', marginTop: '1.5rem', paddingTop: '1.5rem' }}>
+                    <h3 style={{ fontSize: '0.875rem', marginBottom: '0.75rem' }}>Request Password Change</h3>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                        <div>
+                            <label className="form-label" style={{ fontSize: '0.75rem' }}>CURRENT PASSWORD</label>
+                            <input
+                                type="password"
+                                value={adminCurrentPassword}
+                                onChange={(e) => setAdminCurrentPassword(e.target.value)}
+                                className="form-input"
+                                placeholder="••••••••"
+                                data-testid="admin-current-password-input"
+                            />
+                        </div>
+                        <div>
+                            <label className="form-label" style={{ fontSize: '0.75rem' }}>NEW PASSWORD</label>
+                            <input
+                                type="password"
+                                value={adminNewPassword}
+                                onChange={(e) => setAdminNewPassword(e.target.value)}
+                                className="form-input"
+                                placeholder="••••••••"
+                                data-testid="admin-new-password-input"
+                            />
+                        </div>
+                    </div>
+
+                    <button
+                        onClick={handleRequestAdminPasswordChange}
+                        className="action-btn approve"
+                        style={{ padding: '0.75rem 1.5rem', marginTop: '1rem' }}
+                        data-testid="admin-request-password-change-btn"
+                    >
+                        SEND CONFIRMATION EMAIL
+                    </button>
+                </div>
+            </div>
+
                         >
                             <Plus size={14} style={{ display: 'inline', marginRight: '0.5rem' }} />
                             ADD SPONSORED
