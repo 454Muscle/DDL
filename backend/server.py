@@ -1431,6 +1431,11 @@ async def update_theme(update: ThemeUpdate):
 async def get_site_settings_public():
     settings = await fetch_site_settings()
 
+    # Submissions workflow
+    if update.auto_approve_submissions is not None:
+        settings["auto_approve_submissions"] = bool(update.auto_approve_submissions)
+
+
     # Never expose secret keys publicly
     settings = dict(settings)
     settings["recaptcha_secret_key"] = None
