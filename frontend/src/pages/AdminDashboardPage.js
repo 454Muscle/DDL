@@ -322,10 +322,6 @@ export default function AdminDashboardPage() {
         }
     };
 
-    const handleInitAdmin = async () => {
-        try {
-            if (!adminEmail.trim()) {
-
     const handleSendResendTestEmail = async () => {
         try {
             await axios.post(`${API}/admin/resend/test`);
@@ -333,42 +329,6 @@ export default function AdminDashboardPage() {
         } catch (error) {
             console.error('Resend test email error:', error);
             toast.error(error.response?.data?.detail || 'Failed to send test email');
-        }
-    };
-
-                toast.error('Admin email is required');
-                return;
-            }
-            if (!adminInitPassword || adminInitPassword.length < 6) {
-                toast.error('Admin password must be at least 6 characters');
-                return;
-            }
-            await axios.post(`${API}/admin/init`, { email: adminEmail, password: adminInitPassword });
-            toast.success('Admin initialized');
-        } catch (error) {
-            console.error('Admin init error:', error);
-            toast.error(error.response?.data?.detail || 'Failed to initialize admin');
-        }
-    };
-
-    const handleRequestAdminPasswordChange = async () => {
-        try {
-            if (!adminCurrentPassword) {
-                toast.error('Current password is required');
-                return;
-            }
-            if (!adminNewPassword || adminNewPassword.length < 6) {
-                toast.error('New password must be at least 6 characters');
-                return;
-            }
-            await axios.post(`${API}/admin/password/change/request`, {
-                current_password: adminCurrentPassword,
-                new_password: adminNewPassword
-            });
-            toast.success('Confirmation email sent. Check admin inbox.');
-        } catch (error) {
-            console.error('Admin password change request error:', error);
-            toast.error(error.response?.data?.detail || 'Failed to request password change');
         }
     };
 
