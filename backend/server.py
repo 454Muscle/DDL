@@ -1464,9 +1464,6 @@ async def reject_submission(submission_id: str):
         raise HTTPException(status_code=404, detail="Submission not found")
     return {"success": True, "message": "Submission rejected"}
 
-# Admin - Delete Submission
-@api_router.delete("/admin/submissions/{submission_id}")
-
 # Resend test email (Admin)
 @api_router.post("/admin/resend/test")
 async def resend_test_email():
