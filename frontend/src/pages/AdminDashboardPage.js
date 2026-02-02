@@ -1367,8 +1367,8 @@ export default function AdminDashboardPage() {
                                 <AlertDialogDescription>
                                     Delete “{deleteConfirm.name}”. This cannot be undone.
                                 </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
                                 <AlertDialogCancel onClick={() => setDeleteConfirm({ open: false, id: null, name: '' })}>Cancel</AlertDialogCancel>
                                 <AlertDialogAction
                                     onClick={() => {
