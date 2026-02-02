@@ -288,6 +288,29 @@ export default function AdminDashboardPage() {
                 <h1 className="pixel-font neon-glow" style={{ fontSize: '1rem' }}>
                     <Shield size={20} style={{ display: 'inline', marginRight: '0.5rem' }} />
                     ADMIN CONTROL PANEL
+
+    const handleUpdateRecaptcha = async () => {
+        try {
+            const payload = {
+                recaptcha_site_key: recaptchaSiteKey,
+                recaptcha_secret_key: recaptchaSecretKey,
+                recaptcha_enable_submit: recaptchaEnableSubmit,
+                recaptcha_enable_auth: recaptchaEnableAuth
+            };
+            const response = await axios.put(`${API}/admin/settings`, payload);
+            setSiteSettings(response.data);
+            setRecaptchaSiteKey(response.data.recaptcha_site_key || '');
+            setRecaptchaSecretKey(response.data.recaptcha_secret_key || '');
+            setRecaptchaEnableSubmit(!!response.data.recaptcha_enable_submit);
+            setRecaptchaEnableAuth(!!response.data.recaptcha_enable_auth);
+            toast.success('reCAPTCHA settings updated');
+        } catch (error) {
+            console.error('Update reCAPTCHA error:', error);
+            const message = error.response?.data?.detail || 'Failed to update reCAPTCHA settings';
+            toast.error(message);
+        }
+    };
+
                 </h1>
                 <button 
                     onClick={handleLogout}
