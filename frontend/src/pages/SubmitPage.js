@@ -39,6 +39,12 @@ function SubmitPage() {
     const [recaptchaSettings, setRecaptchaSettings] = useState({ site_key: null, enable_submit: false, enable_auth: false });
     const [recaptchaToken, setRecaptchaToken] = useState('');
 
+
+    const [multiMode, setMultiMode] = useState(false);
+    const [multiItems, setMultiItems] = useState([
+        { name: '', downloadLink: '', fileType: 'game', siteName: '', siteUrl: '', fileSize: '', description: '', category: '', tags: [] }
+    ]);
+
     const [submitting, setSubmitting] = useState(false);
     const [rateLimit, setRateLimit] = useState({ daily_limit: 10, used: 0, remaining: 10 });
     const [captcha, setCaptcha] = useState({ question: '', id: '' });
