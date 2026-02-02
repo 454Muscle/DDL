@@ -738,7 +738,9 @@ async def approve_submission(submission_id: str):
         file_size_bytes=submission.get("file_size_bytes"),
         description=submission.get("description"),
         category=submission.get("category"),
-        tags=submission.get("tags", [])
+        tags=submission.get("tags", []),
+        site_name=submission.get("site_name"),
+        site_url=submission.get("site_url")
     )
     
     await db.downloads.insert_one(download_obj.model_dump())
