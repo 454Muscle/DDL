@@ -109,6 +109,17 @@ function SubmitPage() {
             });
     }
 
+
+    useEffect(function() {
+        if (recaptchaSettings.enable_submit) {
+            setCaptchaAnswer('');
+            setCaptchaId('');
+            setCaptcha({ question: '', id: '' });
+        } else {
+            fetchCaptcha();
+        }
+    }, [recaptchaSettings.enable_submit]);
+
     function handleAddTag(tag) {
         var cleanTag = tag.trim().toLowerCase();
         if (cleanTag && !tags.includes(cleanTag) && tags.length < 10) {
