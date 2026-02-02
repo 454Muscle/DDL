@@ -149,6 +149,7 @@ export default function AdminDashboardPage() {
         try {
             const response = await axios.get(`${API}/settings`);
             setSiteSettings(response.data);
+            fetchUnseenSubmissionsCount();
             setNewLimit(response.data.daily_submission_limit || 10);
             setTopEnabled(response.data.top_downloads_enabled !== false);
             setTopCount(response.data.top_downloads_count || 5);
