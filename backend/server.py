@@ -728,12 +728,6 @@ async def create_submission(submission: SubmissionCreate, request: Request):
         if not await verify_captcha(submission.captcha_id, submission.captcha_answer):
             raise HTTPException(status_code=400, detail="Invalid captcha. Please try again.")
     
-    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-    
-    # Get rate limit settings
-    settings = await fetch_site_settings()
-    daily_limit = settings.get("daily_submission_limit", 10)
-
 # Admin init (set email + password the first time)
 @api_router.post("/admin/init")
 async def admin_init(payload: AdminInitRequest):
