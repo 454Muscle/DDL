@@ -1258,8 +1258,27 @@ async def admin_login(login: AdminLogin):
 
 # Admin - Get Pending Submissions
 @api_router.get("/admin/submissions", response_model=PaginatedSubmissions)
-async def get_admin_submissions(
-    page: int = Query(1, ge=1),
+async def get_submissions(page: int = 1, limit: int = 20):
+    skip = (page - 1) * limit
+    submissions = await db.submissions.find(
+        {"status": "pending"},
+        {"_id": 0}
+    ).sort("created_at", -1).skip(skip).limit(limit).to_list(limit)
+
+    # mark returned submissions as seen
+    ids = [s.get("id") for s in submissions if s.get("id")]
+    if ids:
+        await db.submissions.update_many({"id": {"$in": ids}}, {"$set": {"seen_by_admin": True}})
+
+    total = await db.submissions.count_documents({"status": "pending"})
+    pages = (total + limit - 1) // limit
+
+    return {
+        "items": submissions,
+        "total": total,
+        "page": page,
+        "pages": pages
+    }
 
 @api_router.get("/admin/submissions/unseen-count")
 async def admin_unseen_submissions_count():
@@ -1269,22 +1288,6 @@ async def admin_unseen_submissions_count():
 
     count = await db.submissions.count_documents({"status": "pending", "seen_by_admin": False})
     return {"count": count}
-
-
-    limit: int = Query(50, ge=1, le=100),
-    status: Optional[str] = None
-):
-    skip = (page - 1) * limit
-    query = {}
-    if status:
-        query["status"] = status
-    
-    total = await db.submissions.count_documents(query)
-    pages = max((total + limit - 1) // limit, 1)
-    
-    submissions = await db.submissions.find(query, {"_id": 0}).sort("created_at", -1).skip(skip).limit(limit).to_list(limit)
-    
-    return PaginatedSubmissions(items=submissions, total=total, page=page, pages=pages)
 
 # Admin - Approve Submission
 @api_router.post("/admin/submissions/{submission_id}/approve")
