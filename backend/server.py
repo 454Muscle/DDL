@@ -200,6 +200,13 @@ class SiteSettingsUpdate(BaseModel):
     recaptcha_enable_submit: Optional[bool] = None
     recaptcha_enable_auth: Optional[bool] = None
 
+    # Resend email settings
+    resend_api_key: Optional[str] = None
+    resend_sender_email: Optional[str] = None
+
+    # Admin credentials
+    admin_email: Optional[EmailStr] = None
+
 def validate_http_url(url: str) -> str:
     if not url or not isinstance(url, str):
         raise HTTPException(status_code=400, detail="Site URL is required")
