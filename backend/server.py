@@ -192,6 +192,15 @@ class SiteSettingsUpdate(BaseModel):
     recaptcha_enable_submit: Optional[bool] = None
     recaptcha_enable_auth: Optional[bool] = None
 
+def validate_http_url(url: str) -> str:
+    if not url or not isinstance(url, str):
+        raise HTTPException(status_code=400, detail="Site URL is required")
+    url = url.strip()
+    if not (url.startswith("http://") or url.startswith("https://")):
+        raise HTTPException(status_code=400, detail="Site URL must start with http:// or https://")
+    return url
+
+
 class RateLimitEntry(BaseModel):
     model_config = ConfigDict(extra="ignore")
     ip_address: str
