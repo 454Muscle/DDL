@@ -118,6 +118,9 @@ backend:
       - working: true
         agent: "testing"
         comment: "✅ TESTED: Backend API returns site fields correctly. Downloads API shows site_name and site_url for items that have them. Integration working properly."
+      - working: true
+        agent: "testing"
+        comment: "✅ COMPREHENSIVE BACKEND TESTING COMPLETE: All site field functionality verified. 1) /api/captcha generates math captcha correctly. 2) Submissions with site_name (≤15 chars) and site_url (http/https required) work perfectly with math captcha. 3) Approved submissions correctly copy site fields to downloads. 4) Site URL validation properly rejects URLs without http/https prefix. 5) Site name validation rejects names >15 characters. All 53 backend API tests passed (100% success rate)."
 
   - task: "Google reCAPTCHA v2 verification + settings"
     implemented: true
@@ -133,6 +136,9 @@ backend:
       - working: true
         agent: "testing"
         comment: "✅ TESTED: reCAPTCHA settings API working. Admin can update keys and toggles. Backend properly validates and saves settings. Frontend receives correct configuration."
+      - working: true
+        agent: "testing"
+        comment: "✅ COMPREHENSIVE BACKEND TESTING COMPLETE: All reCAPTCHA functionality verified. 1) /api/recaptcha/settings returns only site_key + toggles (no secret exposed). 2) /api/settings never returns recaptcha_secret_key (properly null). 3) Admin settings validation: enabling reCAPTCHA without keys properly rejected (400), enabling with keys succeeds (200). 4) When reCAPTCHA enabled for submissions, requests without recaptcha_token properly rejected with 'Invalid reCAPTCHA'. 5) When reCAPTCHA enabled for auth, registration without recaptcha_token properly rejected. All security and validation requirements met."
 
 frontend:
   - task: "Submit page: required site fields + reCAPTCHA widget toggle"
