@@ -140,6 +140,35 @@ function SubmitPage() {
         if (!canAddMoreItems()) {
             toast.error('RATE LIMIT: Cannot add more items than remaining today');
             return;
+
+    function validateItem(item, indexLabel) {
+        if (!item.name.trim()) {
+            toast.error(`SYSTEM ERROR: Name is required (${indexLabel})`);
+            return false;
+        }
+        if (!item.downloadLink.trim()) {
+            toast.error(`SYSTEM ERROR: Download link is required (${indexLabel})`);
+            return false;
+        }
+        if (!item.siteName.trim()) {
+            toast.error(`SYSTEM ERROR: Site name is required (${indexLabel})`);
+            return false;
+        }
+        if (item.siteName.trim().length > 15) {
+            toast.error(`SYSTEM ERROR: Site name must be 15 characters or less (${indexLabel})`);
+            return false;
+        }
+        if (!item.siteUrl.trim()) {
+            toast.error(`SYSTEM ERROR: Site URL is required (${indexLabel})`);
+            return false;
+        }
+        if (!(item.siteUrl.trim().startsWith('http://') || item.siteUrl.trim().startsWith('https://'))) {
+            toast.error(`SYSTEM ERROR: Site URL must start with http:// or https:// (${indexLabel})`);
+            return false;
+        }
+        return true;
+    }
+
         }
         setMultiItems([
             ...multiItems,
