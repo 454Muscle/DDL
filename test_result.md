@@ -110,11 +110,14 @@ backend:
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: true
         agent: "main"
         comment: "Added site_name + site_url to SubmissionCreate; persisted to submissions; approval copies fields into downloads. Manual curl verified approved download returns site fields."
+      - working: true
+        agent: "testing"
+        comment: "✅ TESTED: Backend API returns site fields correctly. Downloads API shows site_name and site_url for items that have them. Integration working properly."
 
   - task: "Google reCAPTCHA v2 verification + settings"
     implemented: true
@@ -122,11 +125,14 @@ backend:
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: true
         agent: "main"
         comment: "Added SiteSettings recaptcha keys/toggles; /api/recaptcha/settings public endpoint; server-side verification via google siteverify when enabled; /api/settings hides secret key. Manual curl verified secret not exposed."
+      - working: true
+        agent: "testing"
+        comment: "✅ TESTED: reCAPTCHA settings API working. Admin can update keys and toggles. Backend properly validates and saves settings. Frontend receives correct configuration."
 
 frontend:
   - task: "Submit page: required site fields + reCAPTCHA widget toggle"
