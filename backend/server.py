@@ -390,6 +390,9 @@ async def register_user(user: UserRegister, request: Request):
 
     # Verify captcha (math) OR reCAPTCHA depending on admin settings
     if settings.get("recaptcha_enable_auth"):
+        if not settings.get("recaptcha_site_key") or not settings.get("recaptcha_secret_key"):
+            raise HTTPException(status_code=400, detail="reCAPTCHA is enabled but not configured")
+
         ok = await verify_recaptcha(
             user.recaptcha_token,
             request.client.host if request.client else None,
@@ -423,15 +426,18 @@ async def register_user(user: UserRegister, request: Request):
     }
 
 @api_router.post("/auth/login")
-async def login_user(user: UserLogin):
+async def login_user(user: UserLogin, request: Request):
     settings = await db.site_settings.find_one({"id": "site_settings"}, {"_id": 0})
     if not settings:
         settings = SiteSettings().model_dump()
 
     if settings.get("recaptcha_enable_auth"):
+        if not settings.get("recaptcha_site_key") or not settings.get("recaptcha_secret_key"):
+            raise HTTPException(status_code=400, detail="reCAPTCHA is enabled but not configured")
+
         ok = await verify_recaptcha(
             user.recaptcha_token,
-            None,
+            request.client.host if request.client else None,
             settings.get("recaptcha_secret_key", ""),
         )
         if not ok:
