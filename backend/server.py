@@ -410,6 +410,49 @@ async def send_submission_email(email: str, submission: dict):
     else:
         logger.info(f"Email not sent to {email}")
 
+async def send_bulk_submission_email(email: str, submissions: List[dict]):
+    if not email:
+        return
+    if not FRONTEND_URL:
+        logger.info("Email not sent: FRONTEND_URL is not configured")
+        return
+
+    submit_url = f"{FRONTEND_URL}/submit"
+
+    rows = ""
+    for s in submissions[:50]:
+        rows += f"""
+        <tr>
+            <td style=\"padding: 8px; border: 1px solid #333; color: #00FF41;\">{s.get('name','N/A')}</td>
+            <td style=\"padding: 8px; border: 1px solid #333; color: #00FF41;\">{s.get('type','N/A')}</td>
+            <td style=\"padding: 8px; border: 1px solid #333; color: #00FF41;\">{s.get('submission_date','N/A')}</td>
+        </tr>
+        """
+
+    html = f"""
+    <html>
+    <body style=\"font-family: 'Courier New', monospace; background-color: #0a0a0a; color: #00FF41; padding: 20px;\">
+        <div style=\"max-width: 600px; margin: 0 auto; border: 2px solid #00FF41; padding: 20px;\">
+            <h1 style=\"color: #00FF41; border-bottom: 1px solid #00FF41; padding-bottom: 10px;\">DOWNLOAD ZONE - BATCH SUBMISSION RECEIVED</h1>
+            <p>Your submissions have been received and are pending admin approval.</p>
+            <h2 style=\"color: #00FFFF;\">SUBMISSIONS:</h2>
+            <table style=\"width: 100%; border-collapse: collapse;\">
+                <tr>
+                    <td style=\"padding: 8px; border: 1px solid #333; color: #888;\">Name</td>
+                    <td style=\"padding: 8px; border: 1px solid #333; color: #888;\">Type</td>
+                    <td style=\"padding: 8px; border: 1px solid #333; color: #888;\">Date</td>
+                </tr>
+                {rows}
+            </table>
+            <p style=\"margin-top: 20px;\"><a href=\"{submit_url}\" style=\"display: inline-block; padding: 10px 20px; background-color: #00FF41; color: #000; text-decoration: none; font-weight: bold;\">SUBMIT MORE</a></p>
+        </div>
+    </body>
+    </html>
+    """
+
+    await send_email_via_resend(email, f"Download Zone - Batch Submission Received ({len(submissions)})", html)
+
+
 # ===== CAPTCHA ROUTES =====
 
 @api_router.get("/captcha")
