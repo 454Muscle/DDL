@@ -110,11 +110,14 @@ backend:
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: true
         agent: "main"
         comment: "Added POST /api/admin/resend/test to send a test email to admin_email using configured Resend settings."
+      - working: true
+        agent: "testing"
+        comment: "✅ TESTED: Admin dashboard login works with 'newpass123'. Resend section found, SEND TEST EMAIL button works correctly and shows expected 'Failed to send test email' toast message (expected with dummy/missing Resend configuration)."
 
   - task: "Bulk submissions endpoint"
     implemented: true
