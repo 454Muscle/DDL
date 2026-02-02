@@ -285,8 +285,15 @@ class DownloadPortalAPITester:
 
     def test_submission_with_site_fields(self):
         """Test creating submission with required site fields and math captcha"""
-        # First get a captcha
-        captcha_success, captcha_response = self.run_test("Get Captcha for Submission", "GET", "captcha", 200)
+        # First ensure reCAPTCHA is disabled
+        disable_settings = {
+            "recaptcha_enable_submit": False,
+            "recaptcha_enable_auth": False
+        }
+        self.run_test("Ensure reCAPTCHA Disabled", "PUT", "admin/settings", 200, disable_settings)
+        
+        # Get a fresh captcha
+        captcha_success, captcha_response = self.run_test("Get Fresh Captcha for Submission", "GET", "captcha", 200)
         if not captcha_success:
             return False
         
