@@ -1085,16 +1085,13 @@ async def update_theme(update: ThemeUpdate):
 
 # Site Settings - Get
 @api_router.get("/settings")
-async def get_site_settings():
-    settings = await db.site_settings.find_one({"id": "site_settings"}, {"_id": 0})
-    if not settings:
-        default_settings = SiteSettings()
-        await db.site_settings.insert_one(default_settings.model_dump())
-        settings = default_settings.model_dump()
+async def get_site_settings_public():
+    settings = await fetch_site_settings()
 
-    # Never expose secret key publicly
+    # Never expose secret keys publicly
     settings = dict(settings)
     settings["recaptcha_secret_key"] = None
+    settings["resend_api_key"] = None
     return settings
 
 # Site Settings - Update (Admin)
