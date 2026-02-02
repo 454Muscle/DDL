@@ -51,6 +51,7 @@ function SubmitPage() {
         fetchCaptcha();
         fetchCategories();
         fetchPopularTags();
+        fetchRecaptchaSettings();
         if (user && user.email) {
             setSubmitterEmail(user.email);
         }
