@@ -1023,22 +1023,22 @@ export default function AdminDashboardPage() {
                     </button>
                 </div>
 
-                <AlertDialog open={deleteConfirm.open} onOpenChange={(open) => setDeleteConfirm({ ...deleteConfirm, open })}>
+                <AlertDialog open={downloadDeleteConfirm.open} onOpenChange={(open) => setDownloadDeleteConfirm({ ...downloadDeleteConfirm, open })}>
                     <AlertDialogContent>
                         <AlertDialogHeader>
                             <AlertDialogTitle>Delete download?</AlertDialogTitle>
                             <AlertDialogDescription>
-                                Delete "{deleteConfirm.name}". This cannot be undone.
+                                Delete "{downloadDeleteConfirm.name}". This cannot be undone.
                             </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
-                            <AlertDialogCancel onClick={() => setDeleteConfirm({ open: false, id: null, name: '' })}>Cancel</AlertDialogCancel>
+                            <AlertDialogCancel onClick={() => setDownloadDeleteConfirm({ open: false, id: null, name: '' })}>Cancel</AlertDialogCancel>
                             <AlertDialogAction
                                 onClick={() => {
-                                    if (deleteConfirm.id) {
-                                        handleDeleteDownload(deleteConfirm.id);
+                                    if (downloadDeleteConfirm.id) {
+                                        handleDeleteDownload(downloadDeleteConfirm.id);
                                     }
-                                    setDeleteConfirm({ open: false, id: null, name: '' });
+                                    setDownloadDeleteConfirm({ open: false, id: null, name: '' });
                                 }}
                             >
                                 Delete
