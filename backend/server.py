@@ -944,6 +944,9 @@ async def admin_confirm_password_change(payload: TokenOnlyRequest):
         await db.admin_password_resets.delete_one({"token": payload.token})
         raise HTTPException(status_code=400, detail="Invalid or expired token")
 
+    if req.get("type") != "change":
+        raise HTTPException(status_code=400, detail="Invalid token")
+
     # update admin password hash
     settings["admin_password_hash"] = req["new_password_hash"]
     await db.site_settings.update_one({"id": "site_settings"}, {"$set": settings}, upsert=True)
