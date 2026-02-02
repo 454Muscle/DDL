@@ -179,6 +179,13 @@ export default function AdminDashboardPage() {
         }
     };
 
+    useEffect(() => {
+        if (sessionStorage.getItem('admin_auth')) {
+            fetchUnseenSubmissionsCount();
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [sessionStorage.getItem('admin_auth')]);
+
     const handleApprove = async (id) => {
         try {
             await axios.post(`${API}/admin/submissions/${id}/approve`);
