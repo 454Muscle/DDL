@@ -995,7 +995,7 @@ async def admin_forgot_password(payload: AdminForgotPasswordRequest):
     if not FRONTEND_URL:
         raise HTTPException(status_code=500, detail="FRONTEND_URL is not configured")
 
-    link = f"{FRONTEND_URL}/admin/confirm-password-change?token={token}"
+    link = f"{FRONTEND_URL}/admin/reset-password?token={token}"
     html = f"""
     <html><body style='font-family: Arial, sans-serif;'>
       <h2>Reset Admin Password</h2>
