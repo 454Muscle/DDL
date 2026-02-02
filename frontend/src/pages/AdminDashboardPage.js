@@ -1398,10 +1398,10 @@ export default function AdminDashboardPage() {
                                 <AlertDialogCancel onClick={() => setDownloadDeleteConfirm({ open: false, id: null, name: '' })}>Cancel</AlertDialogCancel>
                                 <AlertDialogAction
                                     onClick={() => {
-                                        if (deleteConfirm.id) {
-                                            handleDeleteDownload(deleteConfirm.id);
+                                        if (downloadDeleteConfirm.id) {
+                                            handleDeleteDownload(downloadDeleteConfirm.id);
                                         }
-                                        setDeleteConfirm({ open: false, id: null, name: '' });
+                                        setDownloadDeleteConfirm({ open: false, id: null, name: '' });
                                     }}
                                 >
                                     Delete
