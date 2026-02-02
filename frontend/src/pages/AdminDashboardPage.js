@@ -463,14 +463,6 @@ export default function AdminDashboardPage() {
         }
     };
 
-            });
-            toast.success('Confirmation email sent. Check admin inbox.');
-        } catch (error) {
-            console.error('Admin password change request error:', error);
-            toast.error(error.response?.data?.detail || 'Failed to request password change');
-        }
-    };
-
     return (
         <div className="admin-container" data-testid="admin-dashboard">
             {/* Header */}
