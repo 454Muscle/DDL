@@ -22,7 +22,8 @@ import {
     Plus,
     Star,
     TrendingUp,
-    BarChart3
+    BarChart3,
+    FileText
 } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "../components/ui/alert-dialog";
 
