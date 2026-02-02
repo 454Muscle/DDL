@@ -779,6 +779,23 @@ async def create_submission(submission: SubmissionCreate, request: Request):
         site_url=validate_http_url(submission.site_url),
         submitter_email=submission.submitter_email
     )
+
+# Admin update email (requires current password)
+@api_router.post("/admin/email/update")
+async def admin_update_email(payload: AdminUpdateEmailRequest):
+    settings = await fetch_site_settings()
+    if settings.get("admin_password_hash"):
+        if hash_password(payload.current_password) != settings.get("admin_password_hash"):
+            raise HTTPException(status_code=401, detail="Invalid current password")
+    else:
+        if not ADMIN_PASSWORD or payload.current_password != ADMIN_PASSWORD:
+            raise HTTPException(status_code=401, detail="Invalid current password")
+
+    settings["admin_email"] = payload.new_email.lower()
+    await db.site_settings.update_one({"id": "site_settings"}, {"$set": settings}, upsert=True)
+    return {"success": True}
+
+
     doc = submission_obj.model_dump()
     await db.submissions.insert_one(doc)
     
