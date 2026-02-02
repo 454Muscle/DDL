@@ -116,6 +116,14 @@ class SubmissionCreate(BaseModel):
     recaptcha_token: Optional[str] = None
 
 class User(BaseModel):
+class BulkSubmissionCreate(BaseModel):
+    items: List[SubmissionCreate]
+    submitter_email: Optional[str] = None
+    captcha_answer: Optional[int] = None
+    captcha_id: Optional[str] = None
+    recaptcha_token: Optional[str] = None
+
+
     model_config = ConfigDict(extra="ignore")
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     email: str
