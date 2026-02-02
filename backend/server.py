@@ -829,6 +829,24 @@ async def update_site_settings(update: SiteSettingsUpdate):
     
     if update.sponsored_downloads is not None:
         settings["sponsored_downloads"] = update.sponsored_downloads[:5]
+
+    if update.recaptcha_site_key is not None:
+        settings["recaptcha_site_key"] = update.recaptcha_site_key.strip() or None
+
+    if update.recaptcha_secret_key is not None:
+        settings["recaptcha_secret_key"] = update.recaptcha_secret_key.strip() or None
+
+    if update.recaptcha_enable_submit is not None:
+        settings["recaptcha_enable_submit"] = bool(update.recaptcha_enable_submit)
+
+    if update.recaptcha_enable_auth is not None:
+        settings["recaptcha_enable_auth"] = bool(update.recaptcha_enable_auth)
+
+    # If either toggle is enabled, require both keys
+    if (settings.get("recaptcha_enable_submit") or settings.get("recaptcha_enable_auth")) and (
+        not settings.get("recaptcha_site_key") or not settings.get("recaptcha_secret_key")
+    ):
+        raise HTTPException(status_code=400, detail="reCAPTCHA keys are required when enabling reCAPTCHA")
     
     await db.site_settings.update_one(
         {"id": "site_settings"},
