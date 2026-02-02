@@ -530,11 +530,11 @@ export default function AdminDashboardPage() {
                 flexWrap: 'wrap',
                 gap: '1rem'
             }}>
-                <h1 className="pixel-font neon-glow" style={{ fontSize: '1rem' }}>
-                    <Shield size={20} style={{ display: 'inline', marginRight: '0.5rem' }} />
-                    ADMIN CONTROL PANEL
-                </h1>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    <h1 className="pixel-font neon-glow" style={{ fontSize: '1rem', margin: 0 }}>
+                        <Shield size={20} style={{ display: 'inline', marginRight: '0.5rem' }} />
+                        ADMIN CONTROL PANEL
+                    </h1>
                     <button 
                         onClick={() => navigate('/admin/submissions')}
                         className="action-btn approve"
@@ -559,15 +559,15 @@ export default function AdminDashboardPage() {
                             />
                         )}
                     </button>
-                    <button 
-                        onClick={handleLogout}
-                        className="action-btn reject"
-                        data-testid="admin-logout-btn"
-                    >
-                        <LogOut size={14} style={{ display: 'inline', marginRight: '0.25rem' }} />
-                        LOGOUT
-                    </button>
                 </div>
+                <button 
+                    onClick={handleLogout}
+                    className="action-btn reject"
+                    data-testid="admin-logout-btn"
+                >
+                    <LogOut size={14} style={{ display: 'inline', marginRight: '0.25rem' }} />
+                    LOGOUT
+                </button>
             </div>
 
             {/* Stats Overview */}
