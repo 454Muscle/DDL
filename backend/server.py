@@ -243,7 +243,7 @@ def parse_file_size_to_bytes(size_str: str) -> Optional[int]:
             return int(float(size_str.replace('B', '').strip()))
         else:
             return int(float(size_str) * 1024 * 1024)  # Assume MB
-    except:
+    except (ValueError, TypeError):
         return None
 
 async def send_submission_email(email: str, submission: dict):
