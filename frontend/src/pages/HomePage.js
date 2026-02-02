@@ -210,12 +210,21 @@ export default function HomePage() {
 
     const handleDownloadClick = async (downloadId) => {
         try {
-            await axios.post(`${API}/downloads/${downloadId}/increment`);
+            // Use /track endpoint which both increments count AND records activity for trending
+            await axios.post(`${API}/downloads/${downloadId}/track`);
             setDownloads(prev => prev.map(d => 
                 d.id === downloadId ? { ...d, download_count: (d.download_count || 0) + 1 } : d
             ));
         } catch (error) {
-            console.error('Error incrementing download:', error);
+            console.error('Error tracking download:', error);
+        }
+    };
+
+    const handleSponsoredClick = async (sponsoredId) => {
+        try {
+            await axios.post(`${API}/sponsored/${sponsoredId}/click`);
+        } catch (error) {
+            console.error('Error tracking sponsored click:', error);
         }
     };
 
