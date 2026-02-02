@@ -310,58 +310,6 @@ export default function AdminDashboardPage() {
         <div className="admin-container" data-testid="admin-dashboard">
             {/* Header */}
 
-    const handleUpdateResend = async () => {
-        try {
-            await axios.put(`${API}/admin/resend`, {
-                resend_api_key: resendApiKey,
-                resend_sender_email: resendSenderEmail
-            });
-            toast.success('Resend settings updated');
-        } catch (error) {
-            console.error('Update Resend error:', error);
-            toast.error(error.response?.data?.detail || 'Failed to update Resend settings');
-        }
-    };
-
-    const handleInitAdmin = async () => {
-        try {
-            if (!adminEmail.trim()) {
-                toast.error('Admin email is required');
-                return;
-            }
-            if (!adminInitPassword || adminInitPassword.length < 6) {
-                toast.error('Admin password must be at least 6 characters');
-                return;
-            }
-            await axios.post(`${API}/admin/init`, { email: adminEmail, password: adminInitPassword });
-            toast.success('Admin initialized');
-        } catch (error) {
-            console.error('Admin init error:', error);
-            toast.error(error.response?.data?.detail || 'Failed to initialize admin');
-        }
-    };
-
-    const handleRequestAdminPasswordChange = async () => {
-        try {
-            if (!adminCurrentPassword) {
-                toast.error('Current password is required');
-                return;
-            }
-            if (!adminNewPassword || adminNewPassword.length < 6) {
-                toast.error('New password must be at least 6 characters');
-                return;
-            }
-            await axios.post(`${API}/admin/password/change/request`, {
-                current_password: adminCurrentPassword,
-                new_password: adminNewPassword
-            });
-            toast.success('Confirmation email sent. Check admin inbox.');
-        } catch (error) {
-            console.error('Admin password change request error:', error);
-            toast.error(error.response?.data?.detail || 'Failed to request password change');
-        }
-    };
-
             <div style={{ 
                 display: 'flex', 
                 justifyContent: 'space-between', 
