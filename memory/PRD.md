@@ -25,10 +25,28 @@ Build a download website where you can download software, games, movies, tv show
 
 ## Architecture
 
-### Backend (FastAPI)
+### Backend (FastAPI) - Refactored Feb 2026
 - **Port**: 8001 (internal)
 - **Database**: MongoDB
 - **API Prefix**: /api
+
+**Directory Structure:**
+```
+/app/backend/
+├── server.py              # Main app entry (54 lines)
+├── models/
+│   └── schemas.py         # Pydantic models (312 lines)
+├── services/
+│   ├── database.py        # DB connection (25 lines)
+│   ├── email.py           # Email functions (244 lines)
+│   ├── captcha.py         # Captcha logic (84 lines)
+│   └── utils.py           # Helpers (45 lines)
+└── routers/
+    ├── downloads.py       # Download endpoints (325 lines)
+    ├── auth.py            # Auth endpoints (158 lines)
+    ├── submissions.py     # Submission endpoints (225 lines)
+    └── admin.py           # Admin endpoints (728 lines)
+```
 
 ### Frontend (React)
 - **Port**: 3000
