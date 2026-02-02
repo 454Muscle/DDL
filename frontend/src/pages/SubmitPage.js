@@ -135,7 +135,7 @@ function SubmitPage() {
     }
 
     function canAddMoreItems() {
-        return multiItems.length < Math.max(1, rateLimit.remaining);
+        return rateLimit.remaining > 0 && multiItems.length < rateLimit.remaining;
     }
 
     function handleAddItemRow() {
