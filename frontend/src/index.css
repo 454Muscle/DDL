@@ -197,7 +197,7 @@ a:hover {
 }
 
 /* Light theme specific overrides */
-.light-theme .retro-btn {
+body.light-theme .retro-btn {
     border-top-color: #ffffff;
     border-left-color: #ffffff;
     border-bottom-color: #808080;
@@ -205,13 +205,63 @@ a:hover {
     box-shadow: none;
 }
 
-.light-theme .retro-btn:active {
+body.light-theme .retro-btn:active {
     border-top-color: #808080;
     border-left-color: #808080;
     border-bottom-color: #ffffff;
     border-right-color: #ffffff;
 }
 
-.light-theme .crt-effect::after {
+body.light-theme .crt-effect::after {
     display: none;
+}
+
+body.light-theme .nav-header {
+    background: hsl(var(--card));
+    border-bottom-color: hsl(var(--border));
+}
+
+body.light-theme .neon-glow {
+    text-shadow: none;
+    color: hsl(var(--primary));
+}
+
+body.light-theme .downloads-table {
+    background: hsl(var(--card));
+}
+
+body.light-theme .downloads-table th,
+body.light-theme .downloads-table td {
+    border-color: hsl(var(--border));
+    color: hsl(var(--foreground));
+}
+
+body.light-theme .filter-btn {
+    background: hsl(var(--secondary));
+    color: hsl(var(--foreground));
+    border-color: hsl(var(--border));
+}
+
+body.light-theme .filter-btn.active {
+    background: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
+}
+
+body.light-theme .admin-card {
+    background: hsl(var(--card));
+    border-color: hsl(var(--border));
+}
+
+body.light-theme .form-input {
+    background: hsl(var(--input));
+    color: hsl(var(--foreground));
+    border-color: hsl(var(--border));
+}
+
+body.light-theme a {
+    color: hsl(var(--primary));
+}
+
+body.light-theme .stat-value {
+    color: hsl(var(--primary));
 }
