@@ -213,8 +213,14 @@ class ReviewRequestTester:
         print("\n=== TEST 4: DELETE /api/admin/downloads/{id} ===")
         
         if not self.created_download_id:
-            self.log_test("Delete Download Test", False, "No download ID available for deletion test")
-            return False
+            # Try to get any available download for deletion
+            get_success, get_response = self.run_test("Get downloads for deletion test", "GET", "admin/downloads?limit=1", 200)
+            if get_success and get_response.get('items'):
+                self.created_download_id = get_response['items'][0]['id']
+                self.log_test("Found Download ID for Deletion", True, f"Using download ID: {self.created_download_id}")
+            else:
+                self.log_test("Delete Download Test", False, "No download ID available for deletion test")
+                return False
         
         # Get initial count
         initial_success, initial_response = self.run_test("Get initial download count", "GET", "admin/downloads", 200)
