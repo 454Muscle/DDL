@@ -1381,6 +1381,36 @@ async def update_site_settings(update: SiteSettingsUpdate):
     ):
         raise HTTPException(status_code=400, detail="reCAPTCHA keys are required when enabling reCAPTCHA")
     
+
+    # Branding / typography
+    if update.site_name is not None:
+        settings["site_name"] = update.site_name.strip() or None
+
+    if update.site_name_font_family is not None:
+        settings["site_name_font_family"] = update.site_name_font_family
+
+    if update.site_name_font_weight is not None:
+        settings["site_name_font_weight"] = update.site_name_font_weight
+
+    if update.site_name_font_color is not None:
+        settings["site_name_font_color"] = update.site_name_font_color
+
+    if update.body_font_family is not None:
+        settings["body_font_family"] = update.body_font_family
+
+    if update.body_font_weight is not None:
+        settings["body_font_weight"] = update.body_font_weight
+
+    # Footer
+    if update.footer_enabled is not None:
+        settings["footer_enabled"] = bool(update.footer_enabled)
+
+    if update.footer_line1_template is not None:
+        settings["footer_line1_template"] = update.footer_line1_template
+
+    if update.footer_line2_template is not None:
+        settings["footer_line2_template"] = update.footer_line2_template
+
     await db.site_settings.update_one(
         {"id": "site_settings"},
         {"$set": settings},
