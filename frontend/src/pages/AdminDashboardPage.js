@@ -533,7 +533,7 @@ export default function AdminDashboardPage() {
             )}
 
             {/* Site Settings Card */}
-            <div className="admin-card" data-testid="site-settings">
+            <div className="admin-card" data-testid="daily-submission-settings">
                 <h2 className="admin-title">
                     <Settings size={18} style={{ display: 'inline', marginRight: '0.5rem' }} />
                     SITE SETTINGS
