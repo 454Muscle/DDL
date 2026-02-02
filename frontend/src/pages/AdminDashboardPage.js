@@ -115,6 +115,10 @@ export default function AdminDashboardPage() {
             setTopEnabled(response.data.top_downloads_enabled !== false);
             setTopCount(response.data.top_downloads_count || 5);
             setSponsoredDownloads(response.data.sponsored_downloads || []);
+            setRecaptchaSiteKey(response.data.recaptcha_site_key || '');
+            setRecaptchaSecretKey(response.data.recaptcha_secret_key || '');
+            setRecaptchaEnableSubmit(!!response.data.recaptcha_enable_submit);
+            setRecaptchaEnableAuth(!!response.data.recaptcha_enable_auth);
         } catch (error) {
             console.error('Error fetching settings:', error);
         }
