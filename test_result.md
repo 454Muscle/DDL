@@ -179,9 +179,8 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Bulk submissions endpoint"
-  stuck_tasks:
-    - "Bulk submissions endpoint"
+    - "Rate limit increment verification"
+  stuck_tasks: []
   test_all: false
   test_priority: "high_first"
 
