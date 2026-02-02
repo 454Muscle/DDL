@@ -333,6 +333,25 @@ async def generate_captcha():
     }
     
     await db.captchas.insert_one(captcha)
+# ===== RECAPTCHA HELPERS =====
+
+async def verify_recaptcha(token: str, remote_ip: Optional[str], secret_key: str) -> bool:
+    """Verify Google reCAPTCHA v2 token server-side"""
+    if not token or not secret_key:
+        return False
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            resp = await client.post(
+                "https://www.google.com/recaptcha/api/siteverify",
+                data={"secret": secret_key, "response": token, "remoteip": remote_ip},
+            )
+        data = resp.json()
+        return bool(data.get("success"))
+    except Exception as e:
+        logger.error(f"reCAPTCHA verification error: {str(e)}")
+        return False
+
+
     
     return {
         "id": captcha_id,
