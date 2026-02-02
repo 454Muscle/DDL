@@ -220,6 +220,19 @@ class SiteSettingsUpdate(BaseModel):
     top_downloads_count: Optional[int] = None
     sponsored_downloads: Optional[List[dict]] = None
 
+    # Branding / typography
+    site_name: Optional[str] = None
+    site_name_font_family: Optional[str] = None
+    site_name_font_weight: Optional[str] = None
+    site_name_font_color: Optional[str] = None
+    body_font_family: Optional[str] = None
+    body_font_weight: Optional[str] = None
+
+    # Footer
+    footer_enabled: Optional[bool] = None
+    footer_line1_template: Optional[str] = None
+    footer_line2_template: Optional[str] = None
+
     # Google reCAPTCHA v2 settings
     recaptcha_site_key: Optional[str] = None
     recaptcha_secret_key: Optional[str] = None
