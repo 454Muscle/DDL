@@ -712,6 +712,17 @@ export default function HomePage() {
                                             <td style={{ fontSize: '0.875rem' }}>
                                                 {download.file_size || '-'}
                                             </td>
+                                            <td style={{ fontSize: '0.875rem' }}>
+                                                {download.site_url ? (
+                                                    <a
+                                                        href={download.site_url}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                    >
+                                                        {download.site_name || '---'}
+                                                    </a>
+                                                ) : '---'}
+                                            </td>
                                             <td>
                                                 <span className="download-count" style={{ 
                                                     color: 'hsl(var(--accent))',
