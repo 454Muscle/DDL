@@ -736,6 +736,150 @@ async def create_submission(submission: SubmissionCreate, request: Request):
     # Get rate limit settings
     settings = await db.site_settings.find_one({"id": "site_settings"}, {"_id": 0})
     daily_limit = settings.get("daily_submission_limit", 10) if settings else 10
+
+# Admin init (set email + password the first time)
+@api_router.post("/admin/init")
+async def admin_init(payload: AdminInitRequest):
+    settings = await get_site_settings()
+    if settings.get("admin_password_hash"):
+        raise HTTPException(status_code=400, detail="Admin is already initialized")
+
+    if not payload.email:
+        raise HTTPException(status_code=400, detail="Admin email is required")
+
+    settings["admin_email"] = payload.email.lower()
+    settings["admin_password_hash"] = hash_password(payload.password)
+
+    await db.site_settings.update_one({"id": "site_settings"}, {"$set": settings}, upsert=True)
+    return {"success": True}
+
+# Admin request password change (requires current password; sends magic link)
+@api_router.post("/admin/password/change/request")
+async def admin_request_password_change(payload: AdminChangePasswordRequest):
+    settings = await get_site_settings()
+    if not settings.get("admin_email"):
+        raise HTTPException(status_code=400, detail="Admin email is not configured")
+
+    # Require current password
+    if settings.get("admin_password_hash"):
+        if hash_password(payload.current_password) != settings.get("admin_password_hash"):
+            raise HTTPException(status_code=401, detail="Invalid current password")
+    else:
+        if payload.current_password != ADMIN_PASSWORD:
+            raise HTTPException(status_code=401, detail="Invalid current password")
+
+    token = generate_token()
+    now = datetime.now(timezone.utc)
+    expires_at = (now + timedelta(minutes=30)).isoformat()
+
+    # store pending token
+    await db.admin_password_resets.insert_one({
+        "token": token,
+        "new_password_hash": hash_password(payload.new_password),
+        "created_at": now.isoformat(),
+        "expires_at": expires_at
+    })
+
+    if not FRONTEND_URL:
+        raise HTTPException(status_code=500, detail="FRONTEND_URL is not configured")
+
+    link = f"{FRONTEND_URL}/admin/reset-password?token={token}"
+    html = f"""
+    <html><body style='font-family: Arial, sans-serif;'>
+      <h2>Confirm Admin Password Change</h2>
+      <p>Click the link below to confirm your admin password change. This link expires in 30 minutes.</p>
+      <p><a href='{link}'>Confirm password change</a></p>
+    </body></html>
+    """
+
+    ok = await send_email_via_resend(settings["admin_email"], "Confirm admin password change", html)
+    if not ok:
+        raise HTTPException(status_code=500, detail="Failed to send confirmation email")
+
+    return {"success": True}
+
+# Admin confirm password change
+@api_router.post("/admin/password/change/confirm")
+async def admin_confirm_password_change(payload: PasswordResetConfirmRequest):
+    settings = await get_site_settings()
+    req = await db.admin_password_resets.find_one({"token": payload.token}, {"_id": 0})
+    if not req:
+        raise HTTPException(status_code=400, detail="Invalid or expired token")
+
+    # check expiry
+    try:
+        exp = datetime.fromisoformat(req["expires_at"])
+    except Exception:
+        exp = datetime.now(timezone.utc)
+    if exp < datetime.now(timezone.utc):
+        await db.admin_password_resets.delete_one({"token": payload.token})
+        raise HTTPException(status_code=400, detail="Invalid or expired token")
+
+    # update admin password hash
+    settings["admin_password_hash"] = req["new_password_hash"]
+    await db.site_settings.update_one({"id": "site_settings"}, {"$set": settings}, upsert=True)
+
+    await db.admin_password_resets.delete_one({"token": payload.token})
+    return {"success": True}
+
+# User forgot password (send magic link)
+@api_router.post("/auth/forgot-password")
+async def user_forgot_password(payload: UserForgotPasswordRequest):
+    user = await db.users.find_one({"email": payload.email.lower()}, {"_id": 0})
+    if not user:
+        # do not reveal existence
+        return {"success": True}
+
+    token = generate_token()
+    now = datetime.now(timezone.utc)
+    expires_at = (now + timedelta(minutes=30)).isoformat()
+
+    await db.user_password_resets.insert_one({
+        "token": token,
+        "user_id": user["id"],
+        "created_at": now.isoformat(),
+        "expires_at": expires_at
+    })
+
+    if not FRONTEND_URL:
+        raise HTTPException(status_code=500, detail="FRONTEND_URL is not configured")
+
+    link = f"{FRONTEND_URL}/reset-password?token={token}"
+    html = f"""
+    <html><body style='font-family: Arial, sans-serif;'>
+      <h2>Reset your password</h2>
+      <p>Click the link below to reset your password. This link expires in 30 minutes.</p>
+      <p><a href='{link}'>Reset password</a></p>
+    </body></html>
+    """
+
+    await send_email_via_resend(payload.email.lower(), "Reset your password", html)
+    return {"success": True}
+
+# User confirm password reset
+@api_router.post("/auth/reset-password")
+async def user_reset_password(payload: PasswordResetConfirmRequest):
+    req = await db.user_password_resets.find_one({"token": payload.token}, {"_id": 0})
+    if not req:
+        raise HTTPException(status_code=400, detail="Invalid or expired token")
+
+    try:
+        exp = datetime.fromisoformat(req["expires_at"])
+    except Exception:
+        exp = datetime.now(timezone.utc)
+    if exp < datetime.now(timezone.utc):
+        await db.user_password_resets.delete_one({"token": payload.token})
+        raise HTTPException(status_code=400, detail="Invalid or expired token")
+
+    await db.users.update_one(
+        {"id": req["user_id"]},
+        {"$set": {"password_hash": hash_password(payload.new_password)}}
+    )
+
+    await db.user_password_resets.delete_one({"token": payload.token})
+    return {"success": True}
+
+
     
     # Check rate limit by IP
     client_ip = request.client.host if request.client else "anonymous"
