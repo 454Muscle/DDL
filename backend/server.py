@@ -42,6 +42,8 @@ RESEND_API_KEY = os.environ.get('RESEND_API_KEY', '')
 SENDER_EMAIL = os.environ.get('SENDER_EMAIL', 'onboarding@resend.dev')
 FRONTEND_URL = os.environ.get('FRONTEND_URL', 'https://downloadportal-1.preview.emergentagent.com')
 
+ADMIN_EMAIL = os.environ.get('ADMIN_EMAIL', '')
+
 if RESEND_API_KEY:
     resend.api_key = RESEND_API_KEY
 
