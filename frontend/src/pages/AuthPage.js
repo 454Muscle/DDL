@@ -37,6 +37,17 @@ export default function AuthPage() {
             const response = await axios.get(`${API}/captcha`);
             setCaptcha(response.data);
             setFormData(prev => ({ ...prev, captcha_id: response.data.id, captcha_answer: '' }));
+
+    const fetchRecaptchaSettings = async () => {
+        try {
+            const response = await axios.get(`${API}/recaptcha/settings`);
+            setRecaptchaSettings(response.data || { site_key: null, enable_submit: false, enable_auth: false });
+            setRecaptchaToken('');
+        } catch (error) {
+            console.error('Error fetching recaptcha settings:', error);
+        }
+    };
+
         } catch (error) {
             console.error('Error fetching captcha:', error);
         }
