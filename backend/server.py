@@ -35,14 +35,14 @@ app = FastAPI()
 api_router = APIRouter(prefix="/api")
 
 # Admin credentials (simple hardcoded)
-ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', 'admin123')
+ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', '')
 
 # Resend email config
 RESEND_API_KEY = os.environ.get('RESEND_API_KEY', '')
 SENDER_EMAIL = os.environ.get('SENDER_EMAIL', 'onboarding@resend.dev')
 FRONTEND_URL = os.environ.get('FRONTEND_URL', 'https://downloadportal-1.preview.emergentagent.com')
 
-ADMIN_EMAIL = os.environ.get('ADMIN_EMAIL', '')
+ADMIN_EMAIL = os.environ.get('ADMIN_EMAIL', '')  # optional bootstrap only
 
 if RESEND_API_KEY:
     resend.api_key = RESEND_API_KEY
@@ -264,6 +264,13 @@ class UserForgotPasswordRequest(BaseModel):
 class PasswordResetConfirmRequest(BaseModel):
     token: str
     new_password: str
+
+class TokenOnlyRequest(BaseModel):
+    token: str
+
+class AdminUpdateEmailRequest(BaseModel):
+    current_password: str
+    new_email: EmailStr
 
 # ===== SETTINGS / EMAIL HELPERS =====
 
@@ -825,7 +832,7 @@ async def admin_request_password_change(payload: AdminChangePasswordRequest):
     if not FRONTEND_URL:
         raise HTTPException(status_code=500, detail="FRONTEND_URL is not configured")
 
-    link = f"{FRONTEND_URL}/admin/reset-password?token={token}"
+    link = f"{FRONTEND_URL}/admin/confirm-password-change?token={token}"
     html = f"""
     <html><body style='font-family: Arial, sans-serif;'>
       <h2>Confirm Admin Password Change</h2>
