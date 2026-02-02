@@ -224,6 +224,10 @@ class RateLimitEntry(BaseModel):
 class AdminInitRequest(BaseModel):
     email: EmailStr
     password: str
+def generate_token() -> str:
+    return secrets.token_urlsafe(32)
+
+
 
 class AdminChangePasswordRequest(BaseModel):
     current_password: str
