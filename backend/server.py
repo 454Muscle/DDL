@@ -375,10 +375,20 @@ async def verify_captcha(captcha_id: str, answer: int) -> bool:
 # ===== USER AUTH ROUTES =====
 
 @api_router.post("/auth/register")
-async def register_user(user: UserRegister):
-    # Verify captcha
-    if not await verify_captcha(user.captcha_id, user.captcha_answer):
-        raise HTTPException(status_code=400, detail="Invalid captcha")
+async def register_user(user: UserRegister, request: Request):
+    settings = await db.site_settings.find_one({"id": "site_settings"}, {"_id": 0})
+    if not settings:
+        settings = SiteSettings().model_dump()
+
+    # Verify captcha (math) OR reCAPTCHA depending on admin settings
+    if settings.get("recaptcha_enable_auth"):
+        token = request.headers.get("X-Recaptcha-Token")
+        ok = await verify_recaptcha(token, request.client.host if request.client else None, settings.get("recaptcha_secret_key", ""))
+        if not ok:
+            raise HTTPException(status_code=400, detail="Invalid reCAPTCHA")
+    else:
+        if not await verify_captcha(user.captcha_id, user.captcha_answer):
+            raise HTTPException(status_code=400, detail="Invalid captcha")
     
     # Check if email exists
     existing = await db.users.find_one({"email": user.email.lower()}, {"_id": 0})
