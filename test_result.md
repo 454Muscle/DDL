@@ -172,3 +172,5 @@ test_plan:
 agent_communication:
   - agent: "main"
     message: "Implemented Resend test email button + endpoint, and batch submissions (frontend toggle + backend /submissions/bulk). Please test multi-mode add/remove, captcha/reCAPTCHA behavior, and that bulk endpoint enforces remaining/daily limit and returns count."
+  - agent: "testing"
+    message: "Completed comprehensive UI/E2E testing. CRITICAL ISSUE FOUND: Backend /api/submissions endpoint has ResponseValidationError causing 500 errors. Multi-mode UI works perfectly (toggle, add/remove items, form validation), Admin dashboard login works with 'newpass123', Resend test email button works and shows expected 'Failed to send test email' toast. Single-mode submission fails due to backend 500 error. Need to fix backend submission endpoint validation issue."
