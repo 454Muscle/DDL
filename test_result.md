@@ -156,11 +156,14 @@ frontend:
     file: "/app/frontend/src/App.js"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: true
         agent: "main"
         comment: "Added ForgotPasswordPage, ResetPasswordPage, AdminForgotPasswordPage, AdminResetPasswordPage, AdminConfirmPasswordChangePage + routes. Added small 'Forgot password?' links on user login and admin login pages."
+      - working: true
+        agent: "testing"
+        comment: "✅ All forgot password links and pages working correctly. Auth page (/auth) shows 'Forgot password?' link in login mode that navigates to /forgot-password. Admin login page (/admin) shows 'Forgot password?' link that navigates to /admin/forgot-password. All reset password pages handle bad tokens properly with backend error messages. Admin confirm password change page (/admin/confirm-password-change) shows proper error with bad token."
 
   - task: "Admin dashboard: Resend + admin credential management UI"
     implemented: true
