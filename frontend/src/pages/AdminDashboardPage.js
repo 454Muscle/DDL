@@ -1395,7 +1395,7 @@ export default function AdminDashboardPage() {
                                 </AlertDialogDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>
-                                <AlertDialogCancel onClick={() => setDeleteConfirm({ open: false, id: null, name: '' })}>Cancel</AlertDialogCancel>
+                                <AlertDialogCancel onClick={() => setDownloadDeleteConfirm({ open: false, id: null, name: '' })}>Cancel</AlertDialogCancel>
                                 <AlertDialogAction
                                     onClick={() => {
                                         if (deleteConfirm.id) {
