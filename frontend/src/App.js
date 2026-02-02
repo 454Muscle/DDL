@@ -9,6 +9,10 @@ import SubmitPage from "./pages/SubmitPage";
 import AuthPage from "./pages/AuthPage";
 import AdminLoginPage from "./pages/AdminLoginPage";
 import AdminDashboardPage from "./pages/AdminDashboardPage";
+import ForgotPasswordPage from "./pages/ForgotPasswordPage";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
+import AdminForgotPasswordPage from "./pages/AdminForgotPasswordPage";
+import AdminResetPasswordPage from "./pages/AdminResetPasswordPage";
 
 function App() {
     return (
