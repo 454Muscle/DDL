@@ -120,6 +120,16 @@ export default function AdminDashboardPage() {
             setTotalPages(response.data.pages);
         } catch (error) {
             console.error('Error fetching submissions:', error);
+
+    const fetchUnseenSubmissionsCount = async () => {
+        try {
+            const res = await axios.get(`${API}/admin/submissions/unseen-count`);
+            setUnseenSubmissionsCount(res.data.count || 0);
+        } catch (e) {
+            console.error('unseen submissions count error', e);
+        }
+    };
+
             toast.error('Failed to load submissions');
         } finally {
             setLoading(false);
