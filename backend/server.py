@@ -294,8 +294,7 @@ def parse_file_size_to_bytes(size_str: str) -> Optional[int]:
 
 async def send_submission_email(email: str, submission: dict):
     """Send confirmation email to submitter"""
-    if not RESEND_API_KEY or not email:
-        logger.info("Email not sent: API key missing or no email provided")
+    if not email:
         return
 
     if not FRONTEND_URL:
