@@ -929,7 +929,7 @@ async def admin_reset_password(payload: PasswordResetConfirmRequest):
 
 # Admin confirm password change
 @api_router.post("/admin/password/change/confirm")
-async def admin_confirm_password_change(payload: PasswordResetConfirmRequest):
+async def admin_confirm_password_change(payload: TokenOnlyRequest):
     settings = await fetch_site_settings()
     req = await db.admin_password_resets.find_one({"token": payload.token}, {"_id": 0})
     if not req:
