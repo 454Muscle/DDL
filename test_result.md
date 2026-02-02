@@ -97,7 +97,103 @@
 #====================================================================================================
 
 
-
 #====================================================================================================
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
+
+user_problem_statement: "Add a new 'Site' column to downloads and collect required site name + URL on submissions; additionally, add optional Google reCAPTCHA v2 configurable via Admin to replace math captcha on Submit and/or Auth."
+
+backend:
+  - task: "Site fields on submissions/downloads"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Added site_name + site_url to SubmissionCreate; persisted to submissions; approval copies fields into downloads. Manual curl verified approved download returns site fields."
+
+  - task: "Google reCAPTCHA v2 verification + settings"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Added SiteSettings recaptcha keys/toggles; /api/recaptcha/settings public endpoint; server-side verification via google siteverify when enabled; /api/settings hides secret key. Manual curl verified secret not exposed."
+
+frontend:
+  - task: "Submit page: required site fields + reCAPTCHA widget toggle"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/pages/SubmitPage.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Added site name/url inputs (required) and reCAPTCHA widget when enabled via /api/recaptcha/settings; fallback to math captcha otherwise. Screenshot-based smoke test passed."
+
+  - task: "Home page: add Site column"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/pages/HomePage.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Added Site column to downloads table. Renders link with target=_blank when site_url present, otherwise shows '---'. Screenshot-based smoke test passed."
+
+  - task: "Admin dashboard: reCAPTCHA keys + toggles"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/pages/AdminDashboardPage.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Added Google reCAPTCHA 2.0 section with Site Key + Secret Key inputs and toggles for Submit/Auth; update button saves to /api/admin/settings. Screenshot shows section rendered after admin login."
+
+  - task: "Auth page: reCAPTCHA widget toggle"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/pages/AuthPage.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "When enabled, registration shows reCAPTCHA widget and sends token to backend; login also sends token. Otherwise uses math captcha for register. Needs e2e test with real keys."
+
+metadata:
+  created_by: "main_agent"
+  version: "1.0"
+  test_sequence: 1
+  run_ui: true
+
+test_plan:
+  current_focus:
+    - "Site fields on submissions/downloads"
+    - "Home page: add Site column"
+    - "Submit page: required site fields + reCAPTCHA widget toggle"
+    - "Admin dashboard: reCAPTCHA keys + toggles"
+    - "Auth page: reCAPTCHA widget toggle"
+  stuck_tasks: []
+  test_all: false
+  test_priority: "high_first"
+
+agent_communication:
+  - agent: "main"
+    message: "Implemented Site fields end-to-end and added optional Google reCAPTCHA v2 with admin-configurable keys + toggles for Submit and Auth. Please run backend+frontend tests focusing on toggles off (math captcha) and toggles on (reCAPTCHA) flows. Admin password for local UI: admin123 (as currently configured)."
