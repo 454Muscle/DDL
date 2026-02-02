@@ -805,6 +805,160 @@ export default function AdminDashboardPage() {
 
             </div>
 
+            {/* Site Settings / Branding Card */}
+            <div className="admin-card" data-testid="site-settings">
+                <h2 className="admin-title">Site Settings</h2>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                    <div>
+                        <label className="form-label" style={{ fontSize: '0.75rem' }}>SITE NAME</label>
+                        <input
+                            type="text"
+                            value={siteName}
+                            onChange={(e) => setSiteName(e.target.value)}
+                            className="form-input"
+                            placeholder="My Site"
+                            data-testid="site-name-input"
+                        />
+                    </div>
+                    <div>
+                        <label className="form-label" style={{ fontSize: '0.75rem' }}>SITE NAME COLOR</label>
+                        <input
+                            type="color"
+                            value={siteNameFontColor}
+                            onChange={(e) => setSiteNameFontColor(e.target.value)}
+                            className="form-input"
+                            style={{ padding: 0, height: 42 }}
+                            data-testid="site-name-color"
+                        />
+                    </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginTop: '1rem' }}>
+                    <div>
+                        <label className="form-label" style={{ fontSize: '0.75rem' }}>SITE NAME FONT</label>
+                        <select className="form-select" value={siteNameFontFamily} onChange={(e) => setSiteNameFontFamily(e.target.value)} data-testid="site-name-font">
+                            {FONT_OPTIONS.map((f) => (
+                                <option key={f} value={f}>{f}</option>
+                            ))}
+                        </select>
+                    </div>
+                    <div>
+                        <label className="form-label" style={{ fontSize: '0.75rem' }}>SITE NAME WEIGHT</label>
+                        <select className="form-select" value={siteNameFontWeight} onChange={(e) => setSiteNameFontWeight(e.target.value)} data-testid="site-name-weight">
+                            {WEIGHT_OPTIONS.map((w) => (
+                                <option key={w} value={w}>{w}</option>
+                            ))}
+                        </select>
+                    </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginTop: '1rem' }}>
+                    <div>
+                        <label className="form-label" style={{ fontSize: '0.75rem' }}>BODY FONT</label>
+                        <select className="form-select" value={bodyFontFamily} onChange={(e) => setBodyFontFamily(e.target.value)} data-testid="body-font">
+                            {FONT_OPTIONS.map((f) => (
+                                <option key={f} value={f}>{f}</option>
+                            ))}
+                        </select>
+                    </div>
+                    <div>
+                        <label className="form-label" style={{ fontSize: '0.75rem' }}>BODY WEIGHT</label>
+                        <select className="form-select" value={bodyFontWeight} onChange={(e) => setBodyFontWeight(e.target.value)} data-testid="body-weight">
+                            {WEIGHT_OPTIONS.map((w) => (
+                                <option key={w} value={w}>{w}</option>
+                            ))}
+                        </select>
+                    </div>
+                </div>
+
+                <div style={{ borderTop: '1px solid hsl(var(--border))', marginTop: '1.25rem', paddingTop: '1.25rem' }}>
+                    <h3 style={{ fontSize: '0.875rem', marginBottom: '0.75rem' }}>Footer</h3>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.75rem' }}>
+                        <input type="checkbox" checked={footerEnabled} onChange={(e) => setFooterEnabled(e.target.checked)} data-testid="footer-enabled" />
+                        Enable footer
+                    </label>
+
+                    <p style={{ fontSize: '0.75rem', opacity: 0.7, marginTop: '0.75rem' }}>
+                        Placeholders: <code>{'{admin_email}'}</code>, <code>{'{site_name}'}</code>, <code>{'{year}'}</code>. Lines are hidden if required values are missing.
+                    </p>
+
+                    <div className="form-group" style={{ marginTop: '0.75rem' }}>
+                        <label className="form-label">FOOTER LINE 1 TEMPLATE</label>
+                        <input type="text" className="form-input" value={footerLine1} onChange={(e) => setFooterLine1(e.target.value)} data-testid="footer-line1" />
+                    </div>
+                    <div className="form-group">
+                        <label className="form-label">FOOTER LINE 2 TEMPLATE</label>
+                        <input type="text" className="form-input" value={footerLine2} onChange={(e) => setFooterLine2(e.target.value)} data-testid="footer-line2" />
+                    </div>
+                </div>
+
+                <button onClick={handleUpdateBranding} className="action-btn approve" style={{ padding: '0.75rem 1.5rem', marginTop: '1rem' }} data-testid="update-site-settings">
+                    UPDATE SITE SETTINGS
+                </button>
+            </div>
+
+            {/* Downloads Management Card */}
+            <div className="admin-card" data-testid="downloads-management">
+                <h2 className="admin-title">Manage Downloads</h2>
+                <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+                    <input
+                        type="text"
+                        className="form-input"
+                        value={downloadsSearch}
+                        onChange={(e) => setDownloadsSearch(e.target.value)}
+                        placeholder="Search downloads..."
+                        style={{ flex: 1, minWidth: 240 }}
+                        data-testid="downloads-search-input"
+                    />
+                    <button className="action-btn approve" onClick={() => fetchDownloads(1)} data-testid="downloads-search-btn">
+                        SEARCH
+                    </button>
+                </div>
+
+                <div style={{ marginTop: '1rem', overflowX: 'auto' }}>
+                    <table className="downloads-table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Type</th>
+                                <th>Date</th>
+                                <th style={{ width: 120 }}>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {downloadsResults.length === 0 ? (
+                                <tr><td colSpan={4} style={{ textAlign: 'center', padding: '1rem', opacity: 0.7 }}>No results</td></tr>
+                            ) : (
+                                downloadsResults.map((d) => (
+                                    <tr key={d.id}>
+                                        <td>{d.name}</td>
+                                        <td>{d.type}</td>
+                                        <td>{d.submission_date}</td>
+                                        <td>
+                                            <button className="action-btn reject" onClick={() => handleDeleteDownload(d.id)} data-testid={`delete-download-${d.id}`}>
+                                                DELETE
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))
+                            )}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.75rem', fontSize: '0.75rem', opacity: 0.8 }}>
+                    <button className="filter-btn" disabled={downloadsPage <= 1} onClick={() => fetchDownloads(downloadsPage - 1)}>
+                        Prev
+                    </button>
+                    <span>Page {downloadsPage} / {downloadsTotalPages}</span>
+                    <button className="filter-btn" disabled={downloadsPage >= downloadsTotalPages} onClick={() => fetchDownloads(downloadsPage + 1)}>
+                        Next
+                    </button>
+                </div>
+            </div>
+
+
             {/* Admin Credentials Card */}
             <div className="admin-card" data-testid="admin-credentials">
                 <h2 className="admin-title">Admin Credentials</h2>
