@@ -1385,6 +1385,8 @@ export default function AdminDashboardPage() {
                         </tbody>
                     </table>
 
+                    </>
+
                     <AlertDialog open={downloadDeleteConfirm.open} onOpenChange={(open) => setDownloadDeleteConfirm({ ...downloadDeleteConfirm, open })}>
                         <AlertDialogContent>
                             <AlertDialogHeader>
