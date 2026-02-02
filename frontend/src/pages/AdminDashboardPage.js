@@ -70,6 +70,13 @@ export default function AdminDashboardPage() {
     const [recaptchaEnableSubmit, setRecaptchaEnableSubmit] = useState(false);
     const [recaptchaEnableAuth, setRecaptchaEnableAuth] = useState(false);
 
+    const [resendApiKey, setResendApiKey] = useState('');
+    const [resendSenderEmail, setResendSenderEmail] = useState('');
+    const [adminEmail, setAdminEmail] = useState('');
+    const [adminInitPassword, setAdminInitPassword] = useState('');
+    const [adminCurrentPassword, setAdminCurrentPassword] = useState('');
+    const [adminNewPassword, setAdminNewPassword] = useState('');
+
     useEffect(() => {
         if (!sessionStorage.getItem('admin_auth')) {
             navigate('/admin');
