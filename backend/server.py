@@ -267,9 +267,7 @@ def generate_token() -> str:
     return secrets.token_urlsafe(32)
 
 async def fetch_site_settings() -> dict:
-    settings = await db.site_settings.find_one({"id": "site_settings"}, {"_id": 0})
-    if not settings:
-        settings = SiteSettings().model_dump()
+    settings = await fetch_site_settings()
         await db.site_settings.insert_one(settings)
     return settings
 
@@ -463,9 +461,7 @@ async def verify_captcha(captcha_id: str, answer: int) -> bool:
 
 @api_router.post("/auth/register")
 async def register_user(user: UserRegister, request: Request):
-    settings = await db.site_settings.find_one({"id": "site_settings"}, {"_id": 0})
-    if not settings:
-        settings = SiteSettings().model_dump()
+    settings = await fetch_site_settings()
 
     # Verify captcha (math) OR reCAPTCHA depending on admin settings
     if settings.get("recaptcha_enable_auth"):
@@ -506,9 +502,7 @@ async def register_user(user: UserRegister, request: Request):
 
 @api_router.post("/auth/login")
 async def login_user(user: UserLogin, request: Request):
-    settings = await db.site_settings.find_one({"id": "site_settings"}, {"_id": 0})
-    if not settings:
-        settings = SiteSettings().model_dump()
+    settings = await fetch_site_settings()
 
     if settings.get("recaptcha_enable_auth"):
         if not settings.get("recaptcha_site_key") or not settings.get("recaptcha_secret_key"):
@@ -676,9 +670,7 @@ async def get_downloads(
 # Top Downloads (includes sponsored)
 @api_router.get("/downloads/top")
 async def get_top_downloads():
-    settings = await db.site_settings.find_one({"id": "site_settings"}, {"_id": 0})
-    if not settings:
-        settings = SiteSettings().model_dump()
+    settings = await fetch_site_settings()
     
     enabled = settings.get("top_downloads_enabled", True)
     count = settings.get("top_downloads_count", 5)
@@ -716,9 +708,7 @@ async def increment_download_count(download_id: str):
 # Submissions - Public (with or without registration)
 @api_router.post("/submissions", response_model=Submission)
 async def create_submission(submission: SubmissionCreate, request: Request):
-    settings = await db.site_settings.find_one({"id": "site_settings"}, {"_id": 0})
-    if not settings:
-        settings = SiteSettings().model_dump()
+    settings = await fetch_site_settings()
 
     # If reCAPTCHA is enabled, require keys to be present
     if settings.get("recaptcha_enable_submit"):
@@ -1036,9 +1026,7 @@ async def delete_submission(submission_id: str):
 # Public: expose only safe reCAPTCHA settings (site key + toggles)
 @api_router.get("/recaptcha/settings")
 async def get_recaptcha_settings_public():
-    settings = await db.site_settings.find_one({"id": "site_settings"}, {"_id": 0})
-    if not settings:
-        settings = SiteSettings().model_dump()
+    settings = await fetch_site_settings()
     return {
         "site_key": settings.get("recaptcha_site_key"),
         "enable_submit": bool(settings.get("recaptcha_enable_submit")),
@@ -1097,9 +1085,7 @@ async def get_site_settings_public():
 # Site Settings - Update (Admin)
 @api_router.put("/admin/settings")
 async def update_site_settings(update: SiteSettingsUpdate):
-    settings = await db.site_settings.find_one({"id": "site_settings"}, {"_id": 0})
-    if not settings:
-        settings = SiteSettings().model_dump()
+    settings = await fetch_site_settings()
     
     if update.daily_submission_limit is not None:
         settings["daily_submission_limit"] = max(5, min(100, update.daily_submission_limit))
