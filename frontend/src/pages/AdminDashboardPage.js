@@ -856,6 +856,109 @@ export default function AdminDashboardPage() {
                 )}
             </div>
 
+            {/* Sponsored Downloads Analytics Card */}
+            {sponsoredDownloads.length > 0 && (
+                <div className="admin-card" data-testid="sponsored-analytics">
+                    <h2 className="admin-title">
+                        <BarChart3 size={18} style={{ display: 'inline', marginRight: '0.5rem', color: '#00FFFF' }} />
+                        SPONSORED LINKS ANALYTICS
+                    </h2>
+                    <p style={{ fontSize: '0.75rem', opacity: 0.7, marginBottom: '1rem' }}>
+                        Click statistics for your sponsored downloads
+                    </p>
+                    
+                    <table className="downloads-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Name</th>
+                                <th>24h Clicks</th>
+                                <th>7d Clicks</th>
+                                <th>Total Clicks</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {sponsoredDownloads.map((item, index) => {
+                                const analytics = sponsoredAnalytics.find(a => a.id === item.id) || {};
+                                return (
+                                    <tr key={index} data-testid={`sponsored-analytics-row-${index}`}>
+                                        <td style={{ color: '#FFD700', fontWeight: 'bold' }}>#{index + 1}</td>
+                                        <td>{item.name}</td>
+                                        <td style={{ color: '#00FF41' }}>{analytics.clicks_24h || 0}</td>
+                                        <td style={{ color: '#00FFFF' }}>{analytics.clicks_7d || 0}</td>
+                                        <td style={{ color: '#FF00FF' }}>{analytics.total_clicks || 0}</td>
+                                    </tr>
+                                );
+                            })}
+                        </tbody>
+                    </table>
+                    
+                    <button
+                        onClick={fetchSponsoredAnalytics}
+                        className="action-btn"
+                        style={{ padding: '0.5rem 1rem', marginTop: '0.75rem' }}
+                        data-testid="refresh-analytics-btn"
+                    >
+                        <RefreshCw size={14} style={{ display: 'inline', marginRight: '0.5rem' }} />
+                        REFRESH ANALYTICS
+                    </button>
+                </div>
+            )}
+
+            {/* Trending Downloads Settings Card */}
+            <div className="admin-card" data-testid="trending-downloads-settings">
+                <h2 className="admin-title">
+                    <TrendingUp size={18} style={{ display: 'inline', marginRight: '0.5rem', color: '#FF6600' }} />
+                    TRENDING DOWNLOADS SETTINGS
+                </h2>
+                <p style={{ fontSize: '0.75rem', opacity: 0.7, marginBottom: '1rem' }}>
+                    Display a "Trending" section on the homepage showing downloads with recent high activity
+                </p>
+                
+                <div style={{ display: 'flex', alignItems: 'flex-end', gap: '1rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
+                    <div>
+                        <label className="form-label" style={{ fontSize: '0.75rem' }}>DISPLAY:</label>
+                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                            <button
+                                onClick={() => setTrendingEnabled(true)}
+                                className={`filter-btn ${trendingEnabled ? 'active' : ''}`}
+                                data-testid="trending-enabled-btn"
+                            >
+                                ENABLED
+                            </button>
+                            <button
+                                onClick={() => setTrendingEnabled(false)}
+                                className={`filter-btn ${!trendingEnabled ? 'active' : ''}`}
+                                data-testid="trending-disabled-btn"
+                            >
+                                DISABLED
+                            </button>
+                        </div>
+                    </div>
+                    <div style={{ minWidth: '150px' }}>
+                        <label className="form-label" style={{ fontSize: '0.75rem' }}>COUNT (5-20):</label>
+                        <input
+                            type="number"
+                            min="5"
+                            max="20"
+                            value={trendingCount}
+                            onChange={(e) => setTrendingCount(e.target.value)}
+                            className="form-input"
+                            style={{ width: '100%' }}
+                            data-testid="trending-count-input"
+                        />
+                    </div>
+                    <button
+                        onClick={handleUpdateTrendingDownloads}
+                        className="action-btn approve"
+                        style={{ padding: '0.75rem 1.5rem', marginBottom: '0.25rem' }}
+                        data-testid="update-trending-btn"
+                    >
+                        UPDATE
+                    </button>
+                </div>
+            </div>
+
             {/* Resend Email Settings Card */}
             <div className="admin-card" data-testid="resend-settings">
                 <h2 className="admin-title">Resend Email</h2>
