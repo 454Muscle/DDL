@@ -180,11 +180,14 @@ frontend:
     file: "/app/frontend/src/pages/AuthPage.js"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: true
         agent: "main"
         comment: "When enabled, registration shows reCAPTCHA widget and sends token to backend; login also sends token. Otherwise uses math captcha for register. Needs e2e test with real keys."
+      - working: true
+        agent: "testing"
+        comment: "✅ TESTED: Auth page correctly switches between math captcha (when reCAPTCHA disabled) and reCAPTCHA widget (when enabled). Toggle functionality works through admin settings. Registration form shows appropriate captcha type based on settings."
 
 metadata:
   created_by: "main_agent"
