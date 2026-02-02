@@ -268,6 +268,29 @@ export default function AdminDashboardPage() {
         }
     };
 
+
+    const handleUpdateRecaptcha = async () => {
+        try {
+            const payload = {
+                recaptcha_site_key: recaptchaSiteKey,
+                recaptcha_secret_key: recaptchaSecretKey,
+                recaptcha_enable_submit: recaptchaEnableSubmit,
+                recaptcha_enable_auth: recaptchaEnableAuth
+            };
+            const response = await axios.put(`${API}/admin/settings`, payload);
+            setSiteSettings(response.data);
+            setRecaptchaSiteKey(response.data.recaptcha_site_key || '');
+            setRecaptchaSecretKey(response.data.recaptcha_secret_key || '');
+            setRecaptchaEnableSubmit(!!response.data.recaptcha_enable_submit);
+            setRecaptchaEnableAuth(!!response.data.recaptcha_enable_auth);
+            toast.success('reCAPTCHA settings updated');
+        } catch (error) {
+            console.error('Update reCAPTCHA error:', error);
+            const message = error.response?.data?.detail || 'Failed to update reCAPTCHA settings';
+            toast.error(message);
+        }
+    };
+
     const handleLogout = () => {
         sessionStorage.removeItem('admin_auth');
         toast.success('Logged out');
