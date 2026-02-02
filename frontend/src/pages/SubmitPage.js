@@ -335,6 +335,38 @@ function SubmitPage() {
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                         <div className="form-group">
                             <label className="form-label">
+                                SITE NAME: <span style={{ color: 'hsl(var(--destructive))' }}>*</span>
+                            </label>
+                            <input
+                                type="text"
+                                value={siteName}
+                                onChange={function(e) { setSiteName(e.target.value); }}
+                                className="form-input"
+                                placeholder="e.g., FitGirl"
+                                maxLength={15}
+                                disabled={rateLimit.remaining <= 0}
+                                data-testid="submit-site-name-input"
+                            />
+                        </div>
+                        <div className="form-group">
+                            <label className="form-label">
+                                SITE URL: <span style={{ color: 'hsl(var(--destructive))' }}>*</span>
+                            </label>
+                            <input
+                                type="url"
+                                value={siteUrl}
+                                onChange={function(e) { setSiteUrl(e.target.value); }}
+                                className="form-input"
+                                placeholder="https://example.com"
+                                disabled={rateLimit.remaining <= 0}
+                                data-testid="submit-site-url-input"
+                            />
+                        </div>
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                        <div className="form-group">
+                            <label className="form-label">
                                 FILE TYPE: <span style={{ color: 'hsl(var(--destructive))' }}>*</span>
                             </label>
                             <select
