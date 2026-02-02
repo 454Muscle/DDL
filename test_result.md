@@ -140,11 +140,14 @@ backend:
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: true
         agent: "main"
         comment: "Added /api/auth/forgot-password + /api/auth/reset-password; added /api/admin/forgot-password + /api/admin/reset-password. Uses token stored in MongoDB collections with 30 min expiry."
+      - working: true
+        agent: "testing"
+        comment: "✅ All forgot password flows working correctly. User forgot password (/forgot-password) shows success toast. Admin forgot password (/admin/forgot-password) shows success toast. Reset password pages with bad tokens show proper backend error messages. All API endpoints responding correctly with appropriate success/error messages."
 
 frontend:
   - task: "Forgot/Reset password pages + links"
