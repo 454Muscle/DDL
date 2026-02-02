@@ -48,10 +48,9 @@ function SubmitPage() {
 
     useEffect(function() {
         fetchRateLimit();
-        fetchCaptcha();
+        fetchRecaptchaSettings();
         fetchCategories();
         fetchPopularTags();
-        fetchRecaptchaSettings();
         if (user && user.email) {
             setSubmitterEmail(user.email);
         }
