@@ -1224,44 +1224,65 @@ export default function AdminDashboardPage() {
             <div className="admin-card" data-testid="admin-credentials">
                 <h2 className="admin-title">Admin Credentials</h2>
                 <p style={{ fontSize: '0.75rem', opacity: 0.7, marginBottom: '1rem' }}>
-                    Set the admin email (required). Password changes require current password and are confirmed via a magic link sent to the admin email.
+                    Manage the admin email address and password. The admin email is used for notifications and password recovery.
                 </p>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                    <div>
-                        <label className="form-label" style={{ fontSize: '0.75rem' }}>ADMIN EMAIL</label>
-                        <input
-                            type="email"
-                            value={adminEmail}
-                            onChange={(e) => setAdminEmail(e.target.value)}
-
-
-                            className="form-input"
-                            placeholder="admin@example.com"
-                            data-testid="admin-email-input"
-                        />
-                    </div>
-                    <div>
-                        <label className="form-label" style={{ fontSize: '0.75rem' }}>INITIAL ADMIN PASSWORD (FIRST TIME ONLY)</label>
-                        <input
-                            type="password"
-                            value={adminInitPassword}
-                            onChange={(e) => setAdminInitPassword(e.target.value)}
-                            className="form-input"
-                            placeholder="••••••••"
-                            data-testid="admin-init-password-input"
-                        />
+                {/* Admin Email Section */}
+                <div style={{ marginBottom: '1.5rem' }}>
+                    <h3 style={{ fontSize: '0.875rem', marginBottom: '0.75rem' }}>Admin Email</h3>
+                    <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-end', flexWrap: 'wrap' }}>
+                        <div style={{ flex: 1, minWidth: '250px' }}>
+                            <label className="form-label" style={{ fontSize: '0.75rem' }}>EMAIL ADDRESS</label>
+                            <input
+                                type="email"
+                                value={adminEmail}
+                                onChange={(e) => setAdminEmail(e.target.value)}
+                                className="form-input"
+                                placeholder="admin@example.com"
+                                data-testid="admin-email-input"
+                            />
+                        </div>
+                        <button
+                            onClick={handleSaveAdminEmail}
+                            className="action-btn approve"
+                            style={{ padding: '0.75rem 1.5rem' }}
+                            data-testid="save-admin-email-btn"
+                        >
+                            SAVE EMAIL
+                        </button>
                     </div>
                 </div>
 
-                <button
-                    onClick={handleInitAdmin}
-                    className="action-btn approve"
-                    style={{ padding: '0.75rem 1.5rem', marginTop: '1rem' }}
-                    data-testid="admin-init-btn"
-                >
-                    INITIALIZE ADMIN
-                </button>
+                {/* Initialize Password Section (First Time Only) */}
+                {!siteSettings.admin_password_hash && (
+                    <div style={{ borderTop: '1px solid hsl(var(--border))', paddingTop: '1.5rem', marginBottom: '1.5rem' }}>
+                        <h3 style={{ fontSize: '0.875rem', marginBottom: '0.75rem' }}>Initialize Admin Password (First Time Only)</h3>
+                        <p style={{ fontSize: '0.75rem', opacity: 0.7, marginBottom: '0.75rem' }}>
+                            Set the initial admin password. This can only be done once.
+                        </p>
+                        <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-end', flexWrap: 'wrap' }}>
+                            <div style={{ minWidth: '250px' }}>
+                                <label className="form-label" style={{ fontSize: '0.75rem' }}>INITIAL PASSWORD</label>
+                                <input
+                                    type="password"
+                                    value={adminInitPassword}
+                                    onChange={(e) => setAdminInitPassword(e.target.value)}
+                                    className="form-input"
+                                    placeholder="••••••••"
+                                    data-testid="admin-init-password-input"
+                                />
+                            </div>
+                            <button
+                                onClick={handleInitAdmin}
+                                className="action-btn approve"
+                                style={{ padding: '0.75rem 1.5rem' }}
+                                data-testid="admin-init-btn"
+                            >
+                                INITIALIZE PASSWORD
+                            </button>
+                        </div>
+                    </div>
+                )}
 
                 <div style={{ borderTop: '1px solid hsl(var(--border))', marginTop: '1.5rem', paddingTop: '1.5rem' }}>
                     <h3 style={{ fontSize: '0.875rem', marginBottom: '0.75rem' }}>Request Password Change</h3>
