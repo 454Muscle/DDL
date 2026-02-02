@@ -203,7 +203,97 @@ function SubmitPage() {
 
     function handleSubmit(e) {
         e.preventDefault();
-        
+
+        if (rateLimit.remaining <= 0) {
+            toast.error('RATE LIMIT: Daily submission limit reached');
+            return;
+        }
+
+        if (multiMode) {
+            if (multiItems.length > rateLimit.remaining) {
+                toast.error('RATE LIMIT: Too many items for remaining submissions today');
+                return;
+            }
+
+            for (var i = 0; i < multiItems.length; i++) {
+                var ok = validateItem(multiItems[i], `Item ${i + 1}`);
+                if (!ok) {
+                    return;
+                }
+            }
+
+            if (recaptchaSettings.enable_submit) {
+                if (!recaptchaToken) {
+                    toast.error('SYSTEM ERROR: Please complete the reCAPTCHA');
+                    return;
+                }
+            } else {
+                if (!captchaAnswer) {
+                    toast.error('SYSTEM ERROR: Please solve the captcha');
+                    return;
+                }
+            }
+
+            setSubmitting(true);
+
+            var bulkPayload = {
+                submitter_email: submitterEmail.trim() || undefined,
+                items: multiItems.map(function(it) {
+                    var itemPayload = {
+                        name: it.name,
+                        download_link: it.downloadLink,
+                        type: it.fileType,
+                        site_name: it.siteName,
+                        site_url: it.siteUrl
+                    };
+                    if (it.fileSize && it.fileSize.trim()) itemPayload.file_size = it.fileSize.trim();
+                    if (it.description && it.description.trim()) itemPayload.description = it.description.trim();
+                    if (it.category) itemPayload.category = it.category;
+                    if (it.tags && it.tags.length > 0) itemPayload.tags = it.tags;
+                    return itemPayload;
+                })
+            };
+
+            if (recaptchaSettings.enable_submit) {
+                bulkPayload.recaptcha_token = recaptchaToken;
+            } else {
+                bulkPayload.captcha_answer = parseInt(captchaAnswer);
+                bulkPayload.captcha_id = captchaId;
+            }
+
+            axios.post(API + '/submissions/bulk', bulkPayload)
+                .then(function(response) {
+                    toast.success('TRANSMISSION COMPLETE: Batch submitted for approval (' + response.data.count + ')');
+                    if (submitterEmail) {
+                        toast.info('Confirmation email sent!');
+                    }
+                    setMultiItems([{ name: '', downloadLink: '', fileType: 'game', siteName: '', siteUrl: '', fileSize: '', description: '', category: '', tags: [] }]);
+                    setRecaptchaToken('');
+                    setCaptchaAnswer('');
+                    fetchRateLimit();
+                    if (!recaptchaSettings.enable_submit) {
+                        fetchCaptcha();
+                    }
+                    setTimeout(function() { navigate('/'); }, 2000);
+                })
+                .catch(function(error) {
+                    console.error('Bulk submission error:', error);
+                    var message2 = error.response && error.response.data && error.response.data.detail ? error.response.data.detail : 'Could not submit';
+                    toast.error('TRANSMISSION FAILED: ' + message2);
+                    if (!recaptchaSettings.enable_submit) {
+                        fetchCaptcha();
+                    } else {
+                        setRecaptchaToken('');
+                    }
+                })
+                .finally(function() {
+                    setSubmitting(false);
+                });
+
+            return;
+        }
+
+        // Single submit mode (existing)
         if (!name.trim()) {
             toast.error('SYSTEM ERROR: Name is required');
             return;
@@ -238,11 +328,6 @@ function SubmitPage() {
                 toast.error('SYSTEM ERROR: Please solve the captcha');
                 return;
             }
-        }
-
-        if (rateLimit.remaining <= 0) {
-            toast.error('RATE LIMIT: Daily submission limit reached');
-            return;
         }
 
         setSubmitting(true);
