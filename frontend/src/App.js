@@ -11,6 +11,7 @@ import SubmitPage from "./pages/SubmitPage";
 import AuthPage from "./pages/AuthPage";
 import AdminLoginPage from "./pages/AdminLoginPage";
 import AdminDashboardPage from "./pages/AdminDashboardPage";
+import AdminSubmissionsPage from "./pages/AdminSubmissionsPage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import AdminForgotPasswordPage from "./pages/AdminForgotPasswordPage";
@@ -36,6 +37,7 @@ function App() {
                             <Route path="/admin/reset-password" element={<AdminResetPasswordPage />} />
                             <Route path="/admin/confirm-password-change" element={<AdminConfirmPasswordChangePage />} />
                             <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
+                            <Route path="/admin/submissions" element={<AdminSubmissionsPage />} />
                         </Routes>
                         <Footer />
                     </BrowserRouter>
