@@ -118,6 +118,9 @@ backend:
       - working: true
         agent: "testing"
         comment: "✅ TESTED: Admin dashboard login works with 'newpass123'. Resend section found, SEND TEST EMAIL button works correctly and shows expected 'Failed to send test email' toast message (expected with dummy/missing Resend configuration)."
+      - working: true
+        agent: "testing"
+        comment: "✅ RE-TESTED: POST /api/admin/resend/test correctly returns error status when using dummy/empty Resend API key. Returns 520 (proxy-mapped from 500) with 'Failed to send test email' message. Admin forgot password email link format verified to point to /admin/reset-password?token= as required."
 
   - task: "Bulk submissions endpoint"
     implemented: true
