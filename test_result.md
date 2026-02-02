@@ -135,11 +135,14 @@ frontend:
     file: "/app/frontend/src/pages/SubmitPage.js"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: true
         agent: "main"
         comment: "Added site name/url inputs (required) and reCAPTCHA widget when enabled via /api/recaptcha/settings; fallback to math captcha otherwise. Screenshot-based smoke test passed."
+      - working: true
+        agent: "testing"
+        comment: "✅ TESTED: Site fields validation working correctly - site name max 15 chars, site URL must start with http/https. reCAPTCHA widget displays when enabled with dummy keys, math captcha shows when disabled. UI switching works properly."
 
   - task: "Home page: add Site column"
     implemented: true
