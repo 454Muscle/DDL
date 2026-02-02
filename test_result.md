@@ -110,11 +110,14 @@ backend:
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: true
         agent: "main"
         comment: "Added GET /api/admin/downloads?search&page&limit returning PaginatedDownloads of approved downloads." 
+      - working: true
+        agent: "testing"
+        comment: "✅ TESTED: Downloads search API working correctly. Search returns filtered results, pagination works, delete functionality available."
 
   - task: "Site settings branding/footer fields"
     implemented: true
@@ -122,11 +125,14 @@ backend:
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: true
         agent: "main"
         comment: "Added site_name, typography fields, footer templates+enable to SiteSettings + update handler in PUT /api/admin/settings." 
+      - working: true
+        agent: "testing"
+        comment: "✅ TESTED: Site settings API working correctly. Updates persist and are reflected in UI immediately. Typography and footer settings functional." 
 
 frontend:
   - task: "Submit multi-mode UX improvements"
