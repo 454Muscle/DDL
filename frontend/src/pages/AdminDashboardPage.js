@@ -424,10 +424,27 @@ export default function AdminDashboardPage() {
         }
     };
 
-    const handleInitAdmin = async () => {
+    const handleSaveAdminEmail = async () => {
         try {
             if (!adminEmail.trim()) {
                 toast.error('Admin email is required');
+                return;
+            }
+            await axios.put(`${API}/admin/settings`, { admin_email: adminEmail.trim() });
+            // Refresh global settings so footer gets the new admin email
+            refreshGlobalSettings();
+            fetchSiteSettings();
+            toast.success('Admin email saved');
+        } catch (error) {
+            console.error('Save admin email error:', error);
+            toast.error(error.response?.data?.detail || 'Failed to save admin email');
+        }
+    };
+
+    const handleInitAdmin = async () => {
+        try {
+            if (!adminEmail.trim()) {
+                toast.error('Admin email is required. Please save the email first.');
                 return;
             }
             if (!adminInitPassword || adminInitPassword.length < 6) {
@@ -435,9 +452,11 @@ export default function AdminDashboardPage() {
                 return;
             }
             await axios.post(`${API}/admin/init`, { email: adminEmail, password: adminInitPassword });
-            // Refresh global settings so footer gets the new admin email
+            // Refresh global settings and local settings
             refreshGlobalSettings();
-            toast.success('Admin initialized');
+            fetchSiteSettings();
+            setAdminInitPassword('');
+            toast.success('Admin password initialized');
         } catch (error) {
             console.error('Admin init error:', error);
             toast.error(error.response?.data?.detail || 'Failed to initialize admin');
