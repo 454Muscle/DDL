@@ -1383,6 +1383,7 @@ export default function AdminDashboardPage() {
                             </AlertDialogFooter>
                         </AlertDialogContent>
                     </AlertDialog>
+                    </div>
 
                 )}
 
