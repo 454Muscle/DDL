@@ -220,7 +220,11 @@ function SubmitPage() {
                     message = error.response.data.detail;
                 }
                 toast.error('TRANSMISSION FAILED: ' + message);
-                fetchCaptcha();
+                if (!recaptchaSettings.enable_submit) {
+                    fetchCaptcha();
+                } else {
+                    setRecaptchaToken('');
+                }
             })
             .finally(function() {
                 setSubmitting(false);
