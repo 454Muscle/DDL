@@ -296,12 +296,36 @@ class DownloadPortalAPITester:
 
     def test_downloads_with_optional_fields(self):
         """Test creating submission with optional fields"""
+        # Get a fresh captcha
+        captcha_success, captcha_response = self.run_test("Get Captcha for Optional Fields Test", "GET", "captcha", 200)
+        if not captcha_success:
+            return False
+        
+        # Parse captcha answer
+        question = captcha_response['question']
+        import re
+        match = re.search(r'What is (\d+) ([\+\-×]) (\d+)\?', question)
+        if not match:
+            return False
+        
+        num1, operator, num2 = int(match.group(1)), match.group(2), int(match.group(3))
+        if operator == '+':
+            answer = num1 + num2
+        elif operator == '-':
+            answer = num1 - num2
+        elif operator == '×':
+            answer = num1 * num2
+        
         test_submission = {
             "name": "Test Game with Optional Fields",
             "download_link": "https://example.com/test-game-full.zip",
             "type": "game",
+            "site_name": "OptionalSite",
+            "site_url": "https://optionalsite.com",
             "file_size": "4.5 GB",
-            "description": "A test game with file size and description"
+            "description": "A test game with file size and description",
+            "captcha_id": captcha_response['id'],
+            "captcha_answer": answer
         }
         success, response = self.run_test("Create Submission with Optional Fields", "POST", "submissions", 200, test_submission)
         if success:
