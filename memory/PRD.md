@@ -40,6 +40,11 @@ Build a download website where you can download software, games, movies, tv show
 |----------|--------|-------------|
 | /api/downloads | GET | List downloads (paginated, filterable, searchable) |
 | /api/downloads/{id}/increment | POST | Increment download counter |
+| /api/downloads/{id}/track | POST | Track download activity for trending |
+| /api/downloads/top | GET | Get top downloads with sponsored |
+| /api/downloads/trending | GET | Get trending downloads |
+| /api/sponsored/{id}/click | POST | Track sponsored link click |
+| /api/admin/sponsored/analytics | GET | Get sponsored click analytics |
 | /api/submissions | POST | Create new submission |
 | /api/admin/login | POST | Admin authentication |
 | /api/admin/submissions | GET | List submissions |
@@ -67,20 +72,39 @@ Build a download website where you can download software, games, movies, tv show
 - File size column
 - Description field (optional)
 - Database statistics (total + by type)
-- Seeded 5000 items:
-  - ~1500 Games (fictional titles)
-  - ~1200 Software (mix of open source + fictional)
-  - ~1300 Movies (fictional)
-  - ~1000 TV Shows (fictional series with episodes)
+- Seeded 5000 items
+
+### Phase 3 (Advanced Features) - Jan 2026
+- Top Downloads section
+- Sponsored Downloads (1-5 admin-configured)
+- Rate limiting (configurable)
+- Advanced filters (date range, size)
+- Categories/tags system
+- User authentication with reCAPTCHA
+- Multi-item submission mode
+- Site branding customization
+- Footer customization
+- Admin password management via DB
+- Email notifications (Resend integration)
+- Submission approval workflow
+- Auto-approve submissions toggle
+
+### Phase 4 (Analytics & Trending) - Feb 2026
+- **Sponsored Links Analytics**: Track clicks on sponsored downloads with 24h/7d/total metrics
+- **Trending Downloads Section**: Display downloads with recent high activity on homepage
+- **Admin Trending Toggle**: Enable/disable trending section via admin panel
+- **Download Activity Tracking**: Record download activity for trending calculation
 
 ## Tech Stack
 - **Frontend**: React 19, Tailwind CSS, Shadcn/UI, React Router
 - **Backend**: FastAPI, Motor (async MongoDB), Pydantic
 - **Database**: MongoDB
+- **Email**: Resend
 - **Fonts**: Press Start 2P, VT323, JetBrains Mono
 
 ## Credentials
-- **Admin Password**: admin123 (configurable via ADMIN_PASSWORD env var)
+- **Admin Password**: admin123 (stored in DB, configurable via admin UI)
+- **Admin Email**: admin@example.com
 
 ## Prioritized Backlog
 
@@ -97,21 +121,25 @@ Build a download website where you can download software, games, movies, tv show
 - [x] Top downloads toggle (enable/disable)
 - [x] Top downloads count (5-20)
 - [x] Sponsored downloads (1-5 admin-configured)
+- [x] Sponsored Links Analytics
+- [x] Trending Downloads Section (with admin toggle)
 
 ### P2 (Medium)
-- [ ] User authentication for submitters
 - [ ] Download history tracking
-- [ ] Categories/tags system
-- [ ] File size range filter
 - [ ] Bulk download selection
+- [ ] Refactor server.py into proper project structure
 
 ### P3 (Nice to have)
 - [ ] User comments on downloads
 - [ ] Rating system
 - [ ] Report broken links
-- [ ] Admin analytics dashboard
+- [ ] Extended admin analytics dashboard
 
 ## Next Tasks
-1. Add user authentication for submitters
-2. Add file size range filter
-3. Implement categories/tags system
+1. Refactor `server.py` into routers/models/services structure
+2. Add download history tracking per user
+3. Implement bulk download selection
+
+## Test Credentials
+- **Admin Password**: admin123
+- **Admin Email**: admin@example.com
