@@ -173,11 +173,9 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Resend status test email endpoint"
     - "Bulk submissions endpoint"
-    - "Submit page: multi-item mode"
-    - "Admin dashboard: Send test email button"
-  stuck_tasks: []
+  stuck_tasks:
+    - "Bulk submissions endpoint"
   test_all: false
   test_priority: "high_first"
 
