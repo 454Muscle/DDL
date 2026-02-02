@@ -161,6 +161,8 @@ export default function AdminDashboardPage() {
             setNewLimit(response.data.daily_submission_limit || 10);
             setTopEnabled(response.data.top_downloads_enabled !== false);
             setTopCount(response.data.top_downloads_count || 5);
+            setTrendingEnabled(!!response.data.trending_downloads_enabled);
+            setTrendingCount(response.data.trending_downloads_count || 5);
             setSponsoredDownloads(response.data.sponsored_downloads || []);
             setRecaptchaSiteKey(response.data.recaptcha_site_key || '');
             // secret key is not returned from /api/settings; keep current input value
@@ -180,8 +182,20 @@ export default function AdminDashboardPage() {
             setFooterLine1(response.data.footer_line1_template || 'For DMCA copyright complaints send an email to {admin_email}.');
             setFooterLine2(response.data.footer_line2_template || 'Copyright © {site_name} {year}. All rights reserved.');
             setAutoApproveSubmissions(!!response.data.auto_approve_submissions);
+            
+            // Fetch sponsored analytics
+            fetchSponsoredAnalytics();
         } catch (error) {
             console.error('Error fetching settings:', error);
+        }
+    };
+
+    const fetchSponsoredAnalytics = async () => {
+        try {
+            const response = await axios.get(`${API}/admin/sponsored/analytics`);
+            setSponsoredAnalytics(response.data.analytics || []);
+        } catch (error) {
+            console.error('Error fetching sponsored analytics:', error);
         }
     };
 
