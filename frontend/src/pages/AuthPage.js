@@ -74,6 +74,17 @@ export default function AuthPage() {
                 toast.error('Password must be at least 6 characters');
                 return;
             }
+            if (recaptchaSettings.enable_auth) {
+                if (!recaptchaToken) {
+                    toast.error('Please complete the reCAPTCHA');
+                    return;
+                }
+            } else {
+                if (!formData.captcha_answer) {
+                    toast.error('Please solve the captcha');
+                    return;
+                }
+            }
         }
 
         setLoading(true);
