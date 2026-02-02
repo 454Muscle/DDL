@@ -168,6 +168,12 @@ class SiteSettings(BaseModel):
     top_downloads_count: int = 5
     sponsored_downloads: List[dict] = []
 
+    # Google reCAPTCHA v2 settings (optional)
+    recaptcha_site_key: Optional[str] = None
+    recaptcha_secret_key: Optional[str] = None
+    recaptcha_enable_submit: bool = False
+    recaptcha_enable_auth: bool = False
+
 class SiteSettingsUpdate(BaseModel):
     daily_submission_limit: Optional[int] = None
     top_downloads_enabled: Optional[bool] = None
