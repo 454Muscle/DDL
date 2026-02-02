@@ -909,18 +909,6 @@ async def user_reset_password(payload: PasswordResetConfirmRequest):
         category=submission.category,
         tags=submission.tags or [],
         site_name=submission.site_name,
-
-    # Resend email settings
-    if update.resend_api_key is not None:
-        settings["resend_api_key"] = update.resend_api_key.strip() or None
-
-    if update.resend_sender_email is not None:
-        settings["resend_sender_email"] = update.resend_sender_email.strip() or None
-
-    # Admin email (required for password change confirmations)
-    if update.admin_email is not None:
-        settings["admin_email"] = update.admin_email.lower() if update.admin_email else None
-
         site_url=validate_http_url(submission.site_url),
         submitter_email=submission.submitter_email
     )
