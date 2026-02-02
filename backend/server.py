@@ -89,6 +89,7 @@ class Submission(BaseModel):
     submission_date: str
     status: str = "pending"
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    seen_by_admin: bool = False
     file_size: Optional[str] = None
     file_size_bytes: Optional[int] = None
     description: Optional[str] = None
