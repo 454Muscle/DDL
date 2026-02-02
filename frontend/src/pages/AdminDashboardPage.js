@@ -533,17 +533,41 @@ export default function AdminDashboardPage() {
                 <h1 className="pixel-font neon-glow" style={{ fontSize: '1rem' }}>
                     <Shield size={20} style={{ display: 'inline', marginRight: '0.5rem' }} />
                     ADMIN CONTROL PANEL
-
-
                 </h1>
-                <button 
-                    onClick={handleLogout}
-                    className="action-btn reject"
-                    data-testid="admin-logout-btn"
-                >
-                    <LogOut size={14} style={{ display: 'inline', marginRight: '0.25rem' }} />
-                    LOGOUT
-                </button>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <button 
+                        onClick={() => navigate('/admin/submissions')}
+                        className="action-btn approve"
+                        style={{ position: 'relative' }}
+                        data-testid="submissions-nav-btn"
+                    >
+                        <FileText size={14} style={{ display: 'inline', marginRight: '0.25rem' }} />
+                        SUBMISSIONS
+                        {unseenSubmissionsCount > 0 && (
+                            <span 
+                                style={{
+                                    position: 'absolute',
+                                    top: '-4px',
+                                    right: '-4px',
+                                    width: '12px',
+                                    height: '12px',
+                                    borderRadius: '50%',
+                                    background: '#FF0000',
+                                    border: '2px solid hsl(var(--card))'
+                                }}
+                                data-testid="submissions-notification-badge"
+                            />
+                        )}
+                    </button>
+                    <button 
+                        onClick={handleLogout}
+                        className="action-btn reject"
+                        data-testid="admin-logout-btn"
+                    >
+                        <LogOut size={14} style={{ display: 'inline', marginRight: '0.25rem' }} />
+                        LOGOUT
+                    </button>
+                </div>
             </div>
 
             {/* Stats Overview */}
