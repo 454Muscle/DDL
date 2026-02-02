@@ -388,6 +388,24 @@ export default function AdminDashboardPage() {
             await axios.post(`${API}/admin/password/change/request`, {
                 current_password: adminCurrentPassword,
                 new_password: adminNewPassword
+            });
+            toast.success('Confirmation email sent. Check admin inbox.');
+        } catch (error) {
+            console.error('Admin password change request error:', error);
+            toast.error(error.response?.data?.detail || 'Failed to request password change');
+        }
+    };
+
+    const FONT_OPTIONS = [
+        'Arial',
+        'Inter',
+        'Roboto',
+        'Georgia',
+        'Times New Roman',
+        'Courier New',
+        'JetBrains Mono'
+    ];
+    const WEIGHT_OPTIONS = ['300', '400', '500', '600', '700', '800'];
 
     const FONT_OPTIONS = [
         'Arial',
