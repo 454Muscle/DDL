@@ -372,11 +372,6 @@ export default function AdminDashboardPage() {
         }
     };
 
-        sessionStorage.removeItem('admin_auth');
-        toast.success('Logged out');
-        navigate('/admin');
-    };
-
     const handleUpdateResend = async () => {
         try {
             await axios.put(`${API}/admin/resend`, {
