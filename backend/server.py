@@ -1425,7 +1425,8 @@ async def admin_unseen_submissions_count():
     if settings.get("auto_approve_submissions"):
         return {"count": 0}
 
-    count = await db.submissions.count_documents({"status": "pending", "seen_by_admin": False})
+    # Count all pending submissions (unseen or not) for the notification badge
+    count = await db.submissions.count_documents({"status": "pending"})
     return {"count": count}
 
 # Admin - Approve Submission
