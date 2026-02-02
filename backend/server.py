@@ -799,6 +799,46 @@ async def admin_init(payload: AdminInitRequest):
 async def admin_request_password_change(payload: AdminChangePasswordRequest):
     settings = await fetch_site_settings()
     if not settings.get("admin_email"):
+        raise HTTPException(status_code=400, detail="Admin email is not configured")
+
+    # Require current password
+    if settings.get("admin_password_hash"):
+        if hash_password(payload.current_password) != settings.get("admin_password_hash"):
+            raise HTTPException(status_code=401, detail="Invalid current password")
+    else:
+        if payload.current_password != ADMIN_PASSWORD:
+            raise HTTPException(status_code=401, detail="Invalid current password")
+
+    token = generate_token()
+    now = datetime.now(timezone.utc)
+    expires_at = (now + timedelta(minutes=30)).isoformat()
+
+    # store pending token
+    await db.admin_password_resets.insert_one({
+        "token": token,
+        "new_password_hash": hash_password(payload.new_password),
+        "created_at": now.isoformat(),
+        "expires_at": expires_at,
+        "type": "change"
+    })
+
+    if not FRONTEND_URL:
+        raise HTTPException(status_code=500, detail="FRONTEND_URL is not configured")
+
+    link = f"{FRONTEND_URL}/admin/reset-password?token={token}"
+    html = f"""
+    <html><body style='font-family: Arial, sans-serif;'>
+      <h2>Confirm Admin Password Change</h2>
+      <p>Click the link below to confirm your admin password change. This link expires in 30 minutes.</p>
+      <p><a href='{link}'>Confirm password change</a></p>
+    </body></html>
+    """
+
+    ok = await send_email_via_resend(settings["admin_email"], "Confirm admin password change", html)
+    if not ok:
+        raise HTTPException(status_code=500, detail="Failed to send confirmation email")
+
+    return {"success": True}
 
 # Admin forgot password (send magic link)
 @api_router.post("/admin/forgot-password")
