@@ -1002,7 +1002,7 @@ export default function AdminDashboardPage() {
                                         <td>{d.type}</td>
                                         <td>{d.submission_date}</td>
                                         <td>
-                                            <button className="action-btn reject" onClick={() => setDeleteConfirm({ open: true, id: d.id, name: d.name })} data-testid={`delete-download-${d.id}`}>
+                                            <button className="action-btn reject" onClick={() => setDownloadDeleteConfirm({ open: true, id: d.id, name: d.name })} data-testid={`delete-download-${d.id}`}>
                                                 DELETE
                                             </button>
                                         </td>
