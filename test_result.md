@@ -154,6 +154,9 @@ backend:
       - working: true
         agent: "testing"
         comment: "✅ All forgot password flows working correctly. User forgot password (/forgot-password) shows success toast. Admin forgot password (/admin/forgot-password) shows success toast. Reset password pages with bad tokens show proper backend error messages. All API endpoints responding correctly with appropriate success/error messages."
+      - working: true
+        agent: "testing"
+        comment: "✅ SECURITY VERIFIED: /api/auth/forgot-password returns success for both existing and non-existing emails (no email enumeration). /api/auth/reset-password with bad token returns 400. /api/admin/forgot-password and /api/admin/reset-password handle bad tokens correctly with 400 responses. All password reset security measures confirmed working."
 
 frontend:
   - task: "Forgot/Reset password pages + links"
