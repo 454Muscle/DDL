@@ -806,6 +806,75 @@ async def create_submission(submission: SubmissionCreate, request: Request):
             detail=f"Daily submission limit ({daily_limit}) reached. Try again tomorrow."
         )
     
+
+@api_router.post("/submissions/bulk")
+async def create_submissions_bulk(payload: BulkSubmissionCreate, request: Request):
+    settings = await fetch_site_settings()
+
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    daily_limit = settings.get("daily_submission_limit", 10)
+
+    client_ip = request.client.host if request.client else "anonymous"
+    rate_entry = await db.rate_limits.find_one({"ip_address": client_ip, "date": today}, {"_id": 0})
+    used = rate_entry.get("count", 0) if rate_entry else 0
+
+    requested_count = len(payload.items)
+    if requested_count <= 0:
+        raise HTTPException(status_code=400, detail="No items provided")
+
+    if used + requested_count > daily_limit:
+        raise HTTPException(status_code=429, detail=f"Daily submission limit ({daily_limit}) exceeded")
+
+    # captcha / recaptcha verification once for whole batch
+    if settings.get("recaptcha_enable_submit"):
+        if not settings.get("recaptcha_site_key") or not settings.get("recaptcha_secret_key"):
+            raise HTTPException(status_code=400, detail="reCAPTCHA is enabled but not configured")
+        ok = await verify_recaptcha(
+            payload.recaptcha_token,
+            request.client.host if request.client else None,
+            settings.get("recaptcha_secret_key", ""),
+        )
+        if not ok:
+            raise HTTPException(status_code=400, detail="Invalid reCAPTCHA. Please try again.")
+    else:
+        if not await verify_captcha(payload.captcha_id, payload.captcha_answer):
+            raise HTTPException(status_code=400, detail="Invalid captcha. Please try again.")
+
+    # increment rate limit by number of items
+    await db.rate_limits.update_one(
+        {"ip_address": client_ip, "date": today},
+        {"$inc": {"count": requested_count}},
+        upsert=True
+    )
+
+    created_docs = []
+    for s in payload.items:
+        file_size_bytes = parse_file_size_to_bytes(s.file_size) if s.file_size else None
+        submission_obj = Submission(
+            name=s.name,
+            download_link=s.download_link,
+            type=s.type,
+            submission_date=today,
+            file_size=s.file_size,
+            file_size_bytes=file_size_bytes,
+            description=s.description,
+            category=s.category,
+            tags=s.tags or [],
+            site_name=s.site_name,
+            site_url=validate_http_url(s.site_url),
+            submitter_email=(payload.submitter_email or s.submitter_email)
+        )
+        doc = submission_obj.model_dump()
+        await db.submissions.insert_one(doc)
+        created_docs.append(doc)
+
+    # send a single summary email
+    email = (payload.submitter_email or '').strip()
+    if email:
+        asyncio.create_task(send_bulk_submission_email(email, created_docs))
+
+    return {"success": True, "count": len(created_docs)}
+
     # Update rate limit counter
     await db.rate_limits.update_one(
         {"ip_address": client_ip, "date": today},
