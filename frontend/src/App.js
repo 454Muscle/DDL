@@ -13,6 +13,7 @@ import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import AdminForgotPasswordPage from "./pages/AdminForgotPasswordPage";
 import AdminResetPasswordPage from "./pages/AdminResetPasswordPage";
+import AdminConfirmPasswordChangePage from "./pages/AdminConfirmPasswordChangePage";
 
 function App() {
     return (
@@ -30,6 +31,7 @@ function App() {
                             <Route path="/admin" element={<AdminLoginPage />} />
                             <Route path="/admin/forgot-password" element={<AdminForgotPasswordPage />} />
                             <Route path="/admin/reset-password" element={<AdminResetPasswordPage />} />
+                            <Route path="/admin/confirm-password-change" element={<AdminConfirmPasswordChangePage />} />
                             <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
                         </Routes>
                     </BrowserRouter>
