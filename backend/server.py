@@ -409,6 +409,25 @@ async def send_submission_email(email: str, submission: dict):
                 </tr>
                 <tr>
                     <td style="padding: 8px; border: 1px solid #333; color: #888;">Date:</td>
+async def send_admin_submissions_summary(submissions: List[dict]):
+    settings = await fetch_site_settings()
+    admin_email = settings.get("admin_email")
+    if not admin_email:
+        return
+
+    names = "".join([f"<li>{s.get('name','N/A')} ({s.get('type','N/A')})</li>" for s in submissions[:50]])
+
+    html = f"""
+    <html><body style='font-family: Arial, sans-serif;'>
+      <h2>New Submission(s) Received</h2>
+      <p>Count: {len(submissions)}</p>
+      <ul>{names}</ul>
+    </body></html>
+    """
+
+    await send_email_via_resend(admin_email, f"New submissions received ({len(submissions)})", html)
+
+
                     <td style="padding: 8px; border: 1px solid #333; color: #00FF41;">{submission.get('submission_date', 'N/A')}</td>
                 </tr>
                 <tr>
