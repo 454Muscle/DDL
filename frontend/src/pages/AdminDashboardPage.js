@@ -128,6 +128,7 @@ export default function AdminDashboardPage() {
             setRecaptchaEnableAuth(!!response.data.recaptcha_enable_auth);
             setAdminEmail(response.data.admin_email || '');
             setResendSenderEmail(response.data.resend_sender_email || '');
+            setResendApiKey('');
         } catch (error) {
             console.error('Error fetching settings:', error);
         }
