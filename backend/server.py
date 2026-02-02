@@ -90,7 +90,7 @@ class Submission(BaseModel):
     tags: List[str] = []
     # optional on existing legacy submissions; required on new submissions via SubmissionCreate
     site_name: Optional[str] = None
-    site_url: Optional[AnyHttpUrl] = None
+    site_url: Optional[str] = None
     submitter_email: Optional[str] = None
     submitter_user_id: Optional[str] = None
 
