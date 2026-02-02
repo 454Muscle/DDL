@@ -784,7 +784,7 @@ class DownloadPortalAPITester:
         
         # Test login with the DB-stored password
         db_password_login = {
-            "password": "dbstored123"
+            "password": "newpass123"  # Current DB password from test_result.md
         }
         
         db_success, db_response = self.run_test("Admin Login DB Password", "POST", "admin/login", 200, db_password_login)
