@@ -187,11 +187,7 @@ metadata:
   run_ui: true
 
 test_plan:
-  current_focus:
-    - "Site-wide typography + header site name + footer"
-    - "Admin dashboard: Site Settings + downloads management UI"
-    - "Admin downloads search"
-    - "Submit multi-mode UX improvements"
+  current_focus: []
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
