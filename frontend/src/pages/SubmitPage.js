@@ -495,112 +495,199 @@ function SubmitPage() {
                 </div>
 
                 <form onSubmit={handleSubmit}>
-                    <div className="form-group">
-                        <label className="form-label">
-                            FILE NAME: <span style={{ color: 'hsl(var(--destructive))' }}>*</span>
-                        </label>
-                        <input
-                            type="text"
-                            value={name}
-                            onChange={function(e) { setName(e.target.value); }}
-                            className="form-input"
-                            placeholder="Enter download name..."
-                            disabled={rateLimit.remaining <= 0}
-                            data-testid="submit-name-input"
-                        />
-                    </div>
+                    {multiMode ? (
+                        <div style={{ marginBottom: '1rem' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+                                <h2 style={{ fontSize: '0.875rem' }}>BATCH ITEMS</h2>
+                                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                    <button type="button" className="filter-btn" onClick={handleAddItemRow} disabled={!canAddMoreItems()} data-testid="add-item-row">
+                                        ADD ITEM
+                                    </button>
+                                </div>
+                            </div>
 
-                    <div className="form-group">
-                        <label className="form-label">
-                            DOWNLOAD LINK: <span style={{ color: 'hsl(var(--destructive))' }}>*</span>
-                        </label>
-                        <input
-                            type="url"
-                            value={downloadLink}
-                            onChange={function(e) { setDownloadLink(e.target.value); }}
-                            className="form-input"
-                            placeholder="https://..."
-                            disabled={rateLimit.remaining <= 0}
-                            data-testid="submit-link-input"
-                        />
-                    </div>
+                            {multiItems.map(function(it, idx) {
+                                return (
+                                    <div key={idx} style={{ border: '1px solid hsl(var(--border))', padding: '1rem', marginTop: '0.75rem' }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                            <span style={{ fontSize: '0.75rem', opacity: 0.7 }}>ITEM {idx + 1}</span>
+                                            <button type="button" className="action-btn reject" onClick={function() { handleRemoveItemRow(idx); }} disabled={multiItems.length <= 1} data-testid={`remove-item-${idx}`}>
+                                                REMOVE
+                                            </button>
+                                        </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                        <div className="form-group">
-                            <label className="form-label">
-                                SITE NAME: <span style={{ color: 'hsl(var(--destructive))' }}>*</span>
-                            </label>
-                            <input
-                                type="text"
-                                value={siteName}
-                                onChange={function(e) { setSiteName(e.target.value); }}
-                                className="form-input"
-                                placeholder="e.g., FitGirl"
-                                maxLength={15}
-                                disabled={rateLimit.remaining <= 0}
-                                data-testid="submit-site-name-input"
-                            />
-                        </div>
-                        <div className="form-group">
-                            <label className="form-label">
-                                SITE URL: <span style={{ color: 'hsl(var(--destructive))' }}>*</span>
-                            </label>
-                            <input
-                                type="url"
-                                value={siteUrl}
-                                onChange={function(e) { setSiteUrl(e.target.value); }}
-                                className="form-input"
-                                placeholder="https://example.com"
-                                disabled={rateLimit.remaining <= 0}
-                                data-testid="submit-site-url-input"
-                            />
-                        </div>
-                    </div>
+                                        <div className="form-group" style={{ marginTop: '0.75rem' }}>
+                                            <label className="form-label">FILE NAME *</label>
+                                            <input type="text" className="form-input" value={it.name} onChange={function(e){ updateMultiItem(idx, { name: e.target.value }); }} disabled={rateLimit.remaining <= 0} />
+                                        </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                        <div className="form-group">
-                            <label className="form-label">
-                                FILE TYPE: <span style={{ color: 'hsl(var(--destructive))' }}>*</span>
-                            </label>
-                            <select
-                                value={fileType}
-                                onChange={function(e) { setFileType(e.target.value); }}
-                                className="form-select"
-                                disabled={rateLimit.remaining <= 0}
-                                data-testid="submit-type-select"
-                            >
-                                {typeOptions.map(function(option) {
-                                    return (
-                                        <option key={option.value} value={option.value}>
-                                            {option.label}
-                                        </option>
-                                    );
-                                })}
-                            </select>
-                        </div>
+                                        <div className="form-group">
+                                            <label className="form-label">DOWNLOAD LINK *</label>
+                                            <input type="url" className="form-input" value={it.downloadLink} onChange={function(e){ updateMultiItem(idx, { downloadLink: e.target.value }); }} disabled={rateLimit.remaining <= 0} />
+                                        </div>
 
-                        <div className="form-group">
-                            <label className="form-label">
-                                CATEGORY:
-                            </label>
-                            <select
-                                value={category}
-                                onChange={function(e) { setCategory(e.target.value); }}
-                                className="form-select"
-                                disabled={rateLimit.remaining <= 0}
-                                data-testid="submit-category-select"
-                            >
-                                <option value="">-- Select Category --</option>
-                                {filteredCategories.map(function(cat) {
-                                    return (
-                                        <option key={cat.id} value={cat.name}>
-                                            {cat.name}
-                                        </option>
-                                    );
-                                })}
-                            </select>
+                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                                            <div className="form-group">
+                                                <label className="form-label">SITE NAME *</label>
+                                                <input type="text" className="form-input" maxLength={15} value={it.siteName} onChange={function(e){ updateMultiItem(idx, { siteName: e.target.value }); }} disabled={rateLimit.remaining <= 0} />
+                                            </div>
+                                            <div className="form-group">
+                                                <label className="form-label">SITE URL *</label>
+                                                <input type="url" className="form-input" value={it.siteUrl} onChange={function(e){ updateMultiItem(idx, { siteUrl: e.target.value }); }} disabled={rateLimit.remaining <= 0} />
+                                            </div>
+                                        </div>
+
+                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                                            <div className="form-group">
+                                                <label className="form-label">FILE TYPE *</label>
+                                                <select className="form-select" value={it.fileType} onChange={function(e){ updateMultiItem(idx, { fileType: e.target.value }); }} disabled={rateLimit.remaining <= 0}>
+                                                    {typeOptions.map(function(option) {
+                                                        return (
+                                                            <option key={option.value} value={option.value}>
+                                                                {option.label}
+                                                            </option>
+                                                        );
+                                                    })}
+                                                </select>
+                                            </div>
+                                            <div className="form-group">
+                                                <label className="form-label">CATEGORY</label>
+                                                <select className="form-select" value={it.category || ''} onChange={function(e){ updateMultiItem(idx, { category: e.target.value }); }} disabled={rateLimit.remaining <= 0}>
+                                                    <option value="">-- Select Category --</option>
+                                                    {categories.map(function(cat) {
+                                                        return (
+                                                            <option key={cat.id} value={cat.name}>
+                                                                {cat.name}
+                                                            </option>
+                                                        );
+                                                    })}
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                        <div className="form-group">
+                                            <label className="form-label">FILE SIZE</label>
+                                            <input type="text" className="form-input" value={it.fileSize} onChange={function(e){ updateMultiItem(idx, { fileSize: e.target.value }); }} disabled={rateLimit.remaining <= 0} />
+                                        </div>
+
+                                        <div className="form-group">
+                                            <label className="form-label">DESCRIPTION</label>
+                                            <textarea className="form-input" style={{ minHeight: '80px' }} value={it.description} onChange={function(e){ updateMultiItem(idx, { description: e.target.value }); }} disabled={rateLimit.remaining <= 0} />
+                                        </div>
+                                    </div>
+                                );
+                            })}
                         </div>
-                    </div>
+                    ) : (
+                        <>
+                            <div className="form-group">
+                                <label className="form-label">
+                                    FILE NAME: <span style={{ color: 'hsl(var(--destructive))' }}>*</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    value={name}
+                                    onChange={function(e) { setName(e.target.value); }}
+                                    className="form-input"
+                                    placeholder="Enter download name..."
+                                    disabled={rateLimit.remaining <= 0}
+                                    data-testid="submit-name-input"
+                                />
+                            </div>
+
+                            <div className="form-group">
+                                <label className="form-label">
+                                    DOWNLOAD LINK: <span style={{ color: 'hsl(var(--destructive))' }}>*</span>
+                                </label>
+                                <input
+                                    type="url"
+                                    value={downloadLink}
+                                    onChange={function(e) { setDownloadLink(e.target.value); }}
+                                    className="form-input"
+                                    placeholder="https://..."
+                                    disabled={rateLimit.remaining <= 0}
+                                    data-testid="submit-link-input"
+                                />
+                            </div>
+
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                                <div className="form-group">
+                                    <label className="form-label">
+                                        SITE NAME: <span style={{ color: 'hsl(var(--destructive))' }}>*</span>
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={siteName}
+                                        onChange={function(e) { setSiteName(e.target.value); }}
+                                        className="form-input"
+                                        placeholder="e.g., FitGirl"
+                                        maxLength={15}
+                                        disabled={rateLimit.remaining <= 0}
+                                        data-testid="submit-site-name-input"
+                                    />
+                                </div>
+                                <div className="form-group">
+                                    <label className="form-label">
+                                        SITE URL: <span style={{ color: 'hsl(var(--destructive))' }}>*</span>
+                                    </label>
+                                    <input
+                                        type="url"
+                                        value={siteUrl}
+                                        onChange={function(e) { setSiteUrl(e.target.value); }}
+                                        className="form-input"
+                                        placeholder="https://example.com"
+                                        disabled={rateLimit.remaining <= 0}
+                                        data-testid="submit-site-url-input"
+                                    />
+                                </div>
+                            </div>
+
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                                <div className="form-group">
+                                    <label className="form-label">
+                                        FILE TYPE: <span style={{ color: 'hsl(var(--destructive))' }}>*</span>
+                                    </label>
+                                    <select
+                                        value={fileType}
+                                        onChange={function(e) { setFileType(e.target.value); }}
+                                        className="form-select"
+                                        disabled={rateLimit.remaining <= 0}
+                                        data-testid="submit-type-select"
+                                    >
+                                        {typeOptions.map(function(option) {
+                                            return (
+                                                <option key={option.value} value={option.value}>
+                                                    {option.label}
+                                                </option>
+                                            );
+                                        })}
+                                    </select>
+                                </div>
+
+                                <div className="form-group">
+                                    <label className="form-label">
+                                        CATEGORY:
+                                    </label>
+                                    <select
+                                        value={category}
+                                        onChange={function(e) { setCategory(e.target.value); }}
+                                        className="form-select"
+                                        disabled={rateLimit.remaining <= 0}
+                                        data-testid="submit-category-select"
+                                    >
+                                        <option value="">-- Select Category --</option>
+                                        {filteredCategories.map(function(cat) {
+                                            return (
+                                                <option key={cat.id} value={cat.name}>
+                                                    {cat.name}
+                                                </option>
+                                            );
+                                        })}
+                                    </select>
+                                </div>
+                            </div>
+                        </>
+                    )}
 
                     <div className="form-group">
                         <label className="form-label">
