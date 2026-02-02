@@ -128,6 +128,7 @@ Build a download website where you can download software, games, movies, tv show
 - [x] Sponsored downloads (1-5 admin-configured)
 - [x] Sponsored Links Analytics
 - [x] Trending Downloads Section (with admin toggle)
+- [x] Dedicated Submissions Management Page with bulk actions
 
 ### P2 (Medium)
 - [ ] Download history tracking
