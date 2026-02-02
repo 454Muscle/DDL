@@ -5,7 +5,7 @@ from motor.motor_asyncio import AsyncIOMotorClient
 import os
 import logging
 from pathlib import Path
-from pydantic import BaseModel, Field, ConfigDict, EmailStr
+from pydantic import BaseModel, Field, ConfigDict, EmailStr, AnyHttpUrl
 from typing import List, Optional
 import uuid
 from datetime import datetime, timezone
@@ -60,6 +60,8 @@ class Download(BaseModel):
     description: Optional[str] = None
     category: Optional[str] = None
     tags: List[str] = []
+    site_name: Optional[str] = None
+    site_url: Optional[AnyHttpUrl] = None
 
 class DownloadCreate(BaseModel):
     name: str
@@ -84,6 +86,8 @@ class Submission(BaseModel):
     description: Optional[str] = None
     category: Optional[str] = None
     tags: List[str] = []
+    site_name: str = Field(min_length=1, max_length=15)
+    site_url: AnyHttpUrl
     submitter_email: Optional[str] = None
     submitter_user_id: Optional[str] = None
 
@@ -91,6 +95,8 @@ class SubmissionCreate(BaseModel):
     name: str
     download_link: str
     type: str
+    site_name: str = Field(min_length=1, max_length=15)
+    site_url: AnyHttpUrl
     file_size: Optional[str] = None
     description: Optional[str] = None
     category: Optional[str] = None
