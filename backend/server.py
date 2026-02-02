@@ -353,18 +353,15 @@ async def send_submission_email(email: str, submission: dict):
     </html>
     """
     
-    params = {
-        "from": SENDER_EMAIL,
-        "to": [email],
-        "subject": f"Download Zone - Submission Received: {submission.get('name', 'Unknown')}",
-        "html": html_content
-    }
-    
-    try:
-        await asyncio.to_thread(resend.Emails.send, params)
+    ok = await send_email_via_resend(
+        email,
+        f"Download Zone - Submission Received: {submission.get('name', 'Unknown')}",
+        html_content
+    )
+    if ok:
         logger.info(f"Email sent to {email}")
-    except Exception as e:
-        logger.error(f"Failed to send email: {str(e)}")
+    else:
+        logger.info(f"Email not sent to {email}")
 
 # ===== CAPTCHA ROUTES =====
 
