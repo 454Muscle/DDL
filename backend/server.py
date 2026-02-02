@@ -88,8 +88,9 @@ class Submission(BaseModel):
     description: Optional[str] = None
     category: Optional[str] = None
     tags: List[str] = []
-    site_name: str = Field(min_length=1, max_length=15)
-    site_url: AnyHttpUrl
+    # optional on existing legacy submissions; required on new submissions via SubmissionCreate
+    site_name: Optional[str] = None
+    site_url: Optional[AnyHttpUrl] = None
     submitter_email: Optional[str] = None
     submitter_user_id: Optional[str] = None
 
@@ -106,6 +107,7 @@ class SubmissionCreate(BaseModel):
     submitter_email: Optional[str] = None
     captcha_answer: Optional[int] = None
     captcha_id: Optional[str] = None
+    recaptcha_token: Optional[str] = None
 
 class User(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -118,12 +120,14 @@ class User(BaseModel):
 class UserRegister(BaseModel):
     email: EmailStr
     password: str
-    captcha_answer: int
-    captcha_id: str
+    captcha_answer: Optional[int] = None
+    captcha_id: Optional[str] = None
+    recaptcha_token: Optional[str] = None
 
 class UserLogin(BaseModel):
     email: EmailStr
     password: str
+    recaptcha_token: Optional[str] = None
 
 class Category(BaseModel):
     model_config = ConfigDict(extra="ignore")
