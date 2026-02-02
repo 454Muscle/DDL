@@ -200,6 +200,9 @@ class SiteSettings(BaseModel):
     footer_line1_template: str = "For DMCA copyright complaints send an email to {admin_email}."
     footer_line2_template: str = "Copyright © {site_name} {year}. All rights reserved."
 
+    # Submissions workflow
+    auto_approve_submissions: bool = False
+
     # Google reCAPTCHA v2 settings (optional)
     recaptcha_site_key: Optional[str] = None
     recaptcha_secret_key: Optional[str] = None
@@ -232,6 +235,9 @@ class SiteSettingsUpdate(BaseModel):
     footer_enabled: Optional[bool] = None
     footer_line1_template: Optional[str] = None
     footer_line2_template: Optional[str] = None
+
+    # Submissions workflow
+    auto_approve_submissions: Optional[bool] = None
 
     # Google reCAPTCHA v2 settings
     recaptcha_site_key: Optional[str] = None
