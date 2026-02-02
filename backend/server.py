@@ -347,6 +347,10 @@ async def verify_recaptcha(token: str, remote_ip: Optional[str], secret_key: str
     """Verify Google reCAPTCHA v2 token server-side"""
     if not token or not secret_key:
         return False
+
+    # Accept either site key or secret key accidentally provided by admin.
+    # If it looks like a site key (starts with "6L"), try verifying with it will fail,
+    # so keep logic simple and require secret_key to be set correctly in admin.
     try:
         async with httpx.AsyncClient(timeout=10.0) as client:
             resp = await client.post(
