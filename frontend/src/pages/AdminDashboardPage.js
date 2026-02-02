@@ -982,6 +982,7 @@ export default function AdminDashboardPage() {
                 </div>
 
                 <div style={{ marginTop: '1rem', overflowX: 'auto' }}>
+                    <>
                     <table className="downloads-table">
                         <thead>
                             <tr>
