@@ -300,16 +300,15 @@ export default function AuthPage() {
                         disabled={loading}
                         style={{ marginTop: '1.5rem' }}
                         data-testid="auth-submit-btn"
-
-                {mode === 'login' && (
-                    <p style={{ marginTop: '0.75rem', fontSize: '0.75rem', opacity: 0.7 }}>
-                        <Link to="/forgot-password">Forgot password?</Link>
-                    </p>
-                )}
-
                     >
                         {loading ? 'PROCESSING...' : (mode === 'login' ? 'LOGIN' : 'REGISTER')}
                     </button>
+
+                    {mode === 'login' && (
+                        <p style={{ marginTop: '0.75rem', fontSize: '0.75rem', opacity: 0.7 }}>
+                            <Link to="/forgot-password">Forgot password?</Link>
+                        </p>
+                    )}
                 </form>
 
                 {/* Links */}
