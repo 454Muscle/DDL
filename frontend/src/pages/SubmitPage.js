@@ -461,7 +461,7 @@ function SubmitPage() {
                         </button>
                         {multiMode && (
                             <span style={{ fontSize: '0.75rem', opacity: 0.7 }}>
-                                Max items you can submit now: {Math.max(0, rateLimit.remaining)}
+                                Remaining today: {Math.max(0, rateLimit.remaining)} • Items in batch: {multiItems.length} • Remaining after batch: {Math.max(0, rateLimit.remaining - multiItems.length)}
                             </span>
                         )}
                     </div>
