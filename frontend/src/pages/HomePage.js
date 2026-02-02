@@ -419,6 +419,82 @@ export default function HomePage() {
                     </div>
                 )}
 
+                {/* Trending Downloads Section */}
+                {trendingEnabled && trendingDownloads.length > 0 && (
+                    <div className="trending-downloads-section" style={{ marginBottom: '2rem' }} data-testid="trending-downloads-section">
+                        <h2 className="pixel-font neon-glow" style={{ fontSize: '0.875rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#FF6600' }}>
+                            <TrendingUp size={18} />
+                            TRENDING NOW
+                        </h2>
+                        <div style={{ 
+                            display: 'grid', 
+                            gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', 
+                            gap: '0.75rem'
+                        }}>
+                            {trendingDownloads.map((item, index) => {
+                                const TypeIcon = typeIcons[item.type] || Download;
+                                return (
+                                    <div 
+                                        key={item.id} 
+                                        className="trending-download-card"
+                                        style={{
+                                            border: '1px solid #FF6600',
+                                            padding: '0.75rem',
+                                            background: 'rgba(255, 102, 0, 0.1)',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '0.75rem',
+                                            position: 'relative'
+                                        }}
+                                        data-testid={`trending-download-${index}`}
+                                    >
+                                        <div style={{
+                                            width: '32px',
+                                            height: '32px',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            background: 'rgba(255, 102, 0, 0.3)',
+                                            border: '1px solid #FF6600',
+                                            fontWeight: 'bold',
+                                            fontSize: '0.875rem',
+                                            color: '#FF6600'
+                                        }}>
+                                            <TrendingUp size={16} />
+                                        </div>
+                                        <div style={{ flex: 1, minWidth: 0 }}>
+                                            <a 
+                                                href={item.download_link}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                onClick={() => handleDownloadClick(item.id)}
+                                                style={{ 
+                                                    display: 'block',
+                                                    whiteSpace: 'nowrap',
+                                                    overflow: 'hidden',
+                                                    textOverflow: 'ellipsis',
+                                                    fontSize: '0.875rem'
+                                                }}
+                                            >
+                                                {item.name}
+                                            </a>
+                                            <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.25rem', fontSize: '0.75rem', opacity: 0.7, flexWrap: 'wrap' }}>
+                                                <span className={`type-${item.type}`}>
+                                                    <TypeIcon size={10} style={{ display: 'inline', marginRight: '0.25rem' }} />
+                                                    {typeLabels[item.type] || item.type}
+                                                </span>
+                                                <span style={{ color: '#FF6600' }}>
+                                                    {formatNumber(item.download_count || 0)} downloads
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                )}
+
                 {/* Stats Bar */}
                 <div className="stats-bar">
                     <div className="stat-item">
