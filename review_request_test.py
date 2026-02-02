@@ -309,6 +309,11 @@ class ReviewRequestTester:
             answer = num1 - num2
         elif operator == '×':
             answer = num1 * num2
+        else:
+            self.log_test("Parse Captcha", False, f"Unknown operator: {operator}")
+            return False
+        
+        self.log_test("Parse Captcha", True, f"Question: {question}, Answer: {answer}")
         
         # Create bulk submission with 2 items (should be within limit)
         items_count = min(2, remaining)  # Don't exceed remaining limit
