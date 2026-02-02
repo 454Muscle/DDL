@@ -159,11 +159,35 @@ class DownloadPortalAPITester:
 
     def test_reject_submission(self):
         """Test rejecting a submission (create new one first)"""
+        # Get a fresh captcha
+        captcha_success, captcha_response = self.run_test("Get Captcha for Rejection Test", "GET", "captcha", 200)
+        if not captcha_success:
+            return False
+        
+        # Parse captcha answer
+        question = captcha_response['question']
+        import re
+        match = re.search(r'What is (\d+) ([\+\-×]) (\d+)\?', question)
+        if not match:
+            return False
+        
+        num1, operator, num2 = int(match.group(1)), match.group(2), int(match.group(3))
+        if operator == '+':
+            answer = num1 + num2
+        elif operator == '-':
+            answer = num1 - num2
+        elif operator == '×':
+            answer = num1 * num2
+        
         # Create a new submission to reject
         test_submission = {
             "name": "Test Rejection",
             "download_link": "https://example.com/reject-test.zip",
-            "type": "software"
+            "type": "software",
+            "site_name": "RejectSite",
+            "site_url": "https://rejectsite.com",
+            "captcha_id": captcha_response['id'],
+            "captcha_answer": answer
         }
         success, response = self.run_test("Create Submission for Rejection", "POST", "submissions", 200, test_submission)
         if success and 'id' in response:
@@ -173,11 +197,35 @@ class DownloadPortalAPITester:
 
     def test_delete_submission(self):
         """Test deleting a submission"""
+        # Get a fresh captcha
+        captcha_success, captcha_response = self.run_test("Get Captcha for Deletion Test", "GET", "captcha", 200)
+        if not captcha_success:
+            return False
+        
+        # Parse captcha answer
+        question = captcha_response['question']
+        import re
+        match = re.search(r'What is (\d+) ([\+\-×]) (\d+)\?', question)
+        if not match:
+            return False
+        
+        num1, operator, num2 = int(match.group(1)), match.group(2), int(match.group(3))
+        if operator == '+':
+            answer = num1 + num2
+        elif operator == '-':
+            answer = num1 - num2
+        elif operator == '×':
+            answer = num1 * num2
+        
         # Create a new submission to delete
         test_submission = {
             "name": "Test Deletion",
             "download_link": "https://example.com/delete-test.zip",
-            "type": "movie"
+            "type": "movie",
+            "site_name": "DeleteSite",
+            "site_url": "https://deletesite.com",
+            "captcha_id": captcha_response['id'],
+            "captcha_answer": answer
         }
         success, response = self.run_test("Create Submission for Deletion", "POST", "submissions", 200, test_submission)
         if success and 'id' in response:
