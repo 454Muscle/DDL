@@ -20,7 +20,9 @@ import {
     Clock,
     Trophy,
     Plus,
-    Star
+    Star,
+    TrendingUp,
+    BarChart3
 } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "../components/ui/alert-dialog";
 
