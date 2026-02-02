@@ -414,7 +414,8 @@ async def register_user(user: UserRegister, request: Request):
     return {
         "success": True,
         "message": "Registration successful",
-        "user_id": user_obj.id
+        "user_id": user_obj.id,
+        "email": user_obj.email
     }
 
 @api_router.post("/auth/login")
