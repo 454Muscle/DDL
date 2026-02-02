@@ -829,6 +829,129 @@ async def increment_download_count(download_id: str):
         raise HTTPException(status_code=404, detail="Download not found")
     return {"success": True}
 
+# Get trending downloads (based on recent activity)
+@api_router.get("/downloads/trending")
+async def get_trending_downloads():
+    settings = await fetch_site_settings()
+    
+    enabled = settings.get("trending_downloads_enabled", False)
+    count = settings.get("trending_downloads_count", 5)
+    
+    if not enabled:
+        return {"enabled": False, "items": []}
+    
+    # Get downloads with activity in the last 7 days
+    # We'll use recent download increments tracked in download_activity collection
+    from datetime import timedelta
+    seven_days_ago = (datetime.now(timezone.utc) - timedelta(days=7)).isoformat()
+    
+    # Aggregate recent download activity
+    pipeline = [
+        {"$match": {"timestamp": {"$gte": seven_days_ago}}},
+        {"$group": {"_id": "$download_id", "recent_count": {"$sum": 1}}},
+        {"$sort": {"recent_count": -1}},
+        {"$limit": count}
+    ]
+    
+    trending_ids = []
+    async for doc in db.download_activity.aggregate(pipeline):
+        trending_ids.append(doc["_id"])
+    
+    # Fetch the actual download documents
+    trending = []
+    if trending_ids:
+        trending = await db.downloads.find(
+            {"id": {"$in": trending_ids}, "approved": True},
+            {"_id": 0}
+        ).to_list(count)
+        
+        # Sort by the order of trending_ids (most active first)
+        id_to_download = {d["id"]: d for d in trending}
+        trending = [id_to_download[tid] for tid in trending_ids if tid in id_to_download]
+    
+    # If we don't have enough trending data, fall back to most downloaded overall
+    if len(trending) < count:
+        existing_ids = [t["id"] for t in trending]
+        fallback = await db.downloads.find(
+            {"approved": True, "id": {"$nin": existing_ids}},
+            {"_id": 0}
+        ).sort("download_count", -1).limit(count - len(trending)).to_list(count)
+        trending.extend(fallback)
+    
+    return {
+        "enabled": True,
+        "items": trending[:count]
+    }
+
+# Track download activity (for trending)
+@api_router.post("/downloads/{download_id}/track")
+async def track_download_activity(download_id: str):
+    """Track a download click for trending calculation"""
+    # First increment the download count
+    result = await db.downloads.update_one(
+        {"id": download_id},
+        {"$inc": {"download_count": 1}}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Download not found")
+    
+    # Also record the activity for trending calculation
+    await db.download_activity.insert_one({
+        "download_id": download_id,
+        "timestamp": datetime.now(timezone.utc).isoformat()
+    })
+    
+    return {"success": True}
+
+# Track sponsored link click
+@api_router.post("/sponsored/{sponsored_id}/click")
+async def track_sponsored_click(sponsored_id: str):
+    """Track a click on a sponsored download"""
+    await db.sponsored_clicks.insert_one({
+        "sponsored_id": sponsored_id,
+        "timestamp": datetime.now(timezone.utc).isoformat()
+    })
+    return {"success": True}
+
+# Get sponsored link analytics (Admin)
+@api_router.get("/admin/sponsored/analytics")
+async def get_sponsored_analytics():
+    """Get click analytics for all sponsored downloads"""
+    settings = await fetch_site_settings()
+    sponsored = settings.get("sponsored_downloads", [])
+    
+    analytics = []
+    for item in sponsored:
+        item_id = item.get("id", "")
+        
+        # Get total clicks
+        total_clicks = await db.sponsored_clicks.count_documents({"sponsored_id": item_id})
+        
+        # Get clicks in last 24 hours
+        from datetime import timedelta
+        day_ago = (datetime.now(timezone.utc) - timedelta(hours=24)).isoformat()
+        clicks_24h = await db.sponsored_clicks.count_documents({
+            "sponsored_id": item_id,
+            "timestamp": {"$gte": day_ago}
+        })
+        
+        # Get clicks in last 7 days
+        week_ago = (datetime.now(timezone.utc) - timedelta(days=7)).isoformat()
+        clicks_7d = await db.sponsored_clicks.count_documents({
+            "sponsored_id": item_id,
+            "timestamp": {"$gte": week_ago}
+        })
+        
+        analytics.append({
+            "id": item_id,
+            "name": item.get("name", "Unknown"),
+            "total_clicks": total_clicks,
+            "clicks_24h": clicks_24h,
+            "clicks_7d": clicks_7d
+        })
+    
+    return {"analytics": analytics}
+
 # Submissions - Public (with or without registration)
 @api_router.post("/submissions", response_model=Submission)
 async def create_submission(submission: SubmissionCreate, request: Request):
