@@ -118,6 +118,9 @@ backend:
       - working: true
         agent: "testing"
         comment: "✅ TESTED: Downloads search API working correctly. Search returns filtered results, pagination works, delete functionality available."
+      - working: true
+        agent: "testing"
+        comment: "✅ REVIEW REQUEST TESTED: GET /api/admin/downloads?search=... returns PaginatedDownloads with items. Search functionality working correctly with proper pagination structure (items, total, page, pages). Search for 'game' returned filtered results. DELETE /api/admin/downloads/{id} successfully deletes approved downloads and subsequent searches no longer return deleted items."
 
   - task: "Site settings branding/footer fields"
     implemented: true
@@ -132,7 +135,25 @@ backend:
         comment: "Added site_name, typography fields, footer templates+enable to SiteSettings + update handler in PUT /api/admin/settings." 
       - working: true
         agent: "testing"
-        comment: "✅ TESTED: Site settings API working correctly. Updates persist and are reflected in UI immediately. Typography and footer settings functional." 
+        comment: "✅ TESTED: Site settings API working correctly. Updates persist and are reflected in UI immediately. Typography and footer settings functional."
+      - working: true
+        agent: "testing"
+        comment: "✅ REVIEW REQUEST TESTED: GET /api/settings returns new branding/footer fields (site_name, site_name_font_family, site_name_font_weight, site_name_font_color, body_font_family, body_font_weight, footer_enabled, footer_line1_template, footer_line2_template) and properly hides secret keys (resend_api_key, recaptcha_secret_key are null). PUT /api/admin/settings successfully updates all typography and footer template fields."
+
+  - task: "Bulk submissions endpoint"
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Bulk submissions endpoint POST /api/submissions/bulk handles multiple items with single captcha verification and respects daily rate limits."
+      - working: true
+        agent: "testing"
+        comment: "✅ REVIEW REQUEST TESTED: Bulk submissions endpoint still works correctly and respects daily limit. POST /api/submissions/bulk returns {success:true, count:n} with valid captcha. Rate limit tracking functional - endpoint properly tracks submissions per IP and enforces daily limits. Math captcha validation working correctly for bulk submissions." 
 
 frontend:
   - task: "Submit multi-mode UX improvements"
