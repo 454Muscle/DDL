@@ -1384,16 +1384,15 @@ export default function AdminDashboardPage() {
                         </tbody>
                     </table>
 
-                    <div>
-                        <AlertDialog open={downloadDeleteConfirm.open} onOpenChange={(open) => setDownloadDeleteConfirm({ ...downloadDeleteConfirm, open })}>
-                            <AlertDialogContent>
-                                <AlertDialogHeader>
+                    <AlertDialog open={downloadDeleteConfirm.open} onOpenChange={(open) => setDownloadDeleteConfirm({ ...downloadDeleteConfirm, open })}>
+                        <AlertDialogContent>
+                            <AlertDialogHeader>
                                 <AlertDialogTitle>Delete download?</AlertDialogTitle>
                                 <AlertDialogDescription>
                                     Delete “{downloadDeleteConfirm.name}”. This cannot be undone.
                                 </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
                                 <AlertDialogCancel onClick={() => setDownloadDeleteConfirm({ open: false, id: null, name: '' })}>Cancel</AlertDialogCancel>
                                 <AlertDialogAction
                                     onClick={() => {
@@ -1405,10 +1404,9 @@ export default function AdminDashboardPage() {
                                 >
                                     Delete
                                 </AlertDialogAction>
-                                </AlertDialogFooter>
-                            </AlertDialogContent>
-                        </AlertDialog>
-                    </div>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
 
                 )}
 
