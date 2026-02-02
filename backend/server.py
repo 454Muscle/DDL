@@ -1184,17 +1184,6 @@ async def update_site_settings(update: SiteSettingsUpdate):
     if update.recaptcha_enable_auth is not None:
         settings["recaptcha_enable_auth"] = bool(update.recaptcha_enable_auth)
 
-    # Resend email settings
-    if update.resend_api_key is not None:
-        settings["resend_api_key"] = update.resend_api_key.strip() or None
-
-    if update.resend_sender_email is not None:
-        settings["resend_sender_email"] = update.resend_sender_email.strip() or None
-
-    # Admin email (required for password change confirmations)
-    if update.admin_email is not None:
-        settings["admin_email"] = update.admin_email.lower() if update.admin_email else None
-
     # If either toggle is enabled, require both keys
     if (settings.get("recaptcha_enable_submit") or settings.get("recaptcha_enable_auth")) and (
         not settings.get("recaptcha_site_key") or not settings.get("recaptcha_secret_key")
