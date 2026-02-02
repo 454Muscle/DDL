@@ -1254,7 +1254,7 @@ export default function AdminDashboardPage() {
             </div>
 
             {/* Submissions Card */}
-            <div className="admin-card" data-testid="submissions-manager">
+            <div className="admin-card" data-testid="submissions-manager" style={{ display: showSubmissions ? 'block' : 'none' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
                     <h2 className="admin-title" style={{ margin: 0, border: 'none', padding: 0 }}>
                         PENDING SUBMISSIONS
