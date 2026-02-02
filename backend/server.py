@@ -1266,6 +1266,26 @@ async def delete_submission(submission_id: str):
     result = await db.submissions.delete_one({"id": submission_id})
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Submission not found")
+
+@api_router.get("/admin/downloads", response_model=PaginatedDownloads)
+async def admin_search_downloads(search: str = Query(""), page: int = Query(1, ge=1), limit: int = Query(20, ge=1, le=100)):
+    query = {"approved": True}
+    if search:
+        query["name"] = {"$regex": search, "$options": "i"}
+
+    total = await db.downloads.count_documents(query)
+    pages = (total + limit - 1) // limit
+    skip = (page - 1) * limit
+
+    items = await db.downloads.find(query, {"_id": 0}).sort("created_at", -1).skip(skip).limit(limit).to_list(limit)
+
+    return {
+        "items": items,
+        "total": total,
+        "page": page,
+        "pages": pages
+    }
+
     return {"success": True, "message": "Submission deleted"}
 
 # Public: expose only safe reCAPTCHA settings (site key + toggles)
