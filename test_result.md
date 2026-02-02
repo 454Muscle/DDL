@@ -110,11 +110,14 @@ backend:
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: true
         agent: "main"
         comment: "Added resend_api_key + resend_sender_email to site_settings; implemented /api/admin/resend; send_submission_email now uses settings-driven send_email_via_resend. Public /api/settings hides resend_api_key."
+      - working: true
+        agent: "testing"
+        comment: "✅ Backend API working correctly. Admin dashboard Resend section renders properly with API key and sender email inputs. Update Resend button shows success toast when clicked with dummy values (returns 200 status). UI flows and API integration confirmed working."
 
   - task: "Admin credentials (DB-stored) + magic-link password change"
     implemented: true
