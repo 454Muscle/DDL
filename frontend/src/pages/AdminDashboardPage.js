@@ -56,6 +56,8 @@ export default function AdminDashboardPage() {
     const [seeding, setSeeding] = useState(false);
     const [stats, setStats] = useState(null);
     const [siteSettings, setSiteSettings] = useState({ 
+    const [showSubmissions, setShowSubmissions] = useState(false);
+
         daily_submission_limit: 10,
         top_downloads_enabled: true,
         top_downloads_count: 5,
