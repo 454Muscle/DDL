@@ -203,6 +203,9 @@ class ReviewRequestTester:
         if search_response.get('items'):
             self.created_download_id = search_response['items'][0]['id']
             self.log_test("Download ID for Deletion Test", True, f"Stored download ID: {self.created_download_id}")
+        elif response.get('items'):  # Fall back to the non-search response
+            self.created_download_id = response['items'][0]['id']
+            self.log_test("Download ID for Deletion Test", True, f"Stored download ID from non-search: {self.created_download_id}")
         else:
             self.log_test("Download ID for Deletion Test", False, "No downloads available for deletion test")
         
