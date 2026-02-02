@@ -121,7 +121,7 @@ backend:
 
   - task: "Bulk submissions endpoint"
     implemented: true
-    working: false
+    working: true
     file: "/app/backend/server.py"
     stuck_count: 1
     priority: "high"
@@ -133,6 +133,9 @@ backend:
       - working: false
         agent: "testing"
         comment: "❌ CRITICAL: Backend /api/submissions endpoint has ResponseValidationError causing 500 Internal Server Error. Both single and bulk submissions fail. Error: 'Input should be a valid dictionary or object to extract fields from', input: None. Backend validation issue needs immediate fix."
+      - working: true
+        agent: "testing"
+        comment: "✅ FIXED: Both single and bulk submissions now work correctly. POST /api/submissions returns 200 with submission object (not 500). POST /api/submissions/bulk returns {success:true,count:n} with valid captcha. Issue was timing-related with captcha validation - captchas must be used immediately after generation."
 
 frontend:
   - task: "Admin dashboard: Send test email button"
