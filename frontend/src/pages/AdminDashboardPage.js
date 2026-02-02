@@ -319,6 +319,17 @@ export default function AdminDashboardPage() {
     const handleInitAdmin = async () => {
         try {
             if (!adminEmail.trim()) {
+
+    const handleSendResendTestEmail = async () => {
+        try {
+            await axios.post(`${API}/admin/resend/test`);
+            toast.success('Test email sent to admin email');
+        } catch (error) {
+            console.error('Resend test email error:', error);
+            toast.error(error.response?.data?.detail || 'Failed to send test email');
+        }
+    };
+
                 toast.error('Admin email is required');
                 return;
             }
