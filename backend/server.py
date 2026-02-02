@@ -220,6 +220,23 @@ class RateLimitEntry(BaseModel):
     model_config = ConfigDict(extra="ignore")
     ip_address: str
     date: str
+
+class AdminInitRequest(BaseModel):
+    email: EmailStr
+    password: str
+
+class AdminChangePasswordRequest(BaseModel):
+    current_password: str
+    new_password: str
+
+class UserForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+class PasswordResetConfirmRequest(BaseModel):
+    token: str
+    new_password: str
+
+
     count: int = 0
 
 class PaginatedDownloads(BaseModel):
