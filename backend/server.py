@@ -635,8 +635,11 @@ async def create_submission(submission: SubmissionCreate, request: Request):
     if not settings:
         settings = SiteSettings().model_dump()
 
-    # Verify captcha (math) OR reCAPTCHA depending on admin settings
+    # If reCAPTCHA is enabled, require keys to be present
     if settings.get("recaptcha_enable_submit"):
+        if not settings.get("recaptcha_site_key") or not settings.get("recaptcha_secret_key"):
+            raise HTTPException(status_code=400, detail="reCAPTCHA is enabled but not configured")
+
         ok = await verify_recaptcha(
             submission.recaptcha_token,
             request.client.host if request.client else None,
