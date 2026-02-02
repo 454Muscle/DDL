@@ -206,45 +206,68 @@ export default function AuthPage() {
                                 />
                             </div>
 
-                            {/* Captcha */}
-                            <div className="form-group" style={{ 
-                                padding: '1rem', 
-                                border: '1px dashed hsl(var(--border))',
-                                background: 'hsl(var(--background))'
-                            }}>
-                                <label className="form-label" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                                    <span>{'>'} CAPTCHA:</span>
-                                    <button 
-                                        type="button" 
-                                        onClick={fetchCaptcha}
-                                        className="action-btn approve"
-                                        style={{ padding: '0.25rem 0.5rem' }}
-                                        data-testid="refresh-captcha-btn"
-                                    >
-                                        <RefreshCw size={12} />
-                                    </button>
-                                </label>
-                                <div style={{ 
-                                    fontSize: '1.25rem', 
-                                    fontWeight: 'bold',
-                                    padding: '0.5rem',
-                                    textAlign: 'center',
-                                    marginBottom: '0.5rem',
-                                    background: 'hsl(var(--card))',
-                                    border: '1px solid hsl(var(--border))'
+                            {recaptchaSettings.enable_auth ? (
+                                <div className="form-group" style={{ 
+                                    padding: '1rem', 
+                                    border: '1px dashed hsl(var(--border))',
+                                    background: 'hsl(var(--background))'
                                 }}>
-                                    {captcha.question || 'Loading...'}
+                                    <label className="form-label">
+                                        {'>'} reCAPTCHA:
+                                    </label>
+                                    <div style={{ marginTop: '0.5rem' }}>
+                                        {recaptchaSettings.site_key ? (
+                                            <ReCAPTCHA
+                                                sitekey={recaptchaSettings.site_key}
+                                                onChange={function(token) { setRecaptchaToken(token || ''); }}
+                                            />
+                                        ) : (
+                                            <div style={{ fontSize: '0.875rem', opacity: 0.7 }}>
+                                                reCAPTCHA is enabled but not configured.
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
-                                <input
-                                    type="number"
-                                    name="captcha_answer"
-                                    value={formData.captcha_answer}
-                                    onChange={handleChange}
-                                    className="form-input"
-                                    placeholder="Enter answer"
-                                    data-testid="captcha-answer-input"
-                                />
-                            </div>
+                            ) : (
+                                <div className="form-group" style={{ 
+                                    padding: '1rem', 
+                                    border: '1px dashed hsl(var(--border))',
+                                    background: 'hsl(var(--background))'
+                                }}>
+                                    <label className="form-label" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                        <span>{'>'} CAPTCHA:</span>
+                                        <button 
+                                            type="button" 
+                                            onClick={fetchCaptcha}
+                                            className="action-btn approve"
+                                            style={{ padding: '0.25rem 0.5rem' }}
+                                            data-testid="refresh-captcha-btn"
+                                        >
+                                            <RefreshCw size={12} />
+                                        </button>
+                                    </label>
+                                    <div style={{ 
+                                        fontSize: '1.25rem', 
+                                        fontWeight: 'bold',
+                                        padding: '0.5rem',
+                                        textAlign: 'center',
+                                        marginBottom: '0.5rem',
+                                        background: 'hsl(var(--card))',
+                                        border: '1px solid hsl(var(--border))'
+                                    }}>
+                                        {captcha.question || 'Loading...'}
+                                    </div>
+                                    <input
+                                        type="number"
+                                        name="captcha_answer"
+                                        value={formData.captcha_answer}
+                                        onChange={handleChange}
+                                        className="form-input"
+                                        placeholder="Enter answer"
+                                        data-testid="captcha-answer-input"
+                                    />
+                                </div>
+                            )}
                         </>
                     )}
 
