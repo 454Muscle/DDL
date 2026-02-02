@@ -29,6 +29,7 @@ export default function AuthPage() {
             navigate('/submit');
         }
         fetchCaptcha();
+        fetchRecaptchaSettings();
     }, [isLoggedIn, navigate]);
 
     const fetchCaptcha = async () => {
