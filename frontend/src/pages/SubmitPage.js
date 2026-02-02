@@ -141,6 +141,22 @@ function SubmitPage() {
             toast.error('SYSTEM ERROR: Download link is required');
             return;
         }
+        if (!siteName.trim()) {
+            toast.error('SYSTEM ERROR: Site name is required');
+            return;
+        }
+        if (siteName.trim().length > 15) {
+            toast.error('SYSTEM ERROR: Site name must be 15 characters or less');
+            return;
+        }
+        if (!siteUrl.trim()) {
+            toast.error('SYSTEM ERROR: Site URL is required');
+            return;
+        }
+        if (!(siteUrl.trim().startsWith('http://') || siteUrl.trim().startsWith('https://'))) {
+            toast.error('SYSTEM ERROR: Site URL must start with http:// or https://');
+            return;
+        }
         if (recaptchaSettings.enable_submit) {
             if (!recaptchaToken) {
                 toast.error('SYSTEM ERROR: Please complete the reCAPTCHA');
