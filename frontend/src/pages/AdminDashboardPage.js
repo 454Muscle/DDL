@@ -50,6 +50,7 @@ const typeOptions = ['game', 'software', 'movie', 'tv_show'];
 export default function AdminDashboardPage() {
     const navigate = useNavigate();
     const { theme, updateTheme } = useTheme();
+    const { fetchSettings: refreshGlobalSettings } = useSiteSettings();
     const [submissions, setSubmissions] = useState([]);
     const [loading, setLoading] = useState(true);
     const [page, setPage] = useState(1);
