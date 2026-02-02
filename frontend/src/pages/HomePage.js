@@ -47,6 +47,8 @@ const formatNumber = (num) => {
 export default function HomePage() {
     const [downloads, setDownloads] = useState([]);
     const [topDownloads, setTopDownloads] = useState([]);
+    const [trendingDownloads, setTrendingDownloads] = useState([]);
+    const [trendingEnabled, setTrendingEnabled] = useState(false);
     const [loading, setLoading] = useState(true);
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
