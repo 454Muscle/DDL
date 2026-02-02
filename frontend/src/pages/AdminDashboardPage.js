@@ -312,6 +312,23 @@ export default function AdminDashboardPage() {
         }
     };
 
+    const handleUpdateTrendingDownloads = async () => {
+        const countValue = Math.max(5, Math.min(20, parseInt(trendingCount) || 5));
+        try {
+            const response = await axios.put(`${API}/admin/settings`, {
+                trending_downloads_enabled: trendingEnabled,
+                trending_downloads_count: countValue
+            });
+            setSiteSettings(response.data);
+            setTrendingEnabled(!!response.data.trending_downloads_enabled);
+            setTrendingCount(response.data.trending_downloads_count || 5);
+            toast.success('Trending downloads settings updated');
+        } catch (error) {
+            console.error('Update settings error:', error);
+            toast.error('Failed to update settings');
+        }
+    };
+
     const handleAddSponsored = async () => {
         if (!newSponsored.name.trim() || !newSponsored.download_link.trim()) {
             toast.error('Name and download link are required');
