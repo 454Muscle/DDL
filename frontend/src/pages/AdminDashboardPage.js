@@ -343,17 +343,6 @@ export default function AdminDashboardPage() {
             if (!adminNewPassword || adminNewPassword.length < 6) {
                 toast.error('New password must be at least 6 characters');
                 return;
-
-    const handleSendResendTestEmail = async () => {
-        try {
-            await axios.post(`${API}/admin/resend/test`);
-            toast.success('Test email sent to admin email');
-        } catch (error) {
-            console.error('Resend test email error:', error);
-            toast.error(error.response?.data?.detail || 'Failed to send test email');
-        }
-    };
-
             }
             await axios.post(`${API}/admin/password/change/request`, {
                 current_password: adminCurrentPassword,
