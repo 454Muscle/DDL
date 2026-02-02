@@ -666,6 +666,8 @@ async def create_submission(submission: SubmissionCreate, request: Request):
         description=submission.description,
         category=submission.category,
         tags=submission.tags or [],
+        site_name=submission.site_name,
+        site_url=submission.site_url,
         submitter_email=submission.submitter_email
     )
     doc = submission_obj.model_dump()
