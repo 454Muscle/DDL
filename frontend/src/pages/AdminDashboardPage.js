@@ -116,7 +116,7 @@ export default function AdminDashboardPage() {
             setTopCount(response.data.top_downloads_count || 5);
             setSponsoredDownloads(response.data.sponsored_downloads || []);
             setRecaptchaSiteKey(response.data.recaptcha_site_key || '');
-            setRecaptchaSecretKey(response.data.recaptcha_secret_key || '');
+            // secret key is not returned from /api/settings; keep current input value
             setRecaptchaEnableSubmit(!!response.data.recaptcha_enable_submit);
             setRecaptchaEnableAuth(!!response.data.recaptcha_enable_auth);
         } catch (error) {
