@@ -97,7 +97,8 @@ export default function AuthPage() {
             } else {
                 const response = await axios.post(`${API}/auth/login`, {
                     email: formData.email,
-                    password: formData.password
+                    password: formData.password,
+                    recaptcha_token: recaptchaSettings.enable_auth ? recaptchaToken : undefined
                 });
                 login(response.data);
                 toast.success('Login successful!');
