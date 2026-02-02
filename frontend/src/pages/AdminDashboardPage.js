@@ -60,12 +60,17 @@ export default function AdminDashboardPage() {
         daily_submission_limit: 10,
         top_downloads_enabled: true,
         top_downloads_count: 5,
-        sponsored_downloads: []
+        sponsored_downloads: [],
+        trending_downloads_enabled: false,
+        trending_downloads_count: 5
     });
     const [newLimit, setNewLimit] = useState(10);
     const [topEnabled, setTopEnabled] = useState(true);
     const [topCount, setTopCount] = useState(5);
+    const [trendingEnabled, setTrendingEnabled] = useState(false);
+    const [trendingCount, setTrendingCount] = useState(5);
     const [sponsoredDownloads, setSponsoredDownloads] = useState([]);
+    const [sponsoredAnalytics, setSponsoredAnalytics] = useState([]);
     const [newSponsored, setNewSponsored] = useState({ name: '', download_link: '', type: 'software', description: '' });
 
     const [recaptchaSiteKey, setRecaptchaSiteKey] = useState('');
