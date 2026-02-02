@@ -1253,6 +1253,33 @@ export default function AdminDashboardPage() {
                 </div>
             </div>
 
+            {/* Quick-nav: Submissions */}
+            <div className="admin-card" data-testid="submissions-nav">
+                <button
+                    className="action-btn approve"
+                    onClick={() => {
+                        setShowSubmissions(true);
+                        // scroll into view
+                        setTimeout(() => {
+                            const el = document.querySelector('[data-testid="submissions-manager"]');
+                            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }, 50);
+                        fetchSubmissions();
+                    }}
+                    style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                    data-testid="open-submissions"
+                >
+                    SUBMISSIONS
+                    {!autoApproveSubmissions && unseenSubmissionsCount > 0 && (
+                        <span style={{ width: 10, height: 10, borderRadius: 9999, background: 'hsl(var(--destructive))', display: 'inline-block' }} />
+                    )}
+                </button>
+                <p style={{ fontSize: '0.75rem', opacity: 0.7, marginTop: '0.5rem' }}>
+                    {autoApproveSubmissions ? 'Auto-approve is ON. New submissions go directly to downloads.' : 'Auto-approve is OFF. New submissions stay pending until approved.'}
+                </p>
+            </div>
+
+
             {/* Submissions Card */}
             <div className="admin-card" data-testid="submissions-manager" style={{ display: showSubmissions ? 'block' : 'none' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
