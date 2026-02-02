@@ -435,6 +435,8 @@ export default function AdminDashboardPage() {
                 return;
             }
             await axios.post(`${API}/admin/init`, { email: adminEmail, password: adminInitPassword });
+            // Refresh global settings so footer gets the new admin email
+            refreshGlobalSettings();
             toast.success('Admin initialized');
         } catch (error) {
             console.error('Admin init error:', error);
