@@ -99,7 +99,7 @@ class SubmissionCreate(BaseModel):
     download_link: str
     type: str
     site_name: str = Field(min_length=1, max_length=15)
-    site_url: AnyHttpUrl
+    site_url: str
     file_size: Optional[str] = None
     description: Optional[str] = None
     category: Optional[str] = None
