@@ -242,6 +242,10 @@ async def send_submission_email(email: str, submission: dict):
     if not RESEND_API_KEY or not email:
         logger.info(f"Email not sent: API key missing or no email provided")
         return
+
+    if not FRONTEND_URL:
+        logger.info("Email not sent: FRONTEND_URL is not configured")
+        return
     
     submit_url = f"{FRONTEND_URL}/submit"
     html_content = f"""
