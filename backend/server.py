@@ -350,6 +350,12 @@ async def generate_captcha():
     }
     
     await db.captchas.insert_one(captcha)
+    
+    return {
+        "id": captcha_id,
+        "question": f"What is {num1} {operator} {num2}?"
+    }
+
 # ===== RECAPTCHA HELPERS =====
 
 async def verify_recaptcha(token: str, remote_ip: Optional[str], secret_key: str) -> bool:
@@ -368,13 +374,6 @@ async def verify_recaptcha(token: str, remote_ip: Optional[str], secret_key: str
     except Exception as e:
         logger.error(f"reCAPTCHA verification error: {str(e)}")
         return False
-
-
-    
-    return {
-        "id": captcha_id,
-        "question": f"What is {num1} {operator} {num2}?"
-    }
 
 async def verify_captcha(captcha_id: str, answer: int) -> bool:
     """Verify captcha answer"""
