@@ -118,6 +118,7 @@ export default function AdminDashboardPage() {
             const response = await axios.get(`${API}/admin/submissions`, { params });
             setSubmissions(response.data.items);
             setTotalPages(response.data.pages);
+            fetchUnseenSubmissionsCount();
         } catch (error) {
             console.error('Error fetching submissions:', error);
 
