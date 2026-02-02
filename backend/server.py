@@ -857,7 +857,11 @@ async def get_site_settings():
     if not settings:
         default_settings = SiteSettings()
         await db.site_settings.insert_one(default_settings.model_dump())
-        return default_settings.model_dump()
+        settings = default_settings.model_dump()
+
+    # Never expose secret key publicly
+    settings = dict(settings)
+    settings["recaptcha_secret_key"] = None
     return settings
 
 # Site Settings - Update (Admin)
