@@ -447,6 +447,27 @@ function SubmitPage() {
                                 LOGIN / REGISTER
                             </Link>
                         )}
+
+                    <div style={{ marginTop: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+                        <button
+                            type="button"
+                            className="filter-btn"
+                            onClick={function() {
+                                setMultiMode(!multiMode);
+                                setRecaptchaToken('');
+                                setCaptchaAnswer('');
+                            }}
+                            data-testid="toggle-multi-submit"
+                        >
+                            {multiMode ? 'SINGLE SUBMIT MODE' : 'SUBMIT MULTIPLE ITEMS'}
+                        </button>
+                        {multiMode && (
+                            <span style={{ fontSize: '0.75rem', opacity: 0.7 }}>
+                                Max items you can submit now: {Math.max(0, rateLimit.remaining)}
+                            </span>
+                        )}
+                    </div>
+
                     </div>
                 </div>
 
