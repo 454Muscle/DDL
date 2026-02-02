@@ -471,7 +471,7 @@ export default function HomePage() {
                     </div>
                     {searchQuery && (
                         <p style={{ fontSize: '0.75rem', marginTop: '0.5rem', opacity: 0.7 }}>
-                            Showing results for: "{searchQuery}"
+                            Showing results for: &quot;{searchQuery}&quot;
                         </p>
                     )}
                 </form>
