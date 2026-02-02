@@ -101,113 +101,74 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "Activate Resend emails (admin-configurable), move admin password to env/DB with email-confirmed change, add forgot-password flows for user + admin."
+user_problem_statement: "Add Admin 'Send test email' (Resend status) button; add Submit page multi-item submission mode with max items constrained by admin limit/remaining; send one batch confirmation email."
 
 backend:
-  - task: "Resend email via admin-configurable settings"
+  - task: "Resend status test email endpoint"
     implemented: true
     working: true
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
       - working: true
         agent: "main"
-        comment: "Added resend_api_key + resend_sender_email to site_settings; implemented /api/admin/resend; send_submission_email now uses settings-driven send_email_via_resend. Public /api/settings hides resend_api_key."
-      - working: true
-        agent: "testing"
-        comment: "✅ Backend API working correctly. Admin dashboard Resend section renders properly with API key and sender email inputs. Update Resend button shows success toast when clicked with dummy values (returns 200 status). UI flows and API integration confirmed working."
-      - working: true
-        agent: "testing"
-        comment: "✅ SECURITY VERIFIED: /api/settings properly hides resend_api_key. /api/admin/resend updates sender email and hides API key in response. All security requirements for Resend configuration confirmed working."
+        comment: "Added POST /api/admin/resend/test to send a test email to admin_email using configured Resend settings."
 
-  - task: "Admin credentials (DB-stored) + magic-link password change"
+  - task: "Bulk submissions endpoint"
     implemented: true
     working: true
     file: "/app/backend/server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
       - working: true
         agent: "main"
-        comment: "Admin login prefers DB admin_password_hash; fallback to env ADMIN_PASSWORD for bootstrap only. Added /api/admin/init, /api/admin/password/change/request (requires current password; emails magic link), /api/admin/password/change/confirm (token-only), /api/admin/email/update (requires current password)."
-      - working: true
-        agent: "testing"
-        comment: "✅ Admin credentials system working correctly. Admin login successful with DB-stored password hash (password: 'newpass123'). Admin Credentials section renders properly in dashboard. Password change request shows expected backend error when email sending fails (no valid Resend API configured). All API endpoints responding correctly."
-      - working: true
-        agent: "testing"
-        comment: "✅ SECURITY VERIFIED: /api/admin/login uses DB-stored admin_password_hash and properly rejects env fallback. /api/admin/init returns 400 if already initialized. /api/admin/password/change/request requires current password and handles resend configuration properly. /api/admin/password/change/confirm with bad token returns 400. All admin credential security measures confirmed working."
-
-  - task: "Forgot password flows (user + admin)"
-    implemented: true
-    working: true
-    file: "/app/backend/server.py"
-    stuck_count: 0
-    priority: "high"
-    needs_retesting: false
-    status_history:
-      - working: true
-        agent: "main"
-        comment: "Added /api/auth/forgot-password + /api/auth/reset-password; added /api/admin/forgot-password + /api/admin/reset-password. Uses token stored in MongoDB collections with 30 min expiry."
-      - working: true
-        agent: "testing"
-        comment: "✅ All forgot password flows working correctly. User forgot password (/forgot-password) shows success toast. Admin forgot password (/admin/forgot-password) shows success toast. Reset password pages with bad tokens show proper backend error messages. All API endpoints responding correctly with appropriate success/error messages."
-      - working: true
-        agent: "testing"
-        comment: "✅ SECURITY VERIFIED: /api/auth/forgot-password returns success for both existing and non-existing emails (no email enumeration). /api/auth/reset-password with bad token returns 400. /api/admin/forgot-password and /api/admin/reset-password handle bad tokens correctly with 400 responses. All password reset security measures confirmed working."
+        comment: "Added POST /api/submissions/bulk accepting items[] + single captcha/recaptcha and submitter_email. Enforces daily limit by count, increments rate limit by item count, creates pending submissions, sends one summary email." 
 
 frontend:
-  - task: "Forgot/Reset password pages + links"
-    implemented: true
-    working: true
-    file: "/app/frontend/src/App.js"
-    stuck_count: 0
-    priority: "high"
-    needs_retesting: false
-    status_history:
-      - working: true
-        agent: "main"
-        comment: "Added ForgotPasswordPage, ResetPasswordPage, AdminForgotPasswordPage, AdminResetPasswordPage, AdminConfirmPasswordChangePage + routes. Added small 'Forgot password?' links on user login and admin login pages."
-      - working: true
-        agent: "testing"
-        comment: "✅ All forgot password links and pages working correctly. Auth page (/auth) shows 'Forgot password?' link in login mode that navigates to /forgot-password. Admin login page (/admin) shows 'Forgot password?' link that navigates to /admin/forgot-password. All reset password pages handle bad tokens properly with backend error messages. Admin confirm password change page (/admin/confirm-password-change) shows proper error with bad token."
-
-  - task: "Admin dashboard: Resend + admin credential management UI"
+  - task: "Admin dashboard: Send test email button"
     implemented: true
     working: true
     file: "/app/frontend/src/pages/AdminDashboardPage.js"
     stuck_count: 0
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
       - working: true
         agent: "main"
-        comment: "Added Resend section (API key + sender email + instructions) and Admin Credentials section (init, request password change)." 
+        comment: "Added SEND TEST EMAIL button in Resend section calling /api/admin/resend/test and toast result."
+
+  - task: "Submit page: multi-item mode"
+    implemented: true
+    working: true
+    file: "/app/frontend/src/pages/SubmitPage.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
       - working: true
-        agent: "testing"
-        comment: "✅ Admin dashboard sections working correctly. Resend Email section renders with API key and sender email inputs, shows success toast on update. Admin Credentials section renders with email, init password, and password change request fields. All UI components functional and properly integrated with backend APIs. Admin login working with password 'newpass123'." 
+        agent: "main"
+        comment: "Added toggle 'Submit multiple items' near top; renders batch item cards with Add/Remove. Uses remaining submissions as max. Submits via /api/submissions/bulk with one captcha/recaptcha and one submitter_email." 
 
 metadata:
   created_by: "main_agent"
   version: "1.0"
-  test_sequence: 3
+  test_sequence: 4
   run_ui: true
 
 test_plan:
   current_focus:
-    - "Resend email via admin-configurable settings"
-    - "Forgot/Reset password pages + links"
-    - "Admin init + password change confirmation flow"
+    - "Resend status test email endpoint"
+    - "Bulk submissions endpoint"
+    - "Submit page: multi-item mode"
+    - "Admin dashboard: Send test email button"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
 
 agent_communication:
   - agent: "main"
-    message: "Implemented admin-configurable Resend + password reset flows. NOTE: actual email sending requires valid Resend API key + sender configured. Please test UI routing + API responses; magic link flows can be simulated by reading token from DB or response logs if needed."
-  - agent: "testing"
-    message: "Completed comprehensive UI/E2E testing. All password reset flows working correctly. Admin dashboard sections (Resend Email & Admin Credentials) render and function properly. Admin login requires password 'newpass123' (stored as hash in DB). All forgot password links navigate correctly and show appropriate success/error messages. Backend API integration working as expected."
-  - agent: "testing"
-    message: "✅ SECURITY REVIEW COMPLETE: All 9 security requirements verified. 1) /api/settings properly hides resend_api_key and recaptcha_secret_key. 2) /api/admin/resend updates sender email and hides API key in response. 3) /api/auth/forgot-password returns success for both existing/non-existing emails (no leakage). 4) /api/auth/reset-password with bad token returns 400. 5) /api/admin/init returns 400 if already initialized. 6) /api/admin/password/change/request requires current password and returns proper error when resend not configured. 7) /api/admin/password/change/confirm with bad token returns 400. 8) /api/admin/forgot-password and /api/admin/reset-password handle bad tokens correctly. 9) /api/admin/login uses DB-stored admin_password_hash (password: 'newpass123') and properly rejects env fallback. All backend security measures working correctly."
+    message: "Implemented Resend test email button + endpoint, and batch submissions (frontend toggle + backend /submissions/bulk). Please test multi-mode add/remove, captcha/reCAPTCHA behavior, and that bulk endpoint enforces remaining/daily limit and returns count."
