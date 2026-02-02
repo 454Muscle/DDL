@@ -99,6 +99,7 @@ Build a download website where you can download software, games, movies, tv show
   - Bulk selection (Select All + individual checkboxes)
   - Bulk actions (Approve/Delete multiple submissions)
   - Red notification badge showing pending count
+- **Email Notification on Approval**: Submitters receive an email when their submission is approved (requires Resend configuration)
 
 ## Tech Stack
 - **Frontend**: React 19, Tailwind CSS, Shadcn/UI, React Router
@@ -129,6 +130,7 @@ Build a download website where you can download software, games, movies, tv show
 - [x] Sponsored Links Analytics
 - [x] Trending Downloads Section (with admin toggle)
 - [x] Dedicated Submissions Management Page with bulk actions
+- [x] Email Notification on Submission Approval
 
 ### P2 (Medium)
 - [ ] Download history tracking
@@ -142,9 +144,9 @@ Build a download website where you can download software, games, movies, tv show
 - [ ] Extended admin analytics dashboard
 
 ## Next Tasks
-1. Refactor `server.py` into routers/models/services structure
-2. Add download history tracking per user
-3. Implement bulk download selection
+1. **(P0)** Refactor `server.py` into routers/models/services structure (1600+ lines - technical debt)
+2. **(P2)** Add download history tracking per user
+3. **(P2)** Implement bulk download selection
 
 ## Test Credentials
 - **Admin Password**: admin123
