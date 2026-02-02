@@ -795,6 +795,70 @@ async def admin_init(payload: AdminInitRequest):
 async def admin_request_password_change(payload: AdminChangePasswordRequest):
     settings = await fetch_site_settings()
     if not settings.get("admin_email"):
+
+# Admin forgot password (send magic link)
+@api_router.post("/admin/forgot-password")
+async def admin_forgot_password(payload: AdminForgotPasswordRequest):
+    settings = await fetch_site_settings()
+
+    # Admin must be initialized first
+    if not settings.get("admin_email") or not settings.get("admin_password_hash"):
+        raise HTTPException(status_code=400, detail="Admin is not initialized")
+
+    # do not reveal if emails mismatch (still return success)
+    if payload.email.lower() != settings.get("admin_email"):
+        return {"success": True}
+
+    token = generate_token()
+    now = datetime.now(timezone.utc)
+    expires_at = (now + timedelta(minutes=30)).isoformat()
+
+    await db.admin_password_resets.insert_one({
+        "token": token,
+        "new_password_hash": None,
+        "created_at": now.isoformat(),
+        "expires_at": expires_at,
+        "type": "forgot"
+    })
+
+    if not FRONTEND_URL:
+        raise HTTPException(status_code=500, detail="FRONTEND_URL is not configured")
+
+    link = f"{FRONTEND_URL}/admin/reset-password?token={token}"
+    html = f"""
+    <html><body style='font-family: Arial, sans-serif;'>
+      <h2>Reset Admin Password</h2>
+      <p>Click the link below to set a new admin password. This link expires in 30 minutes.</p>
+      <p><a href='{link}'>Reset admin password</a></p>
+    </body></html>
+    """
+
+    await send_email_via_resend(settings["admin_email"], "Reset admin password", html)
+    return {"success": True}
+
+# Admin confirm password reset (forgot password)
+@api_router.post("/admin/reset-password")
+async def admin_reset_password(payload: PasswordResetConfirmRequest):
+    settings = await fetch_site_settings()
+    req = await db.admin_password_resets.find_one({"token": payload.token}, {"_id": 0})
+    if not req:
+        raise HTTPException(status_code=400, detail="Invalid or expired token")
+
+    try:
+        exp = datetime.fromisoformat(req["expires_at"])
+    except Exception:
+        exp = datetime.now(timezone.utc)
+    if exp < datetime.now(timezone.utc):
+        await db.admin_password_resets.delete_one({"token": payload.token})
+        raise HTTPException(status_code=400, detail="Invalid or expired token")
+
+    settings["admin_password_hash"] = hash_password(payload.new_password)
+    await db.site_settings.update_one({"id": "site_settings"}, {"$set": settings}, upsert=True)
+
+    await db.admin_password_resets.delete_one({"token": payload.token})
+    return {"success": True}
+
+
         raise HTTPException(status_code=400, detail="Admin email is not configured")
 
     # Require current password
