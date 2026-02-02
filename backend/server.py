@@ -40,7 +40,7 @@ ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', '')
 # Resend email config
 RESEND_API_KEY = os.environ.get('RESEND_API_KEY', '')
 SENDER_EMAIL = os.environ.get('SENDER_EMAIL', 'onboarding@resend.dev')
-FRONTEND_URL = os.environ.get('FRONTEND_URL', 'https://download-hub-93.preview.emergentagent.com')
+FRONTEND_URL = os.environ.get('FRONTEND_URL')
 
 ADMIN_EMAIL = os.environ.get('ADMIN_EMAIL', '')  # optional bootstrap only
 
