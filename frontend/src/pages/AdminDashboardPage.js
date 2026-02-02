@@ -388,6 +388,63 @@ export default function AdminDashboardPage() {
             await axios.post(`${API}/admin/password/change/request`, {
                 current_password: adminCurrentPassword,
                 new_password: adminNewPassword
+
+    const FONT_OPTIONS = [
+        'Arial',
+        'Inter',
+        'Roboto',
+        'Georgia',
+        'Times New Roman',
+        'Courier New',
+        'JetBrains Mono'
+    ];
+    const WEIGHT_OPTIONS = ['300', '400', '500', '600', '700', '800'];
+
+    const handleUpdateBranding = async () => {
+        try {
+            const payload = {
+                site_name: siteName,
+                site_name_font_family: siteNameFontFamily,
+                site_name_font_weight: siteNameFontWeight,
+                site_name_font_color: siteNameFontColor,
+                body_font_family: bodyFontFamily,
+                body_font_weight: bodyFontWeight,
+                footer_enabled: footerEnabled,
+                footer_line1_template: footerLine1,
+                footer_line2_template: footerLine2
+            };
+            const res = await axios.put(`${API}/admin/settings`, payload);
+            setSiteSettings(res.data);
+            toast.success('Site settings updated');
+        } catch (error) {
+            console.error('Update branding error:', error);
+            toast.error(error.response?.data?.detail || 'Failed to update site settings');
+        }
+    };
+
+    const fetchDownloads = async (page = 1) => {
+        try {
+            const res = await axios.get(`${API}/admin/downloads`, { params: { search: downloadsSearch, page, limit: 20 } });
+            setDownloadsResults(res.data.items || []);
+            setDownloadsTotalPages(res.data.pages || 1);
+            setDownloadsPage(res.data.page || 1);
+        } catch (error) {
+            console.error('Fetch downloads error:', error);
+            toast.error('Failed to load downloads');
+        }
+    };
+
+    const handleDeleteDownload = async (id) => {
+        try {
+            await axios.delete(`${API}/admin/downloads/${id}`);
+            toast.success('Download deleted');
+            fetchDownloads(downloadsPage);
+        } catch (error) {
+            console.error('Delete download error:', error);
+            toast.error(error.response?.data?.detail || 'Failed to delete download');
+        }
+    };
+
             });
             toast.success('Confirmation email sent. Check admin inbox.');
         } catch (error) {
