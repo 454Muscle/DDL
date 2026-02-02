@@ -180,6 +180,12 @@ class SiteSettingsUpdate(BaseModel):
     top_downloads_count: Optional[int] = None
     sponsored_downloads: Optional[List[dict]] = None
 
+    # Google reCAPTCHA v2 settings
+    recaptcha_site_key: Optional[str] = None
+    recaptcha_secret_key: Optional[str] = None
+    recaptcha_enable_submit: Optional[bool] = None
+    recaptcha_enable_auth: Optional[bool] = None
+
 class RateLimitEntry(BaseModel):
     model_config = ConfigDict(extra="ignore")
     ip_address: str
