@@ -874,39 +874,6 @@ async def create_submissions_bulk(payload: BulkSubmissionCreate, request: Reques
 
     return {"success": True, "count": len(created_docs)}
 
-    # Update rate limit counter
-    await db.rate_limits.update_one(
-        {"ip_address": client_ip, "date": today},
-        {"$inc": {"count": 1}},
-        upsert=True
-    )
-    
-    # Parse file size to bytes
-    file_size_bytes = parse_file_size_to_bytes(submission.file_size) if submission.file_size else None
-    
-    submission_obj = Submission(
-        name=submission.name,
-        download_link=submission.download_link,
-        type=submission.type,
-        submission_date=today,
-        file_size=submission.file_size,
-        file_size_bytes=file_size_bytes,
-        description=submission.description,
-        category=submission.category,
-        tags=submission.tags or [],
-        site_name=submission.site_name,
-        site_url=validate_http_url(submission.site_url),
-        submitter_email=submission.submitter_email
-    )
-
-    doc = submission_obj.model_dump()
-    await db.submissions.insert_one(doc)
-    
-    # Send confirmation email
-    if submission.submitter_email:
-        asyncio.create_task(send_submission_email(submission.submitter_email, doc))
-    
-    return submission_obj
     
 # Admin init (set email + password the first time)
 @api_router.post("/admin/init")
