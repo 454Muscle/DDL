@@ -160,6 +160,7 @@ export default function AdminDashboardPage() {
             setFooterEnabled(response.data.footer_enabled !== false);
             setFooterLine1(response.data.footer_line1_template || 'For DMCA copyright complaints send an email to {admin_email}.');
             setFooterLine2(response.data.footer_line2_template || 'Copyright © {site_name} {year}. All rights reserved.');
+            setAutoApproveSubmissions(!!response.data.auto_approve_submissions);
         } catch (error) {
             console.error('Error fetching settings:', error);
         }
