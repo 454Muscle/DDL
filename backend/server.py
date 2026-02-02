@@ -228,6 +228,10 @@ class SiteSettingsUpdate(BaseModel):
     top_downloads_count: Optional[int] = None
     sponsored_downloads: Optional[List[dict]] = None
 
+    # Trending downloads settings
+    trending_downloads_enabled: Optional[bool] = None
+    trending_downloads_count: Optional[int] = None
+
     # Branding / typography
     site_name: Optional[str] = None
     site_name_font_family: Optional[str] = None
