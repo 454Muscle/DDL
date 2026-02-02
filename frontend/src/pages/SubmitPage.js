@@ -208,7 +208,9 @@ function SubmitPage() {
                 setSubmitterEmail(user && user.email ? user.email : '');
                 setCaptchaAnswer('');
                 fetchRateLimit();
-                fetchCaptcha();
+                if (!recaptchaSettings.enable_submit) {
+                    fetchCaptcha();
+                }
                 setTimeout(function() { navigate('/'); }, 2000);
             })
             .catch(function(error) {
