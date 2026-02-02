@@ -668,6 +668,7 @@ export default function HomePage() {
                                     <th style={{ width: '12%' }}>Date</th>
                                     <th style={{ width: '12%' }}>Type</th>
                                     <th style={{ width: '12%' }}>Size</th>
+                                    <th style={{ width: '12%' }}>Site</th>
                                     <th style={{ width: '12%' }}>
                                         <TrendingUp size={14} style={{ display: 'inline', marginRight: '0.25rem' }} />
                                         Downloads
