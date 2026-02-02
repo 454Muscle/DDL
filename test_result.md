@@ -165,11 +165,14 @@ frontend:
     file: "/app/frontend/src/pages/AdminDashboardPage.js"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: true
         agent: "main"
         comment: "Added Google reCAPTCHA 2.0 section with Site Key + Secret Key inputs and toggles for Submit/Auth; update button saves to /api/admin/settings. Screenshot shows section rendered after admin login."
+      - working: true
+        agent: "testing"
+        comment: "✅ TESTED: Admin login works with password 'admin123'. Google reCAPTCHA 2.0 section renders with all inputs/toggles. Update button makes requests and saves settings. Backend properly validates keys when enabling toggles."
 
   - task: "Auth page: reCAPTCHA widget toggle"
     implemented: true
