@@ -94,6 +94,11 @@ Build a download website where you can download software, games, movies, tv show
 - **Trending Downloads Section**: Display downloads with recent high activity on homepage
 - **Admin Trending Toggle**: Enable/disable trending section via admin panel
 - **Download Activity Tracking**: Record download activity for trending calculation
+- **Dedicated Submissions Page**: New `/admin/submissions` page with:
+  - Status filters (ALL, PENDING, APPROVED, REJECTED)
+  - Bulk selection (Select All + individual checkboxes)
+  - Bulk actions (Approve/Delete multiple submissions)
+  - Red notification badge showing pending count
 
 ## Tech Stack
 - **Frontend**: React 19, Tailwind CSS, Shadcn/UI, React Router
