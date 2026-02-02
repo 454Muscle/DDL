@@ -386,7 +386,7 @@ export default function HomePage() {
                                                 href={item.download_link}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                onClick={() => !isSponsored && item.id && handleDownloadClick(item.id)}
+                                                onClick={() => isSponsored ? handleSponsoredClick(item.id) : (item.id && handleDownloadClick(item.id))}
                                                 style={{ 
                                                     display: 'block',
                                                     whiteSpace: 'nowrap',
