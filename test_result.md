@@ -135,11 +135,14 @@ frontend:
     file: "/app/frontend/src/pages/SubmitPage.js"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: true
         agent: "main"
         comment: "Remaining/Items/Remaining-after displayed; per-row note; Add item auto-disables when max reached (uses remaining exactly, no max(1))." 
+      - working: true
+        agent: "testing"
+        comment: "✅ TESTED: Multi-mode functionality works correctly. Add Item button properly disables when remaining limit reached. Remaining stats update correctly as items added/removed. Toggle between single/multi modes works. Rate limit display accurate."
 
   - task: "Site-wide typography + header site name + footer"
     implemented: true
@@ -147,11 +150,14 @@ frontend:
     file: "/app/frontend/src/context/SiteSettingsContext.js"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: true
         agent: "main"
         comment: "Created SiteSettingsProvider that fetches /api/settings and applies CSS variables; header reads site_name and styles with variables; Footer renders templates with placeholders {admin_email},{site_name},{year} and hides lines when required values missing." 
+      - working: true
+        agent: "testing"
+        comment: "✅ TESTED: Fixed ESLint error. Site name changes update header text and browser title correctly. Footer renders with correct placeholders including current year (2026). CSS variables applied properly for typography."
 
   - task: "Admin dashboard: Site Settings + downloads management UI"
     implemented: true
@@ -159,11 +165,14 @@ frontend:
     file: "/app/frontend/src/pages/AdminDashboardPage.js"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: true
         agent: "main"
         comment: "Added Site Settings UI (font dropdowns, weights, color picker, footer templates); Added downloads search table + delete button. Renamed duplicate data-testid for earlier card to daily-submission-settings." 
+      - working: true
+        agent: "testing"
+        comment: "✅ TESTED: Site Settings card renders all components (site name input, font dropdowns, weight selectors, color picker, footer templates, update button). Downloads Management section works with search functionality returning results and delete buttons present. All UI elements functional." 
 
 metadata:
   created_by: "main_agent"
