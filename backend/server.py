@@ -180,6 +180,14 @@ class SiteSettings(BaseModel):
     recaptcha_enable_submit: bool = False
     recaptcha_enable_auth: bool = False
 
+    # Resend email settings (optional)
+    resend_api_key: Optional[str] = None
+    resend_sender_email: Optional[str] = None
+
+    # Admin credentials stored in DB (set from Admin UI)
+    admin_email: Optional[EmailStr] = None
+    admin_password_hash: Optional[str] = None
+
 class SiteSettingsUpdate(BaseModel):
     daily_submission_limit: Optional[int] = None
     top_downloads_enabled: Optional[bool] = None
