@@ -156,11 +156,14 @@ frontend:
     file: "/app/frontend/src/pages/SubmitPage.js"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: true
         agent: "main"
         comment: "Added toggle 'Submit multiple items' near top; renders batch item cards with Add/Remove. Uses remaining submissions as max. Submits via /api/submissions/bulk with one captcha/recaptcha and one submitter_email." 
+      - working: true
+        agent: "testing"
+        comment: "✅ TESTED: Multi-item UI works perfectly. Toggle 'SUBMIT MULTIPLE ITEMS' switches modes correctly. Batch UI appears/disappears properly. Add item button works (creates Item 2). Remove item button works. Form validation works (shows 'Site name is required' errors). Math captcha displays and can be solved. Frontend multi-mode implementation is fully functional. Note: Actual submission fails due to backend 500 error, not frontend issue."
 
 metadata:
   created_by: "main_agent"
