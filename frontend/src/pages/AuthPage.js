@@ -103,7 +103,10 @@ export default function AuthPage() {
                 await axios.post(`${API}/auth/register`, payload);
                 toast.success('Registration successful! Please login.');
                 setMode('login');
-                fetchCaptcha();
+                setRecaptchaToken('');
+                if (!recaptchaSettings.enable_auth) {
+                    fetchCaptcha();
+                }
             } else {
                 const response = await axios.post(`${API}/auth/login`, {
                     email: formData.email,
