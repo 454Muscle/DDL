@@ -731,8 +731,8 @@ async def create_submission(submission: SubmissionCreate, request: Request):
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     
     # Get rate limit settings
-    settings = await db.site_settings.find_one({"id": "site_settings"}, {"_id": 0})
-    daily_limit = settings.get("daily_submission_limit", 10) if settings else 10
+    settings = await fetch_site_settings()
+    daily_limit = settings.get("daily_submission_limit", 10)
 
 # Admin init (set email + password the first time)
 @api_router.post("/admin/init")
