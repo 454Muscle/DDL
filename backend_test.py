@@ -96,7 +96,7 @@ class DownloadPortalAPITester:
 
     def test_admin_login_valid(self):
         """Test admin login with valid password"""
-        return self.run_test("Admin Login (Valid)", "POST", "admin/login", 200, {"password": "admin123"})
+        return self.run_test("Admin Login (Valid)", "POST", "admin/login", 200, {"password": "newpass123"})
 
     def test_get_admin_submissions(self):
         """Test getting admin submissions"""
