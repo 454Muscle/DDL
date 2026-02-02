@@ -1524,6 +1524,11 @@ async def update_site_settings(update: SiteSettingsUpdate):
     )
     return settings
 
+
+    # Submissions workflow
+    if update.auto_approve_submissions is not None:
+        settings["auto_approve_submissions"] = bool(update.auto_approve_submissions)
+
 # Get statistics
 @api_router.get("/stats")
 async def get_stats():
