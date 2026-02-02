@@ -871,6 +871,7 @@ async def create_submission(submission: SubmissionCreate, request: Request):
         download_link=submission.download_link,
         type=submission.type,
         submission_date=today,
+        seen_by_admin=False,
         file_size=submission.file_size,
         file_size_bytes=file_size_bytes,
         description=submission.description,
