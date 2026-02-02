@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'sonner';
 import { useTheme } from '../context/ThemeContext';
+import { useSiteSettings } from '../context/SiteSettingsContext';
 import { 
     Shield, 
     Check, 
