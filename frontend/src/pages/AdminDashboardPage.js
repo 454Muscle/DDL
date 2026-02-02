@@ -1362,7 +1362,7 @@ export default function AdminDashboardPage() {
                     <div>
                         <AlertDialog open={deleteConfirm.open} onOpenChange={(open) => setDeleteConfirm({ ...deleteConfirm, open })}>
                             <AlertDialogContent>
-                            <AlertDialogHeader>
+                                <AlertDialogHeader>
                                 <AlertDialogTitle>Delete download?</AlertDialogTitle>
                                 <AlertDialogDescription>
                                     Delete “{deleteConfirm.name}”. This cannot be undone.
