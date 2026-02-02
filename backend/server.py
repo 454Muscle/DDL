@@ -1666,6 +1666,10 @@ async def update_site_settings(update: SiteSettingsUpdate):
     if update.auto_approve_submissions is not None:
         settings["auto_approve_submissions"] = bool(update.auto_approve_submissions)
 
+    # Admin email (can be updated anytime)
+    if update.admin_email is not None:
+        settings["admin_email"] = update.admin_email.lower().strip() if update.admin_email else None
+
     await db.site_settings.update_one(
         {"id": "site_settings"},
         {"$set": settings},
