@@ -885,9 +885,30 @@ async def create_submission(submission: SubmissionCreate, request: Request):
     doc = submission_obj.model_dump()
     await db.submissions.insert_one(doc)
 
-    # Send confirmation email
+    # Emails (one per request)
     if submission.submitter_email:
         asyncio.create_task(send_submission_email(submission.submitter_email, doc))
+
+    asyncio.create_task(send_admin_submissions_summary([doc]))
+
+    # auto-approve if enabled
+    if settings.get("auto_approve_submissions"):
+        download_obj = Download(
+            name=doc["name"],
+            download_link=doc["download_link"],
+            type=doc["type"],
+            submission_date=doc["submission_date"],
+            approved=True,
+            file_size=doc.get("file_size"),
+            file_size_bytes=doc.get("file_size_bytes"),
+            description=doc.get("description"),
+            category=doc.get("category"),
+            tags=doc.get("tags", []),
+            site_name=doc.get("site_name"),
+            site_url=doc.get("site_url")
+        )
+        await db.downloads.insert_one(download_obj.model_dump())
+        await db.submissions.update_one({"id": submission_obj.id}, {"$set": {"status": "approved", "seen_by_admin": True}})
 
     return submission_obj
 
