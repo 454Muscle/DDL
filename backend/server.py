@@ -776,8 +776,15 @@ async def get_remaining_submissions(request: Request):
 # Admin Login
 @api_router.post("/admin/login")
 async def admin_login(login: AdminLogin):
-    if login.password == ADMIN_PASSWORD:
-        return {"success": True, "message": "Access granted"}
+    settings = await get_site_settings()
+    # Prefer DB-stored password hash; fallback to env for bootstrap
+    if settings.get("admin_password_hash"):
+        if hash_password(login.password) == settings.get("admin_password_hash"):
+            return {"success": True, "message": "Access granted"}
+    else:
+        if login.password == ADMIN_PASSWORD:
+            return {"success": True, "message": "Access granted"}
+
     raise HTTPException(status_code=401, detail="Invalid password")
 
 # Admin - Get Pending Submissions
