@@ -763,6 +763,16 @@ export default function AdminDashboardPage() {
                 >
                     UPDATE RESEND
                 </button>
+
+                <button
+                    onClick={handleSendResendTestEmail}
+                    className="action-btn"
+                    style={{ padding: '0.5rem 1rem', marginTop: '0.75rem' }}
+                    data-testid="resend-test-email-btn"
+                >
+                    SEND TEST EMAIL
+                </button>
+
             </div>
 
             {/* Admin Credentials Card */}
