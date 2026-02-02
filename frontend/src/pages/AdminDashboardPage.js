@@ -1380,7 +1380,7 @@ export default function AdminDashboardPage() {
                                 >
                                     Delete
                                 </AlertDialogAction>
-                            </AlertDialogFooter>
+                                </AlertDialogFooter>
                             </AlertDialogContent>
                         </AlertDialog>
                     </div>
