@@ -4,7 +4,7 @@ import json
 from datetime import datetime
 
 class DownloadPortalAPITester:
-    def __init__(self, base_url="https://contentcatalog-1.preview.emergentagent.com/api"):
+    def __init__(self, base_url="https://downloadportal-1.preview.emergentagent.com/api"):
         self.base_url = base_url
         self.tests_run = 0
         self.tests_passed = 0
@@ -266,7 +266,7 @@ class DownloadPortalAPITester:
 
 def main():
     print("🚀 Starting Download Portal API Tests...")
-    print(f"Testing against: https://contentcatalog-1.preview.emergentagent.com/api")
+    print(f"Testing against: https://downloadportal-1.preview.emergentagent.com/api")
     print("=" * 60)
 
     tester = DownloadPortalAPITester()
