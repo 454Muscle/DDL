@@ -543,9 +543,15 @@ async def verify_captcha(captcha_id: str, answer: int) -> bool:
     """Verify captcha answer"""
     if not captcha_id or answer is None:
         return False
-    
+
     captcha = await db.captchas.find_one({"id": captcha_id}, {"_id": 0})
     if not captcha:
+        return False
+
+    # Delete used captcha
+    await db.captchas.delete_one({"id": captcha_id})
+
+    return captcha.get("answer") == answer
 
 async def send_admin_submissions_summary(submissions: List[dict]):
     settings = await fetch_site_settings()
@@ -566,13 +572,6 @@ async def send_admin_submissions_summary(submissions: List[dict]):
     """
 
     await send_email_via_resend(admin_email, f"New submissions received ({len(submissions)})", html)
-
-        return False
-    
-    # Delete used captcha
-    await db.captchas.delete_one({"id": captcha_id})
-    
-    return captcha.get("answer") == answer
 
 # ===== USER AUTH ROUTES =====
 
