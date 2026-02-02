@@ -141,9 +141,16 @@ function SubmitPage() {
             toast.error('SYSTEM ERROR: Download link is required');
             return;
         }
-        if (!captchaAnswer) {
-            toast.error('SYSTEM ERROR: Please solve the captcha');
-            return;
+        if (recaptchaSettings.enable_submit) {
+            if (!recaptchaToken) {
+                toast.error('SYSTEM ERROR: Please complete the reCAPTCHA');
+                return;
+            }
+        } else {
+            if (!captchaAnswer) {
+                toast.error('SYSTEM ERROR: Please solve the captcha');
+                return;
+            }
         }
 
         if (rateLimit.remaining <= 0) {
