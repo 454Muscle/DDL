@@ -187,6 +187,19 @@ class SiteSettings(BaseModel):
     top_downloads_count: int = 5
     sponsored_downloads: List[dict] = []
 
+    # Branding / typography
+    site_name: Optional[str] = "DOWNLOAD ZONE"
+    site_name_font_family: str = "JetBrains Mono"
+    site_name_font_weight: str = "700"
+    site_name_font_color: str = "#00FF41"
+    body_font_family: str = "JetBrains Mono"
+    body_font_weight: str = "400"
+
+    # Footer
+    footer_enabled: bool = True
+    footer_line1_template: str = "For DMCA copyright complaints send an email to {admin_email}."
+    footer_line2_template: str = "Copyright © {site_name} {year}. All rights reserved."
+
     # Google reCAPTCHA v2 settings (optional)
     recaptcha_site_key: Optional[str] = None
     recaptcha_secret_key: Optional[str] = None
