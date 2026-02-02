@@ -779,15 +779,6 @@ export default function AdminDashboardPage() {
                 </div>
             </div>
 
-                        >
-                            <Plus size={14} style={{ display: 'inline', marginRight: '0.5rem' }} />
-                            ADD SPONSORED
-                        </button>
-                    </div>
-                )}
-            </div>
-
-
             {/* Google reCAPTCHA Settings Card */}
             <div className="admin-card" data-testid="recaptcha-settings">
                 <h2 className="admin-title">Google reCAPTCHA 2.0</h2>
