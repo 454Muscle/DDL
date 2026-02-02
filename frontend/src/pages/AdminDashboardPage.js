@@ -1358,6 +1358,31 @@ export default function AdminDashboardPage() {
                             ))}
                         </tbody>
                     </table>
+
+            <AlertDialog open={deleteConfirm.open} onOpenChange={(open) => setDeleteConfirm({ ...deleteConfirm, open })}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Delete download?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Delete “{deleteConfirm.name}”. This cannot be undone.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel onClick={() => setDeleteConfirm({ open: false, id: null, name: '' })}>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={() => {
+                                if (deleteConfirm.id) {
+                                    handleDeleteDownload(deleteConfirm.id);
+                                }
+                                setDeleteConfirm({ open: false, id: null, name: '' });
+                            }}
+                        >
+                            Delete
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
                 )}
 
                 {totalPages > 1 && (
