@@ -1486,10 +1486,12 @@ async def resend_test_email():
 
     return {"success": True}
 
+@api_router.delete("/admin/submissions/{submission_id}")
 async def delete_submission(submission_id: str):
     result = await db.submissions.delete_one({"id": submission_id})
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Submission not found")
+    return {"success": True}
 
 @api_router.get("/admin/downloads", response_model=PaginatedDownloads)
 async def admin_search_downloads(search: str = Query(""), page: int = Query(1, ge=1), limit: int = Query(20, ge=1, le=100)):
