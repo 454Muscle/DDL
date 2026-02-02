@@ -518,6 +518,27 @@ async def generate_captcha():
     return {
         "id": captcha_id,
         "question": f"What is {num1} {operator} {num2}?"
+
+async def send_admin_submissions_summary(submissions: List[dict]):
+    settings = await fetch_site_settings()
+    admin_email = settings.get("admin_email")
+    if not admin_email:
+        return
+
+    items_html = "".join([
+        f"<li><b>{s.get('name','N/A')}</b> ({s.get('type','N/A')})</li>" for s in submissions[:50]
+    ])
+
+    html = f"""
+    <html><body style='font-family: Arial, sans-serif;'>
+      <h2>New Submission(s) Received</h2>
+      <p>Count: {len(submissions)}</p>
+      <ul>{items_html}</ul>
+    </body></html>
+    """
+
+    await send_email_via_resend(admin_email, f"New submissions received ({len(submissions)})", html)
+
     }
 
 # ===== RECAPTCHA HELPERS =====
