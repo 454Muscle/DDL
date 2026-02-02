@@ -820,7 +820,18 @@ def main():
         tester.test_root_endpoint,
         tester.test_get_downloads_empty,
         
-        # New comprehensive site fields and reCAPTCHA tests
+        # Security tests (Review Request Priority)
+        tester.test_settings_no_secret_keys,
+        tester.test_admin_resend_update_hides_key,
+        tester.test_forgot_password_no_email_leakage,
+        tester.test_reset_password_bad_token,
+        tester.test_admin_init_already_initialized,
+        tester.test_admin_password_change_request_validation,
+        tester.test_admin_password_change_confirm_bad_token,
+        tester.test_admin_forgot_password_bad_token,
+        tester.test_admin_login_db_password_priority,
+        
+        # Site fields and reCAPTCHA tests
         tester.test_captcha_generation,
         tester.test_submission_with_site_fields,
         tester.test_approve_submission_with_site_fields,
