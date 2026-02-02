@@ -51,6 +51,16 @@ export default function AuthPage() {
         }
     };
 
+
+    useEffect(() => {
+        if (recaptchaSettings.enable_auth) {
+            setCaptcha({ question: '', id: '' });
+            setFormData(prev => ({ ...prev, captcha_id: '', captcha_answer: '' }));
+        } else {
+            fetchCaptcha();
+        }
+    }, [recaptchaSettings.enable_auth]);
+
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
