@@ -407,17 +407,6 @@ export default function AdminDashboardPage() {
     ];
     const WEIGHT_OPTIONS = ['300', '400', '500', '600', '700', '800'];
 
-    const FONT_OPTIONS = [
-        'Arial',
-        'Inter',
-        'Roboto',
-        'Georgia',
-        'Times New Roman',
-        'Courier New',
-        'JetBrains Mono'
-    ];
-    const WEIGHT_OPTIONS = ['300', '400', '500', '600', '700', '800'];
-
     const handleUpdateBranding = async () => {
         try {
             const payload = {
