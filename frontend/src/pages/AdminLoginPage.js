@@ -100,6 +100,11 @@ export default function AdminLoginPage() {
                     </button>
                 </form>
 
+                <p style={{ marginTop: '0.75rem', fontSize: '0.75rem', opacity: 0.7, textAlign: 'center' }}>
+                    <Link to="/admin/forgot-password">Forgot password?</Link>
+                </p>
+
+
                 {/* Warning */}
                 <div style={{ 
                     marginTop: '1.5rem', 
