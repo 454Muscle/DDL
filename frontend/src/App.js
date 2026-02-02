@@ -25,7 +25,11 @@ function App() {
                             <Route path="/" element={<HomePage />} />
                             <Route path="/submit" element={<SubmitPage />} />
                             <Route path="/auth" element={<AuthPage />} />
+                            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+                            <Route path="/reset-password" element={<ResetPasswordPage />} />
                             <Route path="/admin" element={<AdminLoginPage />} />
+                            <Route path="/admin/forgot-password" element={<AdminForgotPasswordPage />} />
+                            <Route path="/admin/reset-password" element={<AdminResetPasswordPage />} />
                             <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
                         </Routes>
                     </BrowserRouter>
