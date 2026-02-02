@@ -144,6 +144,16 @@ export default function AdminDashboardPage() {
             setAdminEmail(response.data.admin_email || '');
             setResendSenderEmail(response.data.resend_sender_email || '');
             setResendApiKey('');
+
+            setSiteName(response.data.site_name || 'DOWNLOAD ZONE');
+            setSiteNameFontFamily(response.data.site_name_font_family || 'JetBrains Mono');
+            setSiteNameFontWeight(String(response.data.site_name_font_weight || '700'));
+            setSiteNameFontColor(response.data.site_name_font_color || '#00FF41');
+            setBodyFontFamily(response.data.body_font_family || 'JetBrains Mono');
+            setBodyFontWeight(String(response.data.body_font_weight || '400'));
+            setFooterEnabled(response.data.footer_enabled !== false);
+            setFooterLine1(response.data.footer_line1_template || 'For DMCA copyright complaints send an email to {admin_email}.');
+            setFooterLine2(response.data.footer_line2_template || 'Copyright © {site_name} {year}. All rights reserved.');
         } catch (error) {
             console.error('Error fetching settings:', error);
         }
