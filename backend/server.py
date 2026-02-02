@@ -1260,6 +1260,17 @@ async def admin_login(login: AdminLogin):
 @api_router.get("/admin/submissions", response_model=PaginatedSubmissions)
 async def get_admin_submissions(
     page: int = Query(1, ge=1),
+
+@api_router.get("/admin/submissions/unseen-count")
+async def admin_unseen_submissions_count():
+    settings = await fetch_site_settings()
+    if settings.get("auto_approve_submissions"):
+        return {"count": 0}
+
+    count = await db.submissions.count_documents({"status": "pending", "seen_by_admin": False})
+    return {"count": count}
+
+
     limit: int = Query(50, ge=1, le=100),
     status: Optional[str] = None
 ):
