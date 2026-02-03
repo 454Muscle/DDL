@@ -235,15 +235,51 @@ $categories = $db->query("SELECT DISTINCT name, type FROM categories ORDER BY na
             remaining: <?= (int)$rateLimit['remaining'] ?>
         };
         
+        // Utility functions (defined first)
+        function showAlert(message, type) {
+            const container = document.getElementById('alertContainer');
+            if (container) {
+                container.innerHTML = '<div class="alert alert-' + type + '">' + escapeHtml(message) + '</div>';
+                setTimeout(function() { container.innerHTML = ''; }, 5000);
+            }
+        }
+        
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        function setMode(mode) {
+            currentMode = mode;
+            var singleBtn = document.getElementById('singleModeBtn');
+            var multiBtn = document.getElementById('multiModeBtn');
+            var singleForm = document.getElementById('singleForm');
+            var multiForm = document.getElementById('multiForm');
+            
+            if (singleBtn) singleBtn.classList.toggle('active', mode === 'single');
+            if (multiBtn) multiBtn.classList.toggle('active', mode === 'multi');
+            if (singleForm) singleForm.style.display = mode === 'single' ? 'block' : 'none';
+            if (multiForm) multiForm.style.display = mode === 'multi' ? 'block' : 'none';
+        }
+        
         // Initialize
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', function() {
             // Mode toggle buttons
-            document.getElementById('singleModeBtn').addEventListener('click', function() {
-                setMode('single');
-            });
-            document.getElementById('multiModeBtn').addEventListener('click', function() {
-                setMode('multi');
-            });
+            var singleBtn = document.getElementById('singleModeBtn');
+            var multiBtn = document.getElementById('multiModeBtn');
+            
+            if (singleBtn) {
+                singleBtn.addEventListener('click', function() {
+                    setMode('single');
+                });
+            }
+            if (multiBtn) {
+                multiBtn.addEventListener('click', function() {
+                    setMode('multi');
+                });
+            }
             
             // Add first item for multi mode (even if rate limit is 0, show the form)
             try {
@@ -253,19 +289,17 @@ $categories = $db->query("SELECT DISTINCT name, type FROM categories ORDER BY na
             }
             
             // Single form submit
-            document.getElementById('singleForm').addEventListener('submit', handleSingleSubmit);
+            var singleForm = document.getElementById('singleForm');
+            if (singleForm) {
+                singleForm.addEventListener('submit', handleSingleSubmit);
+            }
             
             // Multi form submit
-            document.getElementById('multiForm').addEventListener('submit', handleMultiSubmit);
+            var multiForm = document.getElementById('multiForm');
+            if (multiForm) {
+                multiForm.addEventListener('submit', handleMultiSubmit);
+            }
         });
-        
-        function setMode(mode) {
-            currentMode = mode;
-            document.getElementById('singleModeBtn').classList.toggle('active', mode === 'single');
-            document.getElementById('multiModeBtn').classList.toggle('active', mode === 'multi');
-            document.getElementById('singleForm').style.display = mode === 'single' ? 'block' : 'none';
-            document.getElementById('multiForm').style.display = mode === 'multi' ? 'block' : 'none';
-        }
         
         function updateCategories(type, selectId) {
             const select = document.getElementById(selectId);
