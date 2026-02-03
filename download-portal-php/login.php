@@ -73,7 +73,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <title><?= $mode === 'register' ? 'Register' : 'Login' ?> - <?= htmlspecialchars($settings['site_name'] ?? 'DOWNLOAD ZONE') ?></title>
     <link rel="stylesheet" href="assets/css/style.css">
 </head>
-<body class="<?= $theme['mode'] === 'light' ? 'light-theme' : '' ?>">
+<body class="<?= ($theme['mode'] ?? 'dark') === 'light' ? 'light-theme' : '' ?>">
     <header>
         <div class="container">
             <div class="header-content">
@@ -83,7 +83,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <a href="submit.php">SUBMIT</a>
                     <a href="login.php" class="active">LOGIN</a>
                     <a href="admin/">ADMIN</a>
-                    <button class="theme-toggle" id="themeToggle">☾ DARK</button>
+                    <button class="theme-toggle" id="themeToggle"><?= ($theme['mode'] ?? 'dark') === 'dark' ? '☀ LIGHT' : '☾ DARK' ?></button>
                 </nav>
             </div>
         </div>
