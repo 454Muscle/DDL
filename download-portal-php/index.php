@@ -2,7 +2,26 @@
 /**
  * Download Portal - Homepage
  */
-require_once __DIR__ . '/includes/functions.php';
+
+// Check if install.php exists and database is not configured
+if (file_exists(__DIR__ . '/install.php')) {
+    // Try to connect to database
+    try {
+        require_once __DIR__ . '/includes/functions.php';
+        $db = getDB();
+        // Check if tables exist
+        $stmt = $db->query("SHOW TABLES LIKE 'site_settings'");
+        if ($stmt->rowCount() === 0) {
+            header('Location: install.php');
+            exit;
+        }
+    } catch (Exception $e) {
+        header('Location: install.php');
+        exit;
+    }
+} else {
+    require_once __DIR__ . '/includes/functions.php';
+}
 
 $settings = getSiteSettings();
 $theme = getThemeSettings();
