@@ -8,83 +8,15 @@ require_once __DIR__ . '/includes/captcha.php';
 $settings = getSiteSettings();
 $theme = getThemeSettings();
 $captcha = generateCaptcha();
-$message = '';
-$messageType = '';
 
-// Handle form submission
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $data = [
-        'name' => $_POST['name'] ?? '',
-        'download_link' => $_POST['download_link'] ?? '',
-        'type' => $_POST['type'] ?? '',
-        'site_name' => $_POST['site_name'] ?? '',
-        'site_url' => $_POST['site_url'] ?? '',
-        'file_size' => $_POST['file_size'] ?? '',
-        'description' => $_POST['description'] ?? '',
-        'category' => $_POST['category'] ?? '',
-        'tags' => $_POST['tags'] ?? '',
-        'submitter_email' => $_POST['submitter_email'] ?? '',
-        'captcha_id' => $_POST['captcha_id'] ?? '',
-        'captcha_answer' => $_POST['captcha_answer'] ?? ''
-    ];
-    
-    // Verify captcha
-    if (!verifyCaptcha($data['captcha_id'], $data['captcha_answer'])) {
-        $message = 'Invalid captcha. Please try again.';
-        $messageType = 'error';
-        $captcha = generateCaptcha();
-    } else {
-        // Check rate limit
-        $ip = getClientIP();
-        $dailyLimit = $settings['daily_submission_limit'] ?? 10;
-        $rateLimit = checkRateLimit($ip, $dailyLimit);
-        
-        if (!$rateLimit['allowed']) {
-            $message = "Daily submission limit ($dailyLimit) reached. Try again tomorrow.";
-            $messageType = 'error';
-        } else {
-            // Validate URL
-            $urlResult = validateHttpUrl($data['site_url']);
-            if (!$urlResult['valid']) {
-                $message = $urlResult['error'];
-                $messageType = 'error';
-            } else {
-                // Create submission
-                $db = getDB();
-                $id = generateUUID();
-                $today = date('Y-m-d');
-                $fileSizeBytes = parseFileSizeToBytes($data['file_size']);
-                $tags = json_encode(array_filter(array_map('trim', explode(',', $data['tags']))));
-                
-                $stmt = $db->prepare("
-                    INSERT INTO submissions (
-                        id, name, download_link, type, submission_date, file_size, file_size_bytes,
-                        description, category, tags, site_name, site_url, submitter_email
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                ");
-                $stmt->execute([
-                    $id, $data['name'], $data['download_link'], $data['type'], $today,
-                    $data['file_size'], $fileSizeBytes, $data['description'], $data['category'],
-                    $tags, $data['site_name'], $urlResult['url'], $data['submitter_email']
-                ]);
-                
-                incrementRateLimit($ip);
-                
-                $message = 'Submission received! It will be reviewed by an admin.';
-                $messageType = 'success';
-                
-                // Reset form
-                $data = [];
-            }
-        }
-        
-        $captcha = generateCaptcha();
-    }
-}
+// Get rate limit info
+$ip = getClientIP();
+$dailyLimit = (int)($settings['daily_submission_limit'] ?? 10);
+$rateLimit = checkRateLimit($ip, $dailyLimit);
 
 // Get categories
 $db = getDB();
-$categories = $db->query("SELECT DISTINCT name FROM categories ORDER BY name")->fetchAll(PDO::FETCH_COLUMN);
+$categories = $db->query("SELECT DISTINCT name, type FROM categories ORDER BY name")->fetchAll(PDO::FETCH_ASSOC);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -93,6 +25,32 @@ $categories = $db->query("SELECT DISTINCT name FROM categories ORDER BY name")->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Submit - <?= htmlspecialchars($settings['site_name'] ?? 'DOWNLOAD ZONE') ?></title>
     <link rel="stylesheet" href="assets/css/style.css">
+    <style>
+        .rate-limit-bar {
+            padding: 12px 15px;
+            margin-bottom: 20px;
+            border: 1px solid;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .rate-limit-bar.ok { border-color: var(--success); background: rgba(0, 255, 65, 0.1); }
+        .rate-limit-bar.warning { border-color: var(--warning); background: rgba(255, 170, 0, 0.1); }
+        .rate-limit-bar.error { border-color: var(--error); background: rgba(255, 68, 68, 0.1); }
+        .mode-toggle { display: flex; gap: 10px; margin-bottom: 20px; }
+        .mode-btn { padding: 10px 20px; background: var(--bg-tertiary); border: 1px solid var(--border-color); color: var(--text-primary); cursor: pointer; }
+        .mode-btn.active { background: var(--accent); color: var(--bg-primary); border-color: var(--accent); }
+        .batch-item { border: 1px solid var(--border-color); padding: 20px; margin-bottom: 15px; position: relative; }
+        .batch-item-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid var(--border-color); }
+        .batch-item-number { color: var(--accent); font-weight: bold; }
+        .remove-item-btn { background: var(--error); color: white; border: none; padding: 5px 15px; cursor: pointer; font-size: 0.85rem; }
+        .remove-item-btn:hover { opacity: 0.8; }
+        .remove-item-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .add-item-btn { margin-bottom: 20px; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        @media (max-width: 768px) { .form-row { grid-template-columns: 1fr; } }
+        .batch-info { font-size: 0.85rem; color: var(--text-muted); margin-top: 5px; }
+    </style>
 </head>
 <body class="<?= $theme['mode'] === 'light' ? 'light-theme' : '' ?>">
     <header>
@@ -114,82 +72,127 @@ $categories = $db->query("SELECT DISTINCT name FROM categories ORDER BY name")->
         <div class="container">
             <h1 class="section-title">SUBMIT NEW DOWNLOAD</h1>
             
-            <?php if ($message): ?>
-                <div class="alert alert-<?= $messageType ?>"><?= htmlspecialchars($message) ?></div>
-            <?php endif; ?>
+            <!-- Rate Limit Info -->
+            <div class="rate-limit-bar <?= $rateLimit['remaining'] <= 0 ? 'error' : ($rateLimit['remaining'] <= 3 ? 'warning' : 'ok') ?>" id="rateLimitBar">
+                <span>
+                    DAILY SUBMISSIONS: <strong id="rateLimitUsed"><?= $rateLimit['used'] ?></strong> / <strong><?= $dailyLimit ?></strong>
+                    &nbsp;|&nbsp;
+                    REMAINING: <strong id="rateLimitRemaining" style="color: <?= $rateLimit['remaining'] <= 0 ? 'var(--error)' : 'var(--success)' ?>"><?= $rateLimit['remaining'] ?></strong>
+                </span>
+            </div>
+            
+            <!-- Mode Toggle -->
+            <div class="mode-toggle">
+                <button type="button" class="mode-btn active" id="singleModeBtn" onclick="setMode('single')">SINGLE SUBMIT</button>
+                <button type="button" class="mode-btn" id="multiModeBtn" onclick="setMode('multi')">SUBMIT MULTIPLE</button>
+            </div>
+            
+            <!-- Alert Container -->
+            <div id="alertContainer"></div>
             
             <div class="admin-section">
-                <form method="POST" action="">
+                <!-- Single Submit Form -->
+                <form id="singleForm" style="display: block;">
                     <div class="form-group">
                         <label>Name *</label>
-                        <input type="text" name="name" required value="<?= htmlspecialchars($data['name'] ?? '') ?>" placeholder="e.g., Super Game v1.0">
+                        <input type="text" name="name" required placeholder="e.g., Super Game v1.0">
                     </div>
                     
                     <div class="form-group">
                         <label>Download Link *</label>
-                        <input type="url" name="download_link" required value="<?= htmlspecialchars($data['download_link'] ?? '') ?>" placeholder="https://...">
+                        <input type="url" name="download_link" required placeholder="https://...">
                     </div>
                     
-                    <div class="form-group">
-                        <label>Type *</label>
-                        <select name="type" required>
-                            <option value="">Select type...</option>
-                            <option value="game" <?= ($data['type'] ?? '') === 'game' ? 'selected' : '' ?>>Game</option>
-                            <option value="software" <?= ($data['type'] ?? '') === 'software' ? 'selected' : '' ?>>Software</option>
-                            <option value="movie" <?= ($data['type'] ?? '') === 'movie' ? 'selected' : '' ?>>Movie</option>
-                            <option value="tv_show" <?= ($data['type'] ?? '') === 'tv_show' ? 'selected' : '' ?>>TV Show</option>
-                        </select>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Site Name * (max 15 chars)</label>
+                            <input type="text" name="site_name" required maxlength="15" placeholder="e.g., MySite">
+                        </div>
+                        <div class="form-group">
+                            <label>Site URL *</label>
+                            <input type="url" name="site_url" required placeholder="https://mysite.com">
+                        </div>
                     </div>
                     
-                    <div class="form-group">
-                        <label>Site Name * (max 15 chars)</label>
-                        <input type="text" name="site_name" required maxlength="15" value="<?= htmlspecialchars($data['site_name'] ?? '') ?>" placeholder="e.g., MySite">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Type *</label>
+                            <select name="type" required onchange="updateCategories(this.value, 'singleCategory')">
+                                <option value="">Select type...</option>
+                                <option value="game">Game</option>
+                                <option value="software">Software</option>
+                                <option value="movie">Movie</option>
+                                <option value="tv_show">TV Show</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Category</label>
+                            <select name="category" id="singleCategory">
+                                <option value="">Select category...</option>
+                            </select>
+                        </div>
                     </div>
                     
-                    <div class="form-group">
-                        <label>Site URL *</label>
-                        <input type="url" name="site_url" required value="<?= htmlspecialchars($data['site_url'] ?? '') ?>" placeholder="https://mysite.com">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>File Size</label>
-                        <input type="text" name="file_size" value="<?= htmlspecialchars($data['file_size'] ?? '') ?>" placeholder="e.g., 5.2 GB">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>Category</label>
-                        <select name="category">
-                            <option value="">Select category...</option>
-                            <?php foreach ($categories as $cat): ?>
-                                <option value="<?= htmlspecialchars($cat) ?>" <?= ($data['category'] ?? '') === $cat ? 'selected' : '' ?>><?= htmlspecialchars($cat) ?></option>
-                            <?php endforeach; ?>
-                        </select>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>File Size</label>
+                            <input type="text" name="file_size" placeholder="e.g., 5.2 GB">
+                        </div>
+                        <div class="form-group">
+                            <label>Your Email (for notifications)</label>
+                            <input type="email" name="submitter_email" placeholder="your@email.com">
+                        </div>
                     </div>
                     
                     <div class="form-group">
                         <label>Tags (comma separated)</label>
-                        <input type="text" name="tags" value="<?= htmlspecialchars($data['tags'] ?? '') ?>" placeholder="e.g., action, multiplayer, HD">
+                        <input type="text" name="tags" placeholder="e.g., action, multiplayer, HD">
                     </div>
                     
                     <div class="form-group">
                         <label>Description</label>
-                        <textarea name="description" placeholder="Brief description..."><?= htmlspecialchars($data['description'] ?? '') ?></textarea>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>Your Email (for notifications)</label>
-                        <input type="email" name="submitter_email" value="<?= htmlspecialchars($data['submitter_email'] ?? '') ?>" placeholder="your@email.com">
+                        <textarea name="description" placeholder="Brief description..."></textarea>
                     </div>
                     
                     <!-- Captcha -->
                     <div class="captcha-section">
                         <label>Solve to verify you're human:</label>
-                        <div class="captcha-challenge"><?= htmlspecialchars($captcha['challenge']) ?></div>
-                        <input type="hidden" name="captcha_id" value="<?= htmlspecialchars($captcha['id']) ?>">
-                        <input type="number" name="captcha_answer" required placeholder="Your answer" class="search-input" style="max-width: 200px;">
+                        <div class="captcha-challenge" id="singleCaptchaChallenge"><?= htmlspecialchars($captcha['challenge']) ?></div>
+                        <input type="hidden" name="captcha_id" id="singleCaptchaId" value="<?= htmlspecialchars($captcha['id']) ?>">
+                        <div style="display: flex; gap: 10px; align-items: center;">
+                            <input type="number" name="captcha_answer" required placeholder="Your answer" class="search-input" style="max-width: 200px;">
+                            <button type="button" class="btn btn-secondary" onclick="refreshCaptcha('single')">↻ REFRESH</button>
+                        </div>
                     </div>
                     
-                    <button type="submit" class="btn">SUBMIT</button>
+                    <button type="submit" class="btn" id="singleSubmitBtn" <?= $rateLimit['remaining'] <= 0 ? 'disabled' : '' ?>>SUBMIT</button>
+                </form>
+                
+                <!-- Multi Submit Form -->
+                <form id="multiForm" style="display: none;">
+                    <div id="batchItemsContainer">
+                        <!-- Items will be added here dynamically -->
+                    </div>
+                    
+                    <button type="button" class="btn btn-secondary add-item-btn" onclick="addBatchItem()" id="addItemBtn">+ ADD ANOTHER ITEM</button>
+                    
+                    <div class="form-group">
+                        <label>Your Email (for all items)</label>
+                        <input type="email" name="submitter_email" id="multiSubmitterEmail" placeholder="your@email.com">
+                    </div>
+                    
+                    <!-- Captcha for batch -->
+                    <div class="captcha-section">
+                        <label>Solve to verify you're human:</label>
+                        <div class="captcha-challenge" id="multiCaptchaChallenge"><?= htmlspecialchars($captcha['challenge']) ?></div>
+                        <input type="hidden" name="captcha_id" id="multiCaptchaId" value="<?= htmlspecialchars($captcha['id']) ?>">
+                        <div style="display: flex; gap: 10px; align-items: center;">
+                            <input type="number" name="captcha_answer" id="multiCaptchaAnswer" required placeholder="Your answer" class="search-input" style="max-width: 200px;">
+                            <button type="button" class="btn btn-secondary" onclick="refreshCaptcha('multi')">↻ REFRESH</button>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn" id="multiSubmitBtn" <?= $rateLimit['remaining'] <= 0 ? 'disabled' : '' ?>>SUBMIT ALL ITEMS</button>
                 </form>
             </div>
         </div>
@@ -205,6 +208,362 @@ $categories = $db->query("SELECT DISTINCT name FROM categories ORDER BY name")->
     </footer>
 
     <script>
+        const API = 'api';
+        const categories = <?= json_encode($categories) ?>;
+        let currentMode = 'single';
+        let batchItems = [];
+        let rateLimit = {
+            daily_limit: <?= $dailyLimit ?>,
+            used: <?= $rateLimit['used'] ?>,
+            remaining: <?= $rateLimit['remaining'] ?>
+        };
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            addBatchItem(); // Add first item for multi mode
+            
+            // Single form submit
+            document.getElementById('singleForm').addEventListener('submit', handleSingleSubmit);
+            
+            // Multi form submit
+            document.getElementById('multiForm').addEventListener('submit', handleMultiSubmit);
+        });
+        
+        function setMode(mode) {
+            currentMode = mode;
+            document.getElementById('singleModeBtn').classList.toggle('active', mode === 'single');
+            document.getElementById('multiModeBtn').classList.toggle('active', mode === 'multi');
+            document.getElementById('singleForm').style.display = mode === 'single' ? 'block' : 'none';
+            document.getElementById('multiForm').style.display = mode === 'multi' ? 'block' : 'none';
+        }
+        
+        function updateCategories(type, selectId) {
+            const select = document.getElementById(selectId);
+            select.innerHTML = '<option value="">Select category...</option>';
+            
+            categories.filter(c => c.type === type || c.type === 'all').forEach(cat => {
+                const option = document.createElement('option');
+                option.value = cat.name;
+                option.textContent = cat.name;
+                select.appendChild(option);
+            });
+        }
+        
+        function addBatchItem() {
+            if (batchItems.length >= rateLimit.remaining) {
+                showAlert('Cannot add more items than remaining submissions today', 'error');
+                return;
+            }
+            
+            const index = batchItems.length;
+            batchItems.push({
+                name: '', download_link: '', type: 'game', site_name: '', site_url: '',
+                file_size: '', description: '', category: '', tags: ''
+            });
+            
+            const container = document.getElementById('batchItemsContainer');
+            const itemDiv = document.createElement('div');
+            itemDiv.className = 'batch-item';
+            itemDiv.id = `batchItem${index}`;
+            itemDiv.innerHTML = `
+                <div class="batch-item-header">
+                    <span class="batch-item-number">ITEM #${index + 1}</span>
+                    <button type="button" class="remove-item-btn" onclick="removeBatchItem(${index})" ${batchItems.length <= 1 ? 'disabled' : ''}>REMOVE</button>
+                </div>
+                
+                <div class="form-group">
+                    <label>Name *</label>
+                    <input type="text" data-field="name" data-index="${index}" required placeholder="e.g., Super Game v1.0">
+                </div>
+                
+                <div class="form-group">
+                    <label>Download Link *</label>
+                    <input type="url" data-field="download_link" data-index="${index}" required placeholder="https://...">
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Site Name *</label>
+                        <input type="text" data-field="site_name" data-index="${index}" required maxlength="15" placeholder="e.g., MySite">
+                    </div>
+                    <div class="form-group">
+                        <label>Site URL *</label>
+                        <input type="url" data-field="site_url" data-index="${index}" required placeholder="https://mysite.com">
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Type *</label>
+                        <select data-field="type" data-index="${index}" onchange="updateCategories(this.value, 'batchCategory${index}')">
+                            <option value="game">Game</option>
+                            <option value="software">Software</option>
+                            <option value="movie">Movie</option>
+                            <option value="tv_show">TV Show</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Category</label>
+                        <select data-field="category" data-index="${index}" id="batchCategory${index}">
+                            <option value="">Select category...</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>File Size</label>
+                        <input type="text" data-field="file_size" data-index="${index}" placeholder="e.g., 5.2 GB">
+                    </div>
+                    <div class="form-group">
+                        <label>Tags</label>
+                        <input type="text" data-field="tags" data-index="${index}" placeholder="action, HD">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>Description</label>
+                    <textarea data-field="description" data-index="${index}" placeholder="Brief description..."></textarea>
+                </div>
+            `;
+            container.appendChild(itemDiv);
+            
+            // Update batch info
+            updateBatchInfo();
+            updateCategories('game', `batchCategory${index}`);
+        }
+        
+        function removeBatchItem(index) {
+            if (batchItems.length <= 1) return;
+            
+            batchItems.splice(index, 1);
+            
+            // Rebuild the container
+            const container = document.getElementById('batchItemsContainer');
+            container.innerHTML = '';
+            const items = [...batchItems];
+            batchItems = [];
+            items.forEach(() => addBatchItem());
+        }
+        
+        function updateBatchInfo() {
+            const remaining = rateLimit.remaining - batchItems.length;
+            document.getElementById('addItemBtn').disabled = batchItems.length >= rateLimit.remaining;
+            
+            // Update remove buttons
+            document.querySelectorAll('.remove-item-btn').forEach(btn => {
+                btn.disabled = batchItems.length <= 1;
+            });
+        }
+        
+        function getBatchData() {
+            const items = [];
+            for (let i = 0; i < batchItems.length; i++) {
+                const item = {};
+                document.querySelectorAll(`[data-index="${i}"]`).forEach(el => {
+                    const field = el.dataset.field;
+                    let value = el.value;
+                    if (field === 'tags' && value) {
+                        value = value.split(',').map(t => t.trim()).filter(t => t);
+                    }
+                    item[field] = value;
+                });
+                items.push(item);
+            }
+            return items;
+        }
+        
+        async function handleSingleSubmit(e) {
+            e.preventDefault();
+            
+            if (rateLimit.remaining <= 0) {
+                showAlert('Daily submission limit reached', 'error');
+                return;
+            }
+            
+            const form = e.target;
+            const formData = new FormData(form);
+            const data = {};
+            formData.forEach((value, key) => {
+                if (key === 'tags' && value) {
+                    data[key] = value.split(',').map(t => t.trim()).filter(t => t);
+                } else {
+                    data[key] = value;
+                }
+            });
+            
+            // Validate
+            if (!data.name || !data.download_link || !data.type || !data.site_name || !data.site_url) {
+                showAlert('Please fill in all required fields', 'error');
+                return;
+            }
+            
+            if (!data.captcha_answer) {
+                showAlert('Please solve the captcha', 'error');
+                return;
+            }
+            
+            data.captcha_answer = parseInt(data.captcha_answer);
+            
+            document.getElementById('singleSubmitBtn').disabled = true;
+            document.getElementById('singleSubmitBtn').textContent = 'SUBMITTING...';
+            
+            try {
+                const response = await fetch(`${API}/submissions.php?action=create`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                const result = await response.json();
+                
+                if (result.error) {
+                    showAlert(result.error, 'error');
+                    refreshCaptcha('single');
+                } else {
+                    showAlert('Submission received! It will be reviewed by an admin.', 'success');
+                    form.reset();
+                    refreshCaptcha('single');
+                    updateRateLimit();
+                    setTimeout(() => { window.location.href = 'index.php'; }, 2000);
+                }
+            } catch (error) {
+                showAlert('Error submitting. Please try again.', 'error');
+                refreshCaptcha('single');
+            } finally {
+                document.getElementById('singleSubmitBtn').disabled = false;
+                document.getElementById('singleSubmitBtn').textContent = 'SUBMIT';
+            }
+        }
+        
+        async function handleMultiSubmit(e) {
+            e.preventDefault();
+            
+            const items = getBatchData();
+            
+            if (items.length === 0) {
+                showAlert('No items to submit', 'error');
+                return;
+            }
+            
+            if (items.length > rateLimit.remaining) {
+                showAlert('Too many items for remaining submissions today', 'error');
+                return;
+            }
+            
+            // Validate all items
+            for (let i = 0; i < items.length; i++) {
+                const item = items[i];
+                if (!item.name || !item.download_link || !item.site_name || !item.site_url) {
+                    showAlert(`Please fill in all required fields for Item #${i + 1}`, 'error');
+                    return;
+                }
+            }
+            
+            const captchaId = document.getElementById('multiCaptchaId').value;
+            const captchaAnswer = document.getElementById('multiCaptchaAnswer').value;
+            
+            if (!captchaAnswer) {
+                showAlert('Please solve the captcha', 'error');
+                return;
+            }
+            
+            const payload = {
+                items: items,
+                submitter_email: document.getElementById('multiSubmitterEmail').value,
+                captcha_id: captchaId,
+                captcha_answer: parseInt(captchaAnswer)
+            };
+            
+            document.getElementById('multiSubmitBtn').disabled = true;
+            document.getElementById('multiSubmitBtn').textContent = 'SUBMITTING...';
+            
+            try {
+                const response = await fetch(`${API}/submissions.php?action=bulk`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const result = await response.json();
+                
+                if (result.error) {
+                    showAlert(result.error, 'error');
+                    refreshCaptcha('multi');
+                } else {
+                    showAlert(`${result.count} item(s) submitted successfully!`, 'success');
+                    // Reset
+                    document.getElementById('batchItemsContainer').innerHTML = '';
+                    batchItems = [];
+                    addBatchItem();
+                    document.getElementById('multiSubmitterEmail').value = '';
+                    document.getElementById('multiCaptchaAnswer').value = '';
+                    refreshCaptcha('multi');
+                    updateRateLimit();
+                    setTimeout(() => { window.location.href = 'index.php'; }, 2000);
+                }
+            } catch (error) {
+                showAlert('Error submitting. Please try again.', 'error');
+                refreshCaptcha('multi');
+            } finally {
+                document.getElementById('multiSubmitBtn').disabled = false;
+                document.getElementById('multiSubmitBtn').textContent = 'SUBMIT ALL ITEMS';
+            }
+        }
+        
+        async function refreshCaptcha(mode) {
+            try {
+                const response = await fetch(`${API}/submissions.php?action=captcha`);
+                const data = await response.json();
+                
+                if (mode === 'single') {
+                    document.getElementById('singleCaptchaChallenge').textContent = data.challenge;
+                    document.getElementById('singleCaptchaId').value = data.id;
+                } else {
+                    document.getElementById('multiCaptchaChallenge').textContent = data.challenge;
+                    document.getElementById('multiCaptchaId').value = data.id;
+                }
+            } catch (error) {
+                console.error('Error refreshing captcha:', error);
+            }
+        }
+        
+        async function updateRateLimit() {
+            try {
+                const response = await fetch(`${API}/submissions.php?action=remaining`);
+                const data = await response.json();
+                rateLimit = data;
+                
+                document.getElementById('rateLimitUsed').textContent = data.used;
+                document.getElementById('rateLimitRemaining').textContent = data.remaining;
+                document.getElementById('rateLimitRemaining').style.color = data.remaining <= 0 ? 'var(--error)' : 'var(--success)';
+                
+                const bar = document.getElementById('rateLimitBar');
+                bar.classList.remove('ok', 'warning', 'error');
+                if (data.remaining <= 0) bar.classList.add('error');
+                else if (data.remaining <= 3) bar.classList.add('warning');
+                else bar.classList.add('ok');
+                
+                document.getElementById('singleSubmitBtn').disabled = data.remaining <= 0;
+                document.getElementById('multiSubmitBtn').disabled = data.remaining <= 0;
+                
+                updateBatchInfo();
+            } catch (error) {
+                console.error('Error updating rate limit:', error);
+            }
+        }
+        
+        function showAlert(message, type) {
+            const container = document.getElementById('alertContainer');
+            container.innerHTML = `<div class="alert alert-${type}">${escapeHtml(message)}</div>`;
+            setTimeout(() => { container.innerHTML = ''; }, 5000);
+        }
+        
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        // Theme toggle
         document.getElementById('themeToggle')?.addEventListener('click', () => {
             document.body.classList.toggle('light-theme');
             const btn = document.getElementById('themeToggle');
