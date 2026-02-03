@@ -496,6 +496,75 @@ $pendingCount = $db->query("SELECT COUNT(*) FROM submissions WHERE status = 'pen
             await updateSettings(data);
         });
 
+        // Theme Form
+        document.getElementById('themeForm')?.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const data = {
+                mode: formData.get('theme_mode'),
+                accent_color: formData.get('accent_color')
+            };
+            try {
+                const response = await fetch(`${API}/theme.php`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                const result = await response.json();
+                if (result.error) {
+                    alert('Error: ' + result.error);
+                } else {
+                    alert('Theme updated!');
+                    location.reload();
+                }
+            } catch (error) {
+                alert('Error updating theme');
+            }
+        });
+
+        // Accent color preset buttons
+        document.querySelectorAll('.accent-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const color = btn.dataset.color;
+                document.querySelector('input[name="accent_color"]').value = color;
+            });
+        });
+
+        // Site Name Typography Form
+        document.getElementById('siteNameTypographyForm')?.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const data = {
+                site_name_font_family: formData.get('site_name_font_family'),
+                site_name_font_weight: formData.get('site_name_font_weight'),
+                site_name_font_color: formData.get('site_name_font_color')
+            };
+            await updateSettings(data);
+        });
+
+        // Body Typography Form
+        document.getElementById('bodyTypographyForm')?.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const data = {
+                body_font_family: formData.get('body_font_family'),
+                body_font_weight: formData.get('body_font_weight')
+            };
+            await updateSettings(data);
+        });
+
+        // Footer Settings Form
+        document.getElementById('footerSettingsForm')?.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const data = {
+                footer_enabled: formData.has('footer_enabled'),
+                footer_line1_template: formData.get('footer_line1_template'),
+                footer_line2_template: formData.get('footer_line2_template')
+            };
+            await updateSettings(data);
+        });
+
         // Top Downloads Form
         document.getElementById('topDownloadsForm')?.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -526,6 +595,82 @@ $pendingCount = $db->query("SELECT COUNT(*) FROM submissions WHERE status = 'pen
             await updateSettings(data);
         });
 
+        // Change Password Form
+        document.getElementById('changePasswordForm')?.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const currentPassword = formData.get('current_password');
+            const newPassword = formData.get('new_password');
+            
+            if (!currentPassword || !newPassword) {
+                alert('Both current and new password are required');
+                return;
+            }
+            if (newPassword.length < 6) {
+                alert('New password must be at least 6 characters');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API}/admin.php?action=change-password`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        current_password: currentPassword,
+                        new_password: newPassword
+                    })
+                });
+                const result = await response.json();
+                if (result.error) {
+                    alert('Error: ' + result.error);
+                } else {
+                    alert('Password changed successfully!');
+                    e.target.reset();
+                }
+            } catch (error) {
+                alert('Error changing password');
+            }
+        });
+
+        // Resend Form
+        document.getElementById('resendForm')?.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const data = {
+                resend_api_key: formData.get('resend_api_key'),
+                resend_sender_email: formData.get('resend_sender_email')
+            };
+            await updateSettings(data);
+        });
+
+        // Test Resend Email
+        document.getElementById('testResendBtn')?.addEventListener('click', async () => {
+            try {
+                const response = await fetch(`${API}/admin.php?action=test-email`, { method: 'POST' });
+                const result = await response.json();
+                if (result.error) {
+                    alert('Error: ' + result.error);
+                } else {
+                    alert('Test email sent to admin email!');
+                }
+            } catch (error) {
+                alert('Error sending test email');
+            }
+        });
+
+        // reCAPTCHA Form
+        document.getElementById('recaptchaForm')?.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const data = {
+                recaptcha_site_key: formData.get('recaptcha_site_key'),
+                recaptcha_secret_key: formData.get('recaptcha_secret_key'),
+                recaptcha_enable_submit: formData.has('recaptcha_enable_submit'),
+                recaptcha_enable_auth: formData.has('recaptcha_enable_auth')
+            };
+            await updateSettings(data);
+        });
+
         // Add Sponsored Form
         document.getElementById('addSponsoredForm')?.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -534,7 +679,8 @@ $pendingCount = $db->query("SELECT COUNT(*) FROM submissions WHERE status = 'pen
                 id: Date.now().toString(),
                 name: formData.get('name'),
                 download_link: formData.get('download_link'),
-                type: formData.get('type')
+                type: formData.get('type'),
+                description: formData.get('description') || ''
             };
             sponsoredDownloads.push(newItem);
             await updateSettings({ sponsored_downloads: sponsoredDownloads });
@@ -589,14 +735,15 @@ $pendingCount = $db->query("SELECT COUNT(*) FROM submissions WHERE status = 'pen
                     return;
                 }
                 
-                let html = '<table style="width:100%;">';
-                html += '<tr><th>Name</th><th>24h</th><th>7d</th><th>Total</th></tr>';
-                data.analytics.forEach(item => {
+                let html = '<table style="width:100%; font-size: 0.85rem;">';
+                html += '<tr><th style="text-align:left;">#</th><th style="text-align:left;">Name</th><th>24h</th><th>7d</th><th>Total</th></tr>';
+                data.analytics.forEach((item, index) => {
                     html += `<tr>
+                        <td style="color: var(--sponsored-border); font-weight: bold;">#${index + 1}</td>
                         <td>${item.name}</td>
-                        <td>${item.clicks_24h}</td>
-                        <td>${item.clicks_7d}</td>
-                        <td>${item.total_clicks}</td>
+                        <td style="text-align:center; color: var(--success);">${item.clicks_24h}</td>
+                        <td style="text-align:center; color: #00FFFF;">${item.clicks_7d}</td>
+                        <td style="text-align:center; color: #FF00FF;">${item.total_clicks}</td>
                     </tr>`;
                 });
                 html += '</table>';
@@ -604,6 +751,113 @@ $pendingCount = $db->query("SELECT COUNT(*) FROM submissions WHERE status = 'pen
             } catch (error) {
                 document.getElementById('sponsoredAnalytics').innerHTML = 'Error loading analytics';
             }
+        }
+
+        // Downloads Management
+        let downloadsPage = 1;
+        let downloadsTotalPages = 1;
+
+        document.getElementById('downloadsSearchBtn')?.addEventListener('click', () => {
+            downloadsPage = 1;
+            searchDownloads();
+        });
+
+        document.getElementById('downloadsSearchInput')?.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                downloadsPage = 1;
+                searchDownloads();
+            }
+        });
+
+        async function searchDownloads() {
+            const search = document.getElementById('downloadsSearchInput')?.value || '';
+            const container = document.getElementById('downloadsManageTable');
+            
+            if (!search.trim()) {
+                container.innerHTML = '<p style="color: var(--text-muted);">Enter a search term to find downloads</p>';
+                return;
+            }
+            
+            container.innerHTML = '<p class="loading">Searching...</p>';
+            
+            try {
+                const response = await fetch(`${API}/admin.php?action=search-downloads&search=${encodeURIComponent(search)}&page=${downloadsPage}&limit=20`);
+                const data = await response.json();
+                
+                if (data.error) {
+                    container.innerHTML = `<p class="alert alert-error">${data.error}</p>`;
+                    return;
+                }
+                
+                downloadsTotalPages = data.pages || 1;
+                
+                if (!data.items?.length) {
+                    container.innerHTML = '<p style="color: var(--text-muted);">No downloads found</p>';
+                    return;
+                }
+                
+                let html = '<table class="downloads-table">';
+                html += '<thead><tr><th>Name</th><th>Type</th><th>Date</th><th>Action</th></tr></thead>';
+                html += '<tbody>';
+                data.items.forEach(item => {
+                    html += `<tr>
+                        <td>${escapeHtml(item.name)}</td>
+                        <td>${item.type}</td>
+                        <td>${item.submission_date || ''}</td>
+                        <td><button class="btn btn-danger btn-sm" onclick="deleteDownload('${item.id}')">DELETE</button></td>
+                    </tr>`;
+                });
+                html += '</tbody></table>';
+                
+                // Pagination
+                html += '<div style="display: flex; justify-content: space-between; margin-top: 15px; font-size: 0.85rem;">';
+                html += `<button class="btn btn-secondary btn-sm" onclick="prevDownloadsPage()" ${downloadsPage <= 1 ? 'disabled' : ''}>Prev</button>`;
+                html += `<span>Page ${downloadsPage} / ${downloadsTotalPages}</span>`;
+                html += `<button class="btn btn-secondary btn-sm" onclick="nextDownloadsPage()" ${downloadsPage >= downloadsTotalPages ? 'disabled' : ''}>Next</button>`;
+                html += '</div>';
+                
+                container.innerHTML = html;
+            } catch (error) {
+                container.innerHTML = '<p class="alert alert-error">Error searching downloads</p>';
+            }
+        }
+
+        function prevDownloadsPage() {
+            if (downloadsPage > 1) {
+                downloadsPage--;
+                searchDownloads();
+            }
+        }
+
+        function nextDownloadsPage() {
+            if (downloadsPage < downloadsTotalPages) {
+                downloadsPage++;
+                searchDownloads();
+            }
+        }
+
+        async function deleteDownload(id) {
+            if (!confirm('Delete this download? This cannot be undone.')) return;
+            
+            try {
+                const response = await fetch(`${API}/admin.php?action=delete-download&id=${id}`, { method: 'POST' });
+                const result = await response.json();
+                if (result.error) {
+                    alert('Error: ' + result.error);
+                } else {
+                    alert('Download deleted!');
+                    searchDownloads();
+                }
+            } catch (error) {
+                alert('Error deleting download');
+            }
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
         }
         
         loadAnalytics();
