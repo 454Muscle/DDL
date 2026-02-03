@@ -217,12 +217,12 @@ async function loadTrendingDownloads() {
 
 // Load Downloads
 async function loadDownloads() {
-    const container = document.getElementById('downloadsGrid');
-    if (!container) return;
+    const tbody = document.getElementById('downloadsTableBody');
+    if (!tbody) return;
     
-    container.innerHTML = '<div class="loading">Loading downloads</div>';
+    tbody.innerHTML = '<tr><td colspan="6" class="loading">Loading downloads</td></tr>';
     
-    let url = `downloads.php?action=list&page=${currentPage}&limit=24`;
+    let url = `downloads.php?action=list&page=${currentPage}&limit=50`;
     if (currentType !== 'all') url += `&type_filter=${currentType}`;
     if (currentSearch) url += `&search=${encodeURIComponent(currentSearch)}`;
     if (currentSort) url += `&sort_by=${currentSort}`;
@@ -230,33 +230,67 @@ async function loadDownloads() {
     const data = await apiCall(url);
     
     if (data.error) {
-        container.innerHTML = '<div class="alert alert-error">Failed to load downloads</div>';
+        tbody.innerHTML = '<tr><td colspan="6" class="alert alert-error">Failed to load downloads</td></tr>';
         return;
     }
     
     totalPages = data.pages || 1;
     
     if (!data.items?.length) {
-        container.innerHTML = '<div class="loading">No downloads found</div>';
+        tbody.innerHTML = '<tr><td colspan="6" class="loading">No downloads found</td></tr>';
         renderPagination();
         return;
     }
     
     let html = '';
     data.items.forEach(item => {
-        html += renderDownloadCard(item, false);
+        html += renderDownloadRow(item);
     });
     
-    container.innerHTML = html;
+    tbody.innerHTML = html;
     renderPagination();
     
     // Track download clicks
-    container.querySelectorAll('.download-link').forEach(link => {
+    tbody.querySelectorAll('.download-name-link').forEach(link => {
         link.addEventListener('click', () => {
             const id = link.dataset.downloadId;
             if (id) trackDownload(id);
         });
     });
+}
+
+// Render Download Row for Table
+function renderDownloadRow(item) {
+    const typeLabels = {
+        'game': 'Game',
+        'software': 'Software', 
+        'movie': 'Movie',
+        'tv_show': 'TV Show'
+    };
+    
+    const typeLabel = typeLabels[item.type] || item.type;
+    const siteName = item.site_name || '---';
+    const siteUrl = item.site_url || '#';
+    
+    return `
+        <tr class="download-row" data-id="${item.id || ''}">
+            <td>
+                <a href="${escapeHtml(item.download_link)}" 
+                   class="download-name-link" 
+                   target="_blank"
+                   data-download-id="${item.id || ''}"
+                   title="${escapeHtml(item.description || item.name)}">
+                    ${escapeHtml(item.name)}
+                </a>
+                ${item.description ? `<span class="download-description">${escapeHtml(item.description)}</span>` : ''}
+            </td>
+            <td>${escapeHtml(item.submission_date || '')}</td>
+            <td><span class="type-badge type-${item.type}">${escapeHtml(typeLabel)}</span></td>
+            <td>${escapeHtml(item.file_size || '-')}</td>
+            <td>${item.site_url ? `<a href="${escapeHtml(siteUrl)}" target="_blank">${escapeHtml(siteName)}</a>` : '---'}</td>
+            <td class="download-count-cell">${formatNumber(item.download_count || 0)}</td>
+        </tr>
+    `;
 }
 
 // Render Download Card

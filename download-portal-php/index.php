@@ -105,8 +105,22 @@ $theme = getThemeSettings();
             <!-- All Downloads Section -->
             <div class="top-section">
                 <h2 class="section-title">ALL DOWNLOADS</h2>
-                <div class="downloads-grid" id="downloadsGrid">
-                    <div class="loading">Loading downloads</div>
+                <div id="downloadsTableContainer">
+                    <table class="downloads-table" id="downloadsTable">
+                        <thead>
+                            <tr>
+                                <th style="width: 40%">Download Name</th>
+                                <th style="width: 12%">Date</th>
+                                <th style="width: 12%">Type</th>
+                                <th style="width: 12%">Size</th>
+                                <th style="width: 12%">Site</th>
+                                <th style="width: 12%">Downloads</th>
+                            </tr>
+                        </thead>
+                        <tbody id="downloadsTableBody">
+                            <tr><td colspan="6" class="loading">Loading downloads</td></tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
 
