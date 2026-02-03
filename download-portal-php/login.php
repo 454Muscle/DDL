@@ -3,10 +3,10 @@
  * Download Portal - Login Page
  */
 
-// Check if install.php exists and database is not configured
+// Check if we need to redirect to installer
 if (file_exists(__DIR__ . '/install.php')) {
+    require_once __DIR__ . '/config/database.php';
     try {
-        require_once __DIR__ . '/includes/functions.php';
         $db = getDB();
         $stmt = $db->query("SHOW TABLES LIKE 'site_settings'");
         if ($stmt->rowCount() === 0) {
@@ -17,10 +17,9 @@ if (file_exists(__DIR__ . '/install.php')) {
         header('Location: install.php');
         exit;
     }
-} else {
-    require_once __DIR__ . '/includes/functions.php';
 }
 
+require_once __DIR__ . '/includes/functions.php';
 require_once __DIR__ . '/includes/captcha.php';
 require_once __DIR__ . '/includes/auth.php';
 
