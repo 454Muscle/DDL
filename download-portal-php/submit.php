@@ -619,18 +619,6 @@ $categories = $db->query("SELECT DISTINCT name, type FROM categories ORDER BY na
             }
         }
         
-        function showAlert(message, type) {
-            const container = document.getElementById('alertContainer');
-            container.innerHTML = `<div class="alert alert-${type}">${escapeHtml(message)}</div>`;
-            setTimeout(() => { container.innerHTML = ''; }, 5000);
-        }
-        
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        }
-        
         // Theme toggle
         document.getElementById('themeToggle')?.addEventListener('click', async () => {
             document.body.classList.toggle('light-theme');
@@ -648,7 +636,6 @@ $categories = $db->query("SELECT DISTINCT name, type FROM categories ORDER BY na
             } catch (error) {
                 console.error('Failed to save theme:', error);
             }
-        });
         });
     </script>
 </body>
