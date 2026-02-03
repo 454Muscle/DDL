@@ -237,8 +237,20 @@ $categories = $db->query("SELECT DISTINCT name, type FROM categories ORDER BY na
         
         // Initialize
         document.addEventListener('DOMContentLoaded', () => {
+            // Mode toggle buttons
+            document.getElementById('singleModeBtn').addEventListener('click', function() {
+                setMode('single');
+            });
+            document.getElementById('multiModeBtn').addEventListener('click', function() {
+                setMode('multi');
+            });
+            
             // Add first item for multi mode (even if rate limit is 0, show the form)
-            addBatchItem(true);
+            try {
+                addBatchItem(true);
+            } catch (e) {
+                console.error('Error adding batch item:', e);
+            }
             
             // Single form submit
             document.getElementById('singleForm').addEventListener('submit', handleSingleSubmit);
