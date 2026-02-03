@@ -226,18 +226,19 @@ $categories = $db->query("SELECT DISTINCT name, type FROM categories ORDER BY na
 
     <script>
         const API = 'api';
-        const categories = <?= json_encode($categories) ?>;
+        const categories = <?= json_encode($categories ?: []) ?>;
         let currentMode = 'single';
         let batchItems = [];
         let rateLimit = {
             daily_limit: <?= $dailyLimit ?>,
-            used: <?= $rateLimit['used'] ?>,
-            remaining: <?= $rateLimit['remaining'] ?>
+            used: <?= (int)$rateLimit['used'] ?>,
+            remaining: <?= (int)$rateLimit['remaining'] ?>
         };
         
         // Initialize
         document.addEventListener('DOMContentLoaded', () => {
-            addBatchItem(); // Add first item for multi mode
+            // Add first item for multi mode (even if rate limit is 0, show the form)
+            addBatchItem(true);
             
             // Single form submit
             document.getElementById('singleForm').addEventListener('submit', handleSingleSubmit);
@@ -256,7 +257,10 @@ $categories = $db->query("SELECT DISTINCT name, type FROM categories ORDER BY na
         
         function updateCategories(type, selectId) {
             const select = document.getElementById(selectId);
+            if (!select) return;
             select.innerHTML = '<option value="">Select category...</option>';
+            
+            if (!categories || !Array.isArray(categories)) return;
             
             categories.filter(c => c.type === type || c.type === 'all').forEach(cat => {
                 const option = document.createElement('option');
@@ -266,8 +270,9 @@ $categories = $db->query("SELECT DISTINCT name, type FROM categories ORDER BY na
             });
         }
         
-        function addBatchItem() {
-            if (batchItems.length >= rateLimit.remaining) {
+        function addBatchItem(isFirst = false) {
+            // Allow first item even if rate limit is 0 (so user sees the form)
+            if (!isFirst && batchItems.length >= rateLimit.remaining) {
                 showAlert('Cannot add more items than remaining submissions today', 'error');
                 return;
             }
