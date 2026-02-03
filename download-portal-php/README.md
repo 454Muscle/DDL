@@ -5,27 +5,33 @@ A feature-rich download portal website built with plain PHP, MySQL, HTML, CSS, a
 ## Features
 
 ### Public Features
-- **Downloads Listing** - Browse downloads with pagination, search, and filtering
+- **Downloads Table** - Browse downloads in a table with columns: Name, Date, Type, Size, Site, Downloads
 - **Type Filtering** - Filter by Games, Software, Movies, TV Shows
 - **Sorting Options** - Sort by date, downloads, name
 - **Advanced Search** - Search by name, tags, category
-- **Top Downloads** - Display most downloaded items
-- **Trending Section** - Show currently trending downloads
+- **Top Downloads** - Display most downloaded items (card grid)
+- **Trending Section** - Show currently trending downloads (card grid)
 - **Sponsored Links** - Highlighted sponsored downloads with click tracking
-- **Dark/Light Theme** - Toggle between themes
+- **Dark/Light Theme** - Toggle between themes (saved in DB)
 - **User Registration** - Create account with captcha protection
 - **Submit Downloads** - Users can submit new content for approval
 - **Rate Limiting** - Configurable daily submission limits
+- **Type Badges** - Color-coded type indicators (Game=Magenta, Software=Cyan, Movie=Yellow, TV=Orange)
 
 ### Admin Features
 - **Dashboard** - Overview of site settings and statistics
-- **Submissions Management** - Approve, reject, or delete submissions
-- **Sponsored Downloads** - Add/remove sponsored items with analytics
-- **Top Downloads Toggle** - Enable/disable and configure count
+- **Submissions Management** - Approve, reject, or delete submissions with email notifications
+- **Sponsored Downloads** - Add/remove sponsored items (1-5) with analytics
+- **Top Downloads Toggle** - Enable/disable and configure count (5-20)
 - **Trending Toggle** - Enable/disable trending section
-- **Site Customization** - Change site name, footer text
+- **Theme Settings** - Dark/Light mode toggle + Accent color picker with presets
+- **Site Name Typography** - Font family, weight, and color customization
+- **Body Typography** - Font family and weight for body text
+- **Footer Settings** - Enable/disable footer + customizable templates with placeholders
+- **Admin Credentials** - Update email and password
 - **Email Notifications** - Resend integration for emails
-- **reCAPTCHA Support** - Optional Google reCAPTCHA v2
+- **reCAPTCHA Support** - Optional Google reCAPTCHA v2 for submissions and auth
+- **Downloads Management** - Search and delete existing downloads
 - **Database Seeding** - Populate with 5000 sample items
 
 ## Requirements
