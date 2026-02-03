@@ -25,6 +25,8 @@ Build a feature-rich download portal website with Python (FastAPI), React, and M
 - [x] Color-coded type badges
 - [x] User registration/login
 - [x] Download submission form with captcha
+- [x] **Multiple submission mode** - Submit multiple items in a single batch
+- [x] Rate limiting display - Shows remaining submissions for today
 - [x] Rate limiting for submissions
 
 ### Admin Panel
