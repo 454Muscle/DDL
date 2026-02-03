@@ -59,6 +59,9 @@ switch ($action) {
     case 'password-change-confirm':
         handlePasswordChangeConfirm();
         break;
+    case 'change-password':
+        handleChangePassword();
+        break;
     case 'email-update':
         handleEmailUpdate();
         break;
@@ -80,6 +83,9 @@ switch ($action) {
     case 'downloads':
         handleDownloads();
         break;
+    case 'search-downloads':
+        handleSearchDownloads();
+        break;
     case 'delete-download':
         handleDeleteDownload();
         break;
@@ -93,6 +99,9 @@ switch ($action) {
         handleCategories();
         break;
     case 'resend-test':
+        handleResendTest();
+        break;
+    case 'test-email':
         handleResendTest();
         break;
     case 'resend-settings':
