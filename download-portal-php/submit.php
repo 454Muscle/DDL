@@ -100,8 +100,8 @@ $categories = $db->query("SELECT DISTINCT name, type FROM categories ORDER BY na
             
             <!-- Mode Toggle -->
             <div class="mode-toggle">
-                <button type="button" class="mode-btn active" id="singleModeBtn" onclick="setMode('single')">SINGLE SUBMIT</button>
-                <button type="button" class="mode-btn" id="multiModeBtn" onclick="setMode('multi')">SUBMIT MULTIPLE</button>
+                <button type="button" class="mode-btn active" id="singleModeBtn">SINGLE SUBMIT</button>
+                <button type="button" class="mode-btn" id="multiModeBtn">SUBMIT MULTIPLE</button>
             </div>
             
             <!-- Alert Container -->
