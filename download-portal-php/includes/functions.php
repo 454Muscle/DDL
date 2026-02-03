@@ -268,3 +268,82 @@ function parseTags($tags) {
     }
     return [];
 }
+
+/**
+ * Generate UUID v4
+ */
+function generateUUID() {
+    $data = random_bytes(16);
+    $data[6] = chr(ord($data[6]) & 0x0f | 0x40); // Version 4
+    $data[8] = chr(ord($data[8]) & 0x3f | 0x80); // Variant RFC 4122
+    return vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split(bin2hex($data), 4));
+}
+
+/**
+ * Get client IP address
+ */
+function getClientIP() {
+    if (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+        $ips = explode(',', $_SERVER['HTTP_X_FORWARDED_FOR']);
+        return trim($ips[0]);
+    }
+    if (!empty($_SERVER['HTTP_X_REAL_IP'])) {
+        return $_SERVER['HTTP_X_REAL_IP'];
+    }
+    return $_SERVER['REMOTE_ADDR'] ?? 'anonymous';
+}
+
+/**
+ * Verify captcha or reCAPTCHA
+ */
+function verifyCaptchaOrRecaptcha($data, $settings, $context = 'submit') {
+    $enableKey = $context === 'submit' ? 'recaptcha_enable_submit' : 'recaptcha_enable_auth';
+    
+    if (!empty($settings[$enableKey])) {
+        // reCAPTCHA enabled
+        if (empty($settings['recaptcha_site_key']) || empty($settings['recaptcha_secret_key'])) {
+            return ['valid' => false, 'error' => 'reCAPTCHA is enabled but not configured'];
+        }
+        
+        $token = $data['recaptcha_token'] ?? '';
+        if (empty($token)) {
+            return ['valid' => false, 'error' => 'reCAPTCHA token is required'];
+        }
+        
+        // Verify with Google
+        $url = 'https://www.google.com/recaptcha/api/siteverify';
+        $postData = [
+            'secret' => $settings['recaptcha_secret_key'],
+            'response' => $token,
+            'remoteip' => getClientIP()
+        ];
+        
+        $ch = curl_init($url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($postData));
+        $response = curl_exec($ch);
+        curl_close($ch);
+        
+        $result = json_decode($response, true);
+        if (!$result || empty($result['success'])) {
+            return ['valid' => false, 'error' => 'Invalid reCAPTCHA. Please try again.'];
+        }
+        
+        return ['valid' => true];
+    } else {
+        // Simple captcha
+        $captchaId = $data['captcha_id'] ?? '';
+        $captchaAnswer = $data['captcha_answer'] ?? null;
+        
+        if (empty($captchaId) || $captchaAnswer === null) {
+            return ['valid' => false, 'error' => 'Captcha is required'];
+        }
+        
+        if (!verifyCaptcha($captchaId, $captchaAnswer)) {
+            return ['valid' => false, 'error' => 'Invalid captcha. Please try again.'];
+        }
+        
+        return ['valid' => true];
+    }
+}
