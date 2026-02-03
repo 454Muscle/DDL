@@ -71,9 +71,15 @@ $pendingCount = $db->query("SELECT COUNT(*) FROM submissions WHERE status = 'pen
         .admin-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
         .admin-card { background: var(--bg-secondary); border: 1px solid var(--border-color); padding: 20px; }
         .admin-card h3 { color: var(--accent); margin-bottom: 15px; }
+        .admin-card h4 { color: var(--text-secondary); font-size: 0.9rem; }
         .submissions-badge { background: var(--error); color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.8rem; margin-left: 10px; }
         .sponsored-form { margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--border-color); }
-        .sponsored-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border: 1px solid var(--border-color); margin-bottom: 10px; }
+        .sponsored-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border: 1px solid var(--border-color); margin-bottom: 10px; background: var(--bg-tertiary); }
+        .accent-presets { display: flex; gap: 8px; flex-wrap: wrap; }
+        .accent-btn { width: 30px; height: 30px; border: 2px solid var(--border-color); cursor: pointer; transition: transform 0.2s; }
+        .accent-btn:hover { transform: scale(1.1); border-color: var(--text-primary); }
+        .btn-sm { padding: 6px 12px; font-size: 0.85rem; }
+        hr { border: none; border-top: 1px solid var(--border-color); }
     </style>
 </head>
 <body class="<?= $theme['mode'] === 'light' ? 'light-theme' : '' ?>">
