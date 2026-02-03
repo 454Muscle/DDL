@@ -153,16 +153,130 @@ $pendingCount = $db->query("SELECT COUNT(*) FROM submissions WHERE status = 'pen
                                 <input type="text" name="site_name" value="<?= htmlspecialchars($settings['site_name'] ?? '') ?>">
                             </div>
                             <div class="form-group">
-                                <label>Daily Submission Limit</label>
+                                <label>Daily Submission Limit (5-100)</label>
                                 <input type="number" name="daily_submission_limit" value="<?= $settings['daily_submission_limit'] ?? 10 ?>" min="5" max="100">
                             </div>
                             <div class="form-group">
                                 <label>
-                                    <input type="checkbox" name="auto_approve_submissions" <?= $settings['auto_approve_submissions'] ? 'checked' : '' ?>>
+                                    <input type="checkbox" name="auto_approve_submissions" <?= ($settings['auto_approve_submissions'] ?? false) ? 'checked' : '' ?>>
                                     Auto-approve submissions
                                 </label>
                             </div>
                             <button type="submit" class="btn">SAVE SETTINGS</button>
+                        </form>
+                    </div>
+
+                    <!-- Theme Settings -->
+                    <div class="admin-card">
+                        <h3>Theme Settings</h3>
+                        <form id="themeForm">
+                            <div class="form-group">
+                                <label>Theme Mode</label>
+                                <select name="theme_mode" id="themeModeSelect">
+                                    <option value="dark" <?= ($theme['mode'] ?? 'dark') === 'dark' ? 'selected' : '' ?>>Dark</option>
+                                    <option value="light" <?= ($theme['mode'] ?? 'dark') === 'light' ? 'selected' : '' ?>>Light</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Accent Color</label>
+                                <div class="accent-presets">
+                                    <button type="button" class="accent-btn" data-color="#00FF41" style="background:#00FF41" title="Matrix Green"></button>
+                                    <button type="button" class="accent-btn" data-color="#FF00FF" style="background:#FF00FF" title="Cyber Magenta"></button>
+                                    <button type="button" class="accent-btn" data-color="#00FFFF" style="background:#00FFFF" title="Electric Cyan"></button>
+                                    <button type="button" class="accent-btn" data-color="#FFFF00" style="background:#FFFF00" title="Warning Yellow"></button>
+                                    <button type="button" class="accent-btn" data-color="#FF6600" style="background:#FF6600" title="Neon Orange"></button>
+                                    <button type="button" class="accent-btn" data-color="#0066FF" style="background:#0066FF" title="Classic Blue"></button>
+                                </div>
+                                <input type="color" name="accent_color" value="<?= htmlspecialchars($theme['accent_color'] ?? '#00FF41') ?>" style="width:100%; height:40px; margin-top:10px;">
+                            </div>
+                            <button type="submit" class="btn">UPDATE THEME</button>
+                        </form>
+                    </div>
+
+                    <!-- Site Name Typography -->
+                    <div class="admin-card">
+                        <h3>Site Name Typography</h3>
+                        <form id="siteNameTypographyForm">
+                            <div class="form-group">
+                                <label>Font Family</label>
+                                <select name="site_name_font_family">
+                                    <?php 
+                                    $fonts = ['Arial', 'Inter', 'Roboto', 'Georgia', 'Times New Roman', 'Courier New', 'JetBrains Mono'];
+                                    $currentFont = $settings['site_name_font_family'] ?? 'JetBrains Mono';
+                                    foreach ($fonts as $font): ?>
+                                        <option value="<?= $font ?>" <?= $currentFont === $font ? 'selected' : '' ?>><?= $font ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Font Weight</label>
+                                <select name="site_name_font_weight">
+                                    <?php 
+                                    $weights = ['300', '400', '500', '600', '700', '800'];
+                                    $currentWeight = $settings['site_name_font_weight'] ?? '700';
+                                    foreach ($weights as $weight): ?>
+                                        <option value="<?= $weight ?>" <?= $currentWeight === $weight ? 'selected' : '' ?>><?= $weight ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Font Color</label>
+                                <input type="color" name="site_name_font_color" value="<?= htmlspecialchars($settings['site_name_font_color'] ?? '#00FF41') ?>">
+                            </div>
+                            <button type="submit" class="btn">UPDATE TYPOGRAPHY</button>
+                        </form>
+                    </div>
+
+                    <!-- Body Typography -->
+                    <div class="admin-card">
+                        <h3>Body Typography</h3>
+                        <form id="bodyTypographyForm">
+                            <div class="form-group">
+                                <label>Body Font Family</label>
+                                <select name="body_font_family">
+                                    <?php 
+                                    $currentBodyFont = $settings['body_font_family'] ?? 'JetBrains Mono';
+                                    foreach ($fonts as $font): ?>
+                                        <option value="<?= $font ?>" <?= $currentBodyFont === $font ? 'selected' : '' ?>><?= $font ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Body Font Weight</label>
+                                <select name="body_font_weight">
+                                    <?php 
+                                    $currentBodyWeight = $settings['body_font_weight'] ?? '400';
+                                    foreach ($weights as $weight): ?>
+                                        <option value="<?= $weight ?>" <?= $currentBodyWeight === $weight ? 'selected' : '' ?>><?= $weight ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                            <button type="submit" class="btn">UPDATE BODY FONT</button>
+                        </form>
+                    </div>
+
+                    <!-- Footer Settings -->
+                    <div class="admin-card" style="grid-column: span 2;">
+                        <h3>Footer Settings</h3>
+                        <form id="footerSettingsForm">
+                            <div class="form-group">
+                                <label>
+                                    <input type="checkbox" name="footer_enabled" <?= ($settings['footer_enabled'] ?? true) ? 'checked' : '' ?>>
+                                    Enable Footer
+                                </label>
+                            </div>
+                            <p style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 15px;">
+                                Placeholders: <code>{admin_email}</code>, <code>{site_name}</code>, <code>{year}</code>
+                            </p>
+                            <div class="form-group">
+                                <label>Footer Line 1 Template</label>
+                                <input type="text" name="footer_line1_template" value="<?= htmlspecialchars($settings['footer_line1_template'] ?? 'For DMCA copyright complaints send an email to {admin_email}.') ?>">
+                            </div>
+                            <div class="form-group">
+                                <label>Footer Line 2 Template</label>
+                                <input type="text" name="footer_line2_template" value="<?= htmlspecialchars($settings['footer_line2_template'] ?? 'Copyright © {site_name} {year}. All rights reserved.') ?>">
+                            </div>
+                            <button type="submit" class="btn">UPDATE FOOTER</button>
                         </form>
                     </div>
 
@@ -172,12 +286,12 @@ $pendingCount = $db->query("SELECT COUNT(*) FROM submissions WHERE status = 'pen
                         <form id="topDownloadsForm">
                             <div class="form-group">
                                 <label>
-                                    <input type="checkbox" name="top_downloads_enabled" <?= $settings['top_downloads_enabled'] ? 'checked' : '' ?>>
+                                    <input type="checkbox" name="top_downloads_enabled" <?= ($settings['top_downloads_enabled'] ?? true) ? 'checked' : '' ?>>
                                     Enable Top Downloads
                                 </label>
                             </div>
                             <div class="form-group">
-                                <label>Number to Show</label>
+                                <label>Number to Show (5-20)</label>
                                 <input type="number" name="top_downloads_count" value="<?= $settings['top_downloads_count'] ?? 5 ?>" min="5" max="20">
                             </div>
                             <button type="submit" class="btn">SAVE</button>
@@ -190,12 +304,12 @@ $pendingCount = $db->query("SELECT COUNT(*) FROM submissions WHERE status = 'pen
                         <form id="trendingForm">
                             <div class="form-group">
                                 <label>
-                                    <input type="checkbox" name="trending_downloads_enabled" <?= $settings['trending_downloads_enabled'] ? 'checked' : '' ?>>
+                                    <input type="checkbox" name="trending_downloads_enabled" <?= ($settings['trending_downloads_enabled'] ?? false) ? 'checked' : '' ?>>
                                     Enable Trending Section
                                 </label>
                             </div>
                             <div class="form-group">
-                                <label>Number to Show</label>
+                                <label>Number to Show (5-20)</label>
                                 <input type="number" name="trending_downloads_count" value="<?= $settings['trending_downloads_count'] ?? 5 ?>" min="5" max="20">
                             </div>
                             <button type="submit" class="btn">SAVE</button>
@@ -210,42 +324,132 @@ $pendingCount = $db->query("SELECT COUNT(*) FROM submissions WHERE status = 'pen
                                 <label>Admin Email</label>
                                 <input type="email" name="admin_email" value="<?= htmlspecialchars($settings['admin_email'] ?? '') ?>">
                             </div>
-                            <button type="submit" class="btn btn-secondary">UPDATE EMAIL</button>
+                            <button type="submit" class="btn btn-secondary">SAVE EMAIL</button>
+                        </form>
+                        <hr style="margin: 20px 0; border-color: var(--border-color);">
+                        <h4 style="margin-bottom: 15px;">Change Password</h4>
+                        <form id="changePasswordForm">
+                            <div class="form-group">
+                                <label>Current Password</label>
+                                <input type="password" name="current_password" placeholder="••••••••">
+                            </div>
+                            <div class="form-group">
+                                <label>New Password</label>
+                                <input type="password" name="new_password" placeholder="••••••••" minlength="6">
+                            </div>
+                            <button type="submit" class="btn btn-secondary">CHANGE PASSWORD</button>
+                        </form>
+                    </div>
+
+                    <!-- Resend Email Settings -->
+                    <div class="admin-card">
+                        <h3>Resend Email Settings</h3>
+                        <p style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 15px;">
+                            Create an API key at <a href="https://resend.com/api-keys" target="_blank" style="color: var(--accent);">resend.com/api-keys</a>
+                        </p>
+                        <form id="resendForm">
+                            <div class="form-group">
+                                <label>Resend API Key</label>
+                                <input type="password" name="resend_api_key" placeholder="re_...">
+                            </div>
+                            <div class="form-group">
+                                <label>Sender Email (FROM)</label>
+                                <input type="email" name="resend_sender_email" value="<?= htmlspecialchars($settings['resend_sender_email'] ?? '') ?>" placeholder="onboarding@resend.dev">
+                            </div>
+                            <button type="submit" class="btn">UPDATE RESEND</button>
+                            <button type="button" class="btn btn-secondary" id="testResendBtn" style="margin-top:10px;">SEND TEST EMAIL</button>
+                        </form>
+                    </div>
+
+                    <!-- reCAPTCHA Settings -->
+                    <div class="admin-card">
+                        <h3>reCAPTCHA Settings</h3>
+                        <p style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 15px;">
+                            Get keys from <a href="https://www.google.com/recaptcha/admin" target="_blank" style="color: var(--accent);">Google reCAPTCHA Admin</a>
+                        </p>
+                        <form id="recaptchaForm">
+                            <div class="form-group">
+                                <label>Site Key</label>
+                                <input type="text" name="recaptcha_site_key" value="<?= htmlspecialchars($settings['recaptcha_site_key'] ?? '') ?>">
+                            </div>
+                            <div class="form-group">
+                                <label>Secret Key</label>
+                                <input type="password" name="recaptcha_secret_key" placeholder="••••••••">
+                            </div>
+                            <div class="form-group">
+                                <label>
+                                    <input type="checkbox" name="recaptcha_enable_submit" <?= ($settings['recaptcha_enable_submit'] ?? false) ? 'checked' : '' ?>>
+                                    Enable for Submissions
+                                </label>
+                            </div>
+                            <div class="form-group">
+                                <label>
+                                    <input type="checkbox" name="recaptcha_enable_auth" <?= ($settings['recaptcha_enable_auth'] ?? false) ? 'checked' : '' ?>>
+                                    Enable for Auth
+                                </label>
+                            </div>
+                            <button type="submit" class="btn">UPDATE reCAPTCHA</button>
                         </form>
                     </div>
 
                     <!-- Sponsored Downloads -->
                     <div class="admin-card" style="grid-column: span 2;">
-                        <h3>Sponsored Downloads</h3>
+                        <h3>Sponsored Downloads (1-5)</h3>
+                        <p style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 15px;">
+                            Sponsored downloads appear first in the Top Downloads section
+                        </p>
                         <div id="sponsoredList">
                             <?php 
                             $sponsored = $settings['sponsored_downloads'] ?? [];
-                            foreach ($sponsored as $item): ?>
+                            foreach ($sponsored as $index => $item): ?>
                                 <div class="sponsored-item" data-id="<?= htmlspecialchars($item['id'] ?? '') ?>">
-                                    <span><?= htmlspecialchars($item['name'] ?? 'Unknown') ?></span>
+                                    <span><strong>#<?= $index + 1 ?></strong> <?= htmlspecialchars($item['name'] ?? 'Unknown') ?> <small>(<?= htmlspecialchars($item['type'] ?? '') ?>)</small></span>
                                     <button class="btn btn-danger btn-sm" onclick="removeSponsored('<?= htmlspecialchars($item['id'] ?? '') ?>')">Remove</button>
                                 </div>
                             <?php endforeach; ?>
                         </div>
+                        <?php if (count($sponsored) < 5): ?>
                         <div class="sponsored-form">
-                            <h4>Add Sponsored Download</h4>
+                            <h4>Add Sponsored Download (<?= count($sponsored) ?>/5)</h4>
                             <form id="addSponsoredForm">
-                                <div class="form-group">
-                                    <input type="text" name="name" placeholder="Name" required>
+                                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                                    <div class="form-group">
+                                        <label>Name *</label>
+                                        <input type="text" name="name" placeholder="Download name" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Download Link *</label>
+                                        <input type="url" name="download_link" placeholder="https://..." required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Type</label>
+                                        <select name="type">
+                                            <option value="game">Game</option>
+                                            <option value="software" selected>Software</option>
+                                            <option value="movie">Movie</option>
+                                            <option value="tv_show">TV Show</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Description</label>
+                                        <input type="text" name="description" placeholder="Optional description">
+                                    </div>
                                 </div>
-                                <div class="form-group">
-                                    <input type="url" name="download_link" placeholder="Download URL" required>
-                                </div>
-                                <div class="form-group">
-                                    <select name="type" required>
-                                        <option value="game">Game</option>
-                                        <option value="software">Software</option>
-                                        <option value="movie">Movie</option>
-                                        <option value="tv_show">TV Show</option>
-                                    </select>
-                                </div>
-                                <button type="submit" class="btn">ADD SPONSORED</button>
+                                <button type="submit" class="btn" style="margin-top: 15px;">ADD SPONSORED</button>
                             </form>
+                        </div>
+                        <?php endif; ?>
+                    </div>
+
+                    <!-- Manage Downloads -->
+                    <div class="admin-card" style="grid-column: span 2;">
+                        <h3>Manage Downloads</h3>
+                        <div style="display: flex; gap: 15px; margin-bottom: 20px;">
+                            <input type="text" id="downloadsSearchInput" class="search-input" placeholder="Search downloads..." style="flex: 1;">
+                            <button class="btn" id="downloadsSearchBtn">SEARCH</button>
+                        </div>
+                        <div id="downloadsManageTable">
+                            <p style="color: var(--text-muted);">Enter a search term to find downloads</p>
                         </div>
                     </div>
 
@@ -260,6 +464,7 @@ $pendingCount = $db->query("SELECT COUNT(*) FROM submissions WHERE status = 'pen
                     <div class="admin-card">
                         <h3>Sponsored Analytics</h3>
                         <div id="sponsoredAnalytics">Loading...</div>
+                        <button class="btn btn-secondary" onclick="loadAnalytics()" style="margin-top: 15px;">REFRESH ANALYTICS</button>
                     </div>
                 </div>
             <?php endif; ?>
