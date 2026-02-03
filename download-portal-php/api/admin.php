@@ -300,6 +300,71 @@ function handleEmailUpdate() {
     jsonResponse(['success' => true]);
 }
 
+function handleChangePassword() {
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        jsonResponse(['error' => 'Method not allowed'], 405);
+    }
+    
+    $data = getJsonInput();
+    
+    if (empty($data['current_password']) || empty($data['new_password'])) {
+        jsonResponse(['error' => 'Current and new password are required'], 400);
+    }
+    
+    if (strlen($data['new_password']) < 6) {
+        jsonResponse(['error' => 'New password must be at least 6 characters'], 400);
+    }
+    
+    // Verify current password
+    $authResult = authenticateAdmin($data['current_password']);
+    if (!$authResult['success']) {
+        jsonResponse(['error' => 'Invalid current password'], 401);
+    }
+    
+    // Update password
+    updateSiteSettings(['admin_password_hash' => hashPassword($data['new_password'])]);
+    
+    jsonResponse(['success' => true, 'message' => 'Password changed successfully']);
+}
+
+function handleSearchDownloads() {
+    $db = getDB();
+    
+    $page = max(1, (int)($_GET['page'] ?? 1));
+    $limit = min(100, max(1, (int)($_GET['limit'] ?? 20)));
+    $offset = ($page - 1) * $limit;
+    $search = $_GET['search'] ?? '';
+    
+    $where = 'approved = 1';
+    $params = [];
+    
+    if ($search) {
+        $where .= ' AND name LIKE ?';
+        $params[] = "%$search%";
+    }
+    
+    // Get total
+    $stmt = $db->prepare("SELECT COUNT(*) FROM downloads WHERE $where");
+    $stmt->execute($params);
+    $total = $stmt->fetchColumn();
+    
+    // Get items
+    $params[] = $limit;
+    $params[] = $offset;
+    $stmt = $db->prepare("SELECT id, name, type, submission_date, download_count FROM downloads WHERE $where ORDER BY created_at DESC LIMIT ? OFFSET ?");
+    $stmt->execute($params);
+    $items = $stmt->fetchAll();
+    
+    $pages = max(1, ceil($total / $limit));
+    
+    jsonResponse([
+        'items' => $items,
+        'total' => (int)$total,
+        'page' => $page,
+        'pages' => $pages
+    ]);
+}
+
 function handleSubmissions() {
     $db = getDB();
     
