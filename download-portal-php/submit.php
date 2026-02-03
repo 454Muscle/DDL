@@ -2,7 +2,25 @@
 /**
  * Download Portal - Submit Page
  */
-require_once __DIR__ . '/includes/functions.php';
+
+// Check if install.php exists and database is not configured
+if (file_exists(__DIR__ . '/install.php')) {
+    try {
+        require_once __DIR__ . '/includes/functions.php';
+        $db = getDB();
+        $stmt = $db->query("SHOW TABLES LIKE 'site_settings'");
+        if ($stmt->rowCount() === 0) {
+            header('Location: install.php');
+            exit;
+        }
+    } catch (Exception $e) {
+        header('Location: install.php');
+        exit;
+    }
+} else {
+    require_once __DIR__ . '/includes/functions.php';
+}
+
 require_once __DIR__ . '/includes/captcha.php';
 
 $settings = getSiteSettings();
