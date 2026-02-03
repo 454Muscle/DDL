@@ -10,11 +10,12 @@ let totalPages = 1;
 let currentType = 'all';
 let currentSearch = '';
 let currentSort = 'date_desc';
-let theme = localStorage.getItem('theme') || 'dark';
+// Theme is set from PHP/database, not localStorage
+let theme = document.body.classList.contains('light-theme') ? 'light' : 'dark';
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
-    initTheme();
+    updateThemeButton();
     loadStats();
     loadTopDownloads();
     loadTrendingDownloads();
@@ -24,16 +25,8 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // Theme
-function initTheme() {
-    if (theme === 'light') {
-        document.body.classList.add('light-theme');
-    }
-    updateThemeButton();
-}
-
 function toggleTheme() {
     theme = theme === 'dark' ? 'light' : 'dark';
-    localStorage.setItem('theme', theme);
     document.body.classList.toggle('light-theme');
     updateThemeButton();
     
@@ -42,7 +35,12 @@ function toggleTheme() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ mode: theme })
-    });
+    }).then(response => response.json())
+      .then(data => {
+          if (data.error) {
+              console.error('Failed to save theme:', data.error);
+          }
+      });
 }
 
 function updateThemeButton() {
