@@ -270,30 +270,6 @@ function parseTags($tags) {
 }
 
 /**
- * Generate UUID v4
- */
-function generateUUID() {
-    $data = random_bytes(16);
-    $data[6] = chr(ord($data[6]) & 0x0f | 0x40); // Version 4
-    $data[8] = chr(ord($data[8]) & 0x3f | 0x80); // Variant RFC 4122
-    return vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split(bin2hex($data), 4));
-}
-
-/**
- * Get client IP address
- */
-function getClientIP() {
-    if (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
-        $ips = explode(',', $_SERVER['HTTP_X_FORWARDED_FOR']);
-        return trim($ips[0]);
-    }
-    if (!empty($_SERVER['HTTP_X_REAL_IP'])) {
-        return $_SERVER['HTTP_X_REAL_IP'];
-    }
-    return $_SERVER['REMOTE_ADDR'] ?? 'anonymous';
-}
-
-/**
  * Verify captcha or reCAPTCHA
  */
 function verifyCaptchaOrRecaptcha($data, $settings, $context = 'submit') {
