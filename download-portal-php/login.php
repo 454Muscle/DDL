@@ -145,10 +145,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </footer>
 
     <script>
-        document.getElementById('themeToggle')?.addEventListener('click', () => {
+        document.getElementById('themeToggle')?.addEventListener('click', async () => {
             document.body.classList.toggle('light-theme');
             const btn = document.getElementById('themeToggle');
-            btn.textContent = document.body.classList.contains('light-theme') ? '☀ LIGHT' : '☾ DARK';
+            const newMode = document.body.classList.contains('light-theme') ? 'light' : 'dark';
+            btn.textContent = newMode === 'dark' ? '☀ LIGHT' : '☾ DARK';
+            
+            // Save to server
+            try {
+                await fetch('api/theme.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ mode: newMode })
+                });
+            } catch (error) {
+                console.error('Failed to save theme:', error);
+            }
         });
     </script>
 </body>
