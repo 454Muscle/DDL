@@ -52,7 +52,7 @@ $categories = $db->query("SELECT DISTINCT name, type FROM categories ORDER BY na
         .batch-info { font-size: 0.85rem; color: var(--text-muted); margin-top: 5px; }
     </style>
 </head>
-<body class="<?= $theme['mode'] === 'light' ? 'light-theme' : '' ?>">
+<body class="<?= ($theme['mode'] ?? 'dark') === 'light' ? 'light-theme' : '' ?>">
     <header>
         <div class="container">
             <div class="header-content">
@@ -62,7 +62,7 @@ $categories = $db->query("SELECT DISTINCT name, type FROM categories ORDER BY na
                     <a href="submit.php" class="active">SUBMIT</a>
                     <a href="login.php">LOGIN</a>
                     <a href="admin/">ADMIN</a>
-                    <button class="theme-toggle" id="themeToggle">☾ DARK</button>
+                    <button class="theme-toggle" id="themeToggle"><?= ($theme['mode'] ?? 'dark') === 'dark' ? '☀ LIGHT' : '☾ DARK' ?></button>
                 </nav>
             </div>
         </div>
